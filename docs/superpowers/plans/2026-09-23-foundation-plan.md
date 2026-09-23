@@ -691,7 +691,7 @@ export default function ClassJoin({ onJoin }: { onJoin: (code: string) => void }
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `npx vitest run src/lib/classroom.test.ts src/pages/JoinFlow.test.tsx`
-Expected: PASS (3 tests)
+Expected: PASS (4 tests)
 
 - [ ] **Step 5: Commit**
 
