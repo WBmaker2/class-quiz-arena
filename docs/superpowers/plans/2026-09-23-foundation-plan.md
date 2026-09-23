@@ -73,6 +73,8 @@
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
     "@testing-library/react": "^16.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
     "@vitejs/plugin-react": "^4.3.0",
     "jsdom": "^25.0.0",
     "tailwindcss": "^4.0.0",
