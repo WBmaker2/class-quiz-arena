@@ -1,0 +1,5 @@
+.worktrees/
+.playwright-mcp/
+node_modules/
+dist/
+.env
