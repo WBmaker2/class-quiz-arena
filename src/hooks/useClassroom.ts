@@ -4,6 +4,7 @@ import { db } from '../lib/firebase';
 import { TEACHER_NOT_ALLOWLISTED } from '../lib/admin';
 import { generateInviteCode, isValidInviteCode, normalizeInviteCode } from '../lib/classroom';
 import { validateNickname } from '../lib/nickname';
+import { seedDefaultArenas } from '../lib/seedDefaults';
 
 export interface JoinInfo {
   nickname: string;
@@ -139,6 +140,13 @@ export function useClassroom() {
       if (!mounted.current) return null;
       setError(null);
       setClassroomId(code);
+      // 기본 6개 아레나를 잠긴 상태로 미리 넣어둔다. 실패해도 학급은 열린다.
+      try {
+        await seedDefaultArenas(code, uid);
+      } catch {
+        /* 빈 아레나 화면의 가져오기 버튼으로 나중에 넣을 수 있다 */
+      }
+      if (!mounted.current) return null;
       return code;
     } catch (e) {
       if (!mounted.current) return null;

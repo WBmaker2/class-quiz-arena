@@ -188,9 +188,9 @@ describe('TeacherHome growth tools', () => {
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: '분석' }));
-    expect(screen.getByText('2개 중 1개 출제')).toBeTruthy();
+    expect(screen.getByText('5개 중 1개 출제')).toBeTruthy();
     expect(screen.getByText(/출제됨/)).toBeTruthy();
-    expect(screen.getByText(/안 됨/)).toBeTruthy();
+    expect(screen.getAllByText(/안 됨/)).toHaveLength(4);
   });
 
   it('copies an arena from the bank', () => {
@@ -343,5 +343,61 @@ describe('TeacherHome classroom management', () => {
     fireEvent.click(screen.getByRole('button', { name: '학생 화면 미리보기' }));
     expect(openSpy).toHaveBeenCalledWith('https://x.web.app/?preview=AAAAAA', '_blank');
     vi.unstubAllGlobals();
+  });
+});
+
+describe('TeacherHome default seeding', () => {
+  it('offers the default 6 only when empty', () => {
+    const onSeedDefaults = vi.fn();
+    const { rerender } = render(
+      <TeacherHome
+        live={[]}
+        abandoned={[]}
+        finished={[]}
+        arenas={[]}
+        classroomCode=""
+        students={[]}
+        onDeleteStudent={noop}
+        onExportCsv={noop}
+        rounds={[]}
+        onForceClose={noop}
+        onEditArena={noop}
+        onDeleteArena={noop}
+        onToggleLock={noop}
+        onToggleShowPlayers={noop}
+        onToggleTts={noop}
+        onNewArena={noop}
+        onSignOut={noop}
+        onSeedDefaults={onSeedDefaults}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '아레나' }));
+    fireEvent.click(screen.getByRole('button', { name: '기본 아레나 6개 가져오기' }));
+    expect(onSeedDefaults).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <TeacherHome
+        live={[]}
+        abandoned={[]}
+        finished={[]}
+        arenas={[{ id: 'a1', title: '내 것', locked: false }]}
+        classroomCode=""
+        students={[]}
+        onDeleteStudent={noop}
+        onExportCsv={noop}
+        rounds={[]}
+        onForceClose={noop}
+        onEditArena={noop}
+        onDeleteArena={noop}
+        onToggleLock={noop}
+        onToggleShowPlayers={noop}
+        onToggleTts={noop}
+        onNewArena={noop}
+        onSignOut={noop}
+        onSeedDefaults={onSeedDefaults}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '아레나' }));
+    expect(screen.queryByRole('button', { name: '기본 아레나 6개 가져오기' })).toBeNull();
   });
 });

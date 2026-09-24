@@ -214,7 +214,7 @@ export default function App() {
 function TeacherShell({ classroomId, userEmail, uid, displayName, animal, onSignOut }: { classroomId: string | null; userEmail: string | null; uid: string; displayName: string; animal: Animal; onSignOut: () => void }) {
   const showAdmin = isMasterEmail(userEmail);
   const { live, abandoned, finished, forceClose } = useTeacherRooms();
-  const { arenas, bank, saveArena, loadProblems, removeArena, setLocked, setShowPlayers, setTtsEnabled, copyArena } = useArenaAdmin(classroomId);
+  const { arenas, bank, saveArena, loadProblems, removeArena, setLocked, setShowPlayers, setTtsEnabled, copyArena, seedDefaults } = useArenaAdmin(classroomId);
   const { students, removeStudent } = useStudents(classroomId);
   const { reports, resolveReport } = useReports(classroomId);
   const { create, renameClassroom } = useClassroom();
@@ -355,6 +355,9 @@ function TeacherShell({ classroomId, userEmail, uid, displayName, animal, onSign
       }}
       onCopyArena={(id) => {
         void copyArena(id);
+      }}
+      onSeedDefaults={() => {
+        void seedDefaults(uid);
       }}
       reports={reports}
       onResolveReport={(id) => {

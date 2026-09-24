@@ -50,6 +50,7 @@ export default function TeacherHome({
   onToggleShowPlayers,
   onToggleTts,
   onCopyArena,
+  onSeedDefaults,
   onNewArena,
   onSignOut,
   classroomName,
@@ -79,6 +80,7 @@ export default function TeacherHome({
   onToggleShowPlayers: (id: string, showPlayers: boolean) => void;
   onToggleTts: (id: string, ttsEnabled: boolean) => void;
   onCopyArena?: (id: string) => void;
+  onSeedDefaults?: () => void;
   onNewArena: () => void;
   onSignOut: () => void;
   classroomName?: string;
@@ -187,6 +189,11 @@ export default function TeacherHome({
             <button type="button" onClick={onNewArena}>
               새 아레나 만들기
             </button>
+            {arenas.length === 0 && (
+              <button type="button" onClick={() => onSeedDefaults?.()}>
+                기본 아레나 6개 가져오기
+              </button>
+            )}
             {arenas.length === 0 && <p>아직 만든 아레나가 없어요</p>}
             {arenas.map((a) => (
               <div key={a.id}>

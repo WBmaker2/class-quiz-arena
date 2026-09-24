@@ -60,3 +60,21 @@ describe('useClassroom nickname gate', () => {
     expect(state.setCalls).toHaveLength(0);
   });
 });
+
+describe('useClassroom default seeding', () => {
+  it('seeds 6 locked arenas on create', async () => {
+    const { result } = renderHook(() => useClassroom());
+    let code: string | null = null;
+    await act(async () => {
+      code = await result.current.create('4학년 3반', 'teacher-1', '김선생', 'cat');
+    });
+    expect(code).not.toBeNull();
+    const datas = state.setCalls.map((c) => (c as unknown[])[1] as Record<string, unknown>);
+    const arenaWrites = datas.filter((d) => d.questionCount === 20);
+    expect(arenaWrites).toHaveLength(6);
+    for (const data of arenaWrites) {
+      expect(data.locked).toBe(true);
+      expect(data.classroomId).toBe(code);
+    }
+  });
+});

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, setDoc, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { Arena, ProblemKind } from '../lib/arena';
+import { seedDefaultArenas } from '../lib/seedDefaults';
 
 export interface ArenaInput {
   title: string;
@@ -161,6 +162,12 @@ export function useArenaAdmin(classroomId: string | null) {
     await setDoc(doc(db, 'arenas', id), { ttsEnabled }, { merge: true });
   };
 
+  /** 빈 작업실에 기본 6개를 잠긴 상태로 채운다. */
+  const seedDefaults = async (ownerUid: string) => {
+    if (!classroomId) return [];
+    return seedDefaultArenas(classroomId, ownerUid);
+  };
+
   /** 은행 아레나를 내 학급에 비공개 복제한다. */
   const copyArena = async (sourceId: string) => {
     const sourceSnap = await getDoc(doc(db, 'arenas', sourceId));
@@ -192,5 +199,5 @@ export function useArenaAdmin(classroomId: string | null) {
     return ref.id;
   };
 
-  return { arenas, bank, saveArena, loadProblems, removeArena, setLocked, setShowPlayers, setTtsEnabled, copyArena };
+  return { arenas, bank, saveArena, loadProblems, removeArena, setLocked, setShowPlayers, setTtsEnabled, copyArena, seedDefaults };
 }

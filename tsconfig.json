@@ -6,6 +6,7 @@
     "strict": true,
     "jsx": "react-jsx",
     "skipLibCheck": true,
+    "resolveJsonModule": true,
     "noEmit": true,
     "types": ["vite/client"]
   },
