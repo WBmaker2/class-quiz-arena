@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import ArenaEditor from './ArenaEditor';
+import ArenaEditor, { findProblemError } from './ArenaEditor';
 import type { EditableProblem } from '../hooks/useArenaAdmin';
 
 vi.mock('firebase/functions', () => ({
@@ -63,8 +63,7 @@ describe('ArenaEditor', () => {
     expect(screen.getByDisplayValue('문제 1')).toBeTruthy();
   });
 
-  it('keeps and shows standardCode of loaded problems', () => {
-    render(
+  it('keeps and shows standardCode of loaded problems', () => {    render(
       <ArenaEditor
         initial={baseInitial}
         problems={[{ text: 'Q', options: ['1', '2', '3', '4'], answerIndex: 0, standardCode: '3수01-01' }]}
@@ -73,5 +72,33 @@ describe('ArenaEditor', () => {
       />,
     );
     expect(screen.getByText('3수01-01')).toBeTruthy();
+  });
+
+  it('blocks publish with blank or duplicate options', () => {
+    expect(findProblemError([{ text: '', options: ['1', '2', '3', '4'], answerIndex: 0 }])).toBeTruthy();
+    expect(findProblemError([{ text: 'Q', options: ['1', '', '2', '3'], answerIndex: 0 }])).toBeTruthy();
+    expect(findProblemError([{ text: 'Q', options: ['1', '1', '2', '3'], answerIndex: 0 }])).toContain('겹');
+    expect(
+      findProblemError(
+        Array.from({ length: 10 }, () => ({ text: 'Q', options: ['1', '2', '3', '4'], answerIndex: 0 })),
+      ),
+    ).toBeNull();
+  });
+
+  it('shows content error instead of count hint when 10 items exist but invalid', () => {
+    render(
+      <ArenaEditor
+        initial={baseInitial}
+        problems={Array.from({ length: 10 }, () => ({
+          text: '',
+          options: ['1', '2', '3', '4'] as [string, string, string, string],
+          answerIndex: 0,
+        }))}
+        onSave={() => {}}
+        onCancel={() => {}}
+      />,
+    );
+    expect(publishButton().disabled).toBe(true);
+    expect(screen.getByText(/비었어요/)).toBeTruthy();
   });
 });

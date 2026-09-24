@@ -33,6 +33,16 @@ function blankProblem(): EditableProblem {
   return { text: '', options: ['', '', '', ''], answerIndex: 0, explanation: '' };
 }
 
+/** 공개 전 내용 검사. 문제 있으면 사람이 읽는 한 줄 설명, 없으면 null. */
+export function findProblemError(items: EditableProblem[]): string | null {
+  for (const [i, p] of items.entries()) {
+    if (!p.text.trim()) return `${i + 1}번 문제 내용이 비었어요`;
+    if (p.options.some((o) => !o.trim())) return `${i + 1}번 빈 선택지가 있어요`;
+    if (new Set(p.options.map((o) => o.trim())).size !== p.options.length) return `${i + 1}번 선택지가 겹쳐요`;
+  }
+  return null;
+}
+
 function normalizeDraft(p: GenerateArenaResponse['problems'][number]): EditableProblem {
   const options = [p.options?.[0] ?? '', p.options?.[1] ?? '', p.options?.[2] ?? '', p.options?.[3] ?? ''] as [
     string,
@@ -74,7 +84,8 @@ export default function ArenaEditor({
   const [aiInfo, setAiInfo] = useState<string | null>(null);
 
   const standards = getStandards(grade, subject);
-  const canPublish = items.length >= MIN_PROBLEMS;
+  const contentError = findProblemError(items);
+  const canPublish = items.length >= MIN_PROBLEMS && contentError === null;
 
   const changeGrade = (next: number) => {
     setGrade(next);
@@ -247,7 +258,7 @@ export default function ArenaEditor({
       <button type="button" onClick={publish} disabled={!canPublish}>
         공개하기
       </button>
-      {!canPublish && <p>문제를 10개 이상 넣어주세요</p>}
+      {!canPublish && <p>{items.length < MIN_PROBLEMS ? '문제를 10개 이상 넣어주세요' : contentError}</p>}
       <button type="button" onClick={onCancel}>
         취소
       </button>
