@@ -7,7 +7,7 @@ const noop = () => {};
 describe('TeacherHome', () => {
   it('shows live battles tab first', () => {
     render(
-      <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onNewArena={noop} onSignOut={noop} />,
+      <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onToggleShowPlayers={noop} onNewArena={noop} onSignOut={noop} />,
     );
     expect(screen.getByText('진행 중인 대결')).toBeTruthy();
     expect(screen.getByText('지금은 진행 중인 대결이 없어요')).toBeTruthy();
@@ -29,7 +29,7 @@ describe('TeacherHome', () => {
         onForceClose={onForceClose}
         onEditArena={noop}
         onDeleteArena={noop}
-        onToggleLock={noop}
+        onToggleLock={noop} onToggleShowPlayers={noop}
         onNewArena={noop}
         onSignOut={noop}
       />,
@@ -42,7 +42,7 @@ describe('TeacherHome', () => {
 
   it('switches to arenas tab', () => {
     render(
-      <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onNewArena={noop} onSignOut={noop} />,
+      <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onToggleShowPlayers={noop} onNewArena={noop} onSignOut={noop} />,
     );
     fireEvent.click(screen.getByRole('button', { name: '아레나' }));
     expect(screen.getByRole('button', { name: '새 아레나 만들기' })).toBeTruthy();
@@ -50,7 +50,7 @@ describe('TeacherHome', () => {
 
   it('shows students placeholder', () => {
     render(
-      <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onNewArena={noop} onSignOut={noop} />,
+      <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onToggleShowPlayers={noop} onNewArena={noop} onSignOut={noop} />,
     );
     fireEvent.click(screen.getByRole('button', { name: '학생' }));
     expect(screen.getByText('학생 일괄 관리')).toBeTruthy();
@@ -58,7 +58,7 @@ describe('TeacherHome', () => {
 
   it('shows empty students roster', () => {
     render(
-      <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="A1B2C3" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onNewArena={noop} onSignOut={noop} />,
+      <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="A1B2C3" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onToggleShowPlayers={noop} onNewArena={noop} onSignOut={noop} />,
     );
     fireEvent.click(screen.getByRole('button', { name: '학생' }));
     expect(screen.getByText('아직 등록된 학생이 없어요')).toBeTruthy();
@@ -66,7 +66,7 @@ describe('TeacherHome', () => {
 
   it('shows empty analysis', () => {
     render(
-      <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="A1B2C3" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onNewArena={noop} onSignOut={noop} />,
+      <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="A1B2C3" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onToggleShowPlayers={noop} onNewArena={noop} onSignOut={noop} />,
     );
     fireEvent.click(screen.getByRole('button', { name: '분석' }));
     expect(screen.getByText('아직 분석할 기록이 없어요')).toBeTruthy();
@@ -74,7 +74,7 @@ describe('TeacherHome', () => {
 
   it('hides admin tab without showAdmin', () => {
     render(
-      <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onNewArena={noop} onSignOut={noop} />,
+      <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onToggleShowPlayers={noop} onNewArena={noop} onSignOut={noop} />,
     );
     expect(screen.queryByRole('button', { name: '선생님 관리' })).toBeNull();
   });
@@ -83,7 +83,7 @@ describe('TeacherHome', () => {
     const onAddTeacher = vi.fn();
     const onRemoveTeacher = vi.fn();
     render(
-      <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onNewArena={noop} onSignOut={noop} showAdmin teachers={['t@school.kr']} onAddTeacher={onAddTeacher} onRemoveTeacher={onRemoveTeacher} />,
+      <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onToggleShowPlayers={noop} onNewArena={noop} onSignOut={noop} showAdmin teachers={['t@school.kr']} onAddTeacher={onAddTeacher} onRemoveTeacher={onRemoveTeacher} />,
     );
     fireEvent.click(screen.getByRole('button', { name: '선생님 관리' }));
     expect(screen.getByText('t@school.kr')).toBeTruthy();
@@ -92,5 +92,50 @@ describe('TeacherHome', () => {
     expect(onAddTeacher).toHaveBeenCalledWith('n@school.kr');
     fireEvent.click(screen.getByRole('button', { name: '삭제' }));
     expect(onRemoveTeacher).toHaveBeenCalledWith('t@school.kr');
+  });
+});
+
+describe('TeacherHome arena privacy', () => {
+  const base = {
+    live: [],
+    abandoned: [],
+    finished: [],
+    classroomCode: '',
+    students: [],
+    onDeleteStudent: noop,
+    onExportCsv: noop,
+    rounds: [],
+    onForceClose: noop,
+    onEditArena: noop,
+    onDeleteArena: noop,
+    onToggleLock: noop,
+    onNewArena: noop,
+    onSignOut: noop,
+  };
+
+  it('toggles participant visibility per arena', () => {
+    const onToggleShowPlayers = vi.fn();
+    render(
+      <TeacherHome
+        {...base}
+        arenas={[{ id: 'a1', title: '덧셈', locked: false, showPlayers: false }]}
+        onToggleShowPlayers={onToggleShowPlayers}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '아레나' }));
+    fireEvent.click(screen.getByRole('button', { name: '참가자 공개' }));
+    expect(onToggleShowPlayers).toHaveBeenCalledWith('a1', true);
+  });
+
+  it('shows hide button when already public', () => {
+    render(
+      <TeacherHome
+        {...base}
+        arenas={[{ id: 'a1', title: '덧셈', locked: false, showPlayers: true }]}
+        onToggleShowPlayers={noop}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '아레나' }));
+    expect(screen.getByRole('button', { name: '참가자 비공개' })).toBeTruthy();
   });
 });

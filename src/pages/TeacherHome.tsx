@@ -15,6 +15,8 @@ export interface ArenaRow {
   id: string;
   title: string;
   locked: boolean;
+  /** true면 학생에게 상대 공개. 없으면 비공개로 간주. */
+  showPlayers?: boolean;
 }
 
 export default function TeacherHome({
@@ -31,6 +33,7 @@ export default function TeacherHome({
   onEditArena,
   onDeleteArena,
   onToggleLock,
+  onToggleShowPlayers,
   onNewArena,
   onSignOut,
   showAdmin,
@@ -51,6 +54,7 @@ export default function TeacherHome({
   onEditArena: (id: string) => void;
   onDeleteArena: (id: string) => void;
   onToggleLock: (id: string, locked: boolean) => void;
+  onToggleShowPlayers: (id: string, showPlayers: boolean) => void;
   onNewArena: () => void;
   onSignOut: () => void;
   showAdmin?: boolean;
@@ -141,6 +145,9 @@ export default function TeacherHome({
                 </button>
                 <button type="button" onClick={() => onToggleLock(a.id, !a.locked)}>
                   {a.locked ? '잠금 해제' : '잠금'}
+                </button>
+                <button type="button" onClick={() => onToggleShowPlayers(a.id, !(a.showPlayers ?? false))}>
+                  {(a.showPlayers ?? false) ? '참가자 비공개' : '참가자 공개'}
                 </button>
               </div>
             ))}

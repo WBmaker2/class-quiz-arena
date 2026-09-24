@@ -5,6 +5,7 @@ import { pickBattleProblems } from '../lib/battle';
 const state = vi.hoisted(() => ({
   problemDocs: [] as { id: string }[],
   waitingDocs: [] as { id: string; data: () => Record<string, unknown>; ref: { id: string } }[],
+  arenaShowPlayers: false,
   setCalls: [] as { ref: unknown; data: Record<string, unknown> }[],
   updateCalls: [] as { ref: unknown; data: Record<string, unknown> }[],
 }));
@@ -21,7 +22,11 @@ const tx = {
 
 vi.mock('firebase/firestore', () => ({
   collection: (_db: unknown, ...segs: string[]) => ({ __kind: 'col', path: segs.join('/') }),
-  doc: (arg: unknown) => ({ __kind: 'doc', id: 'room-new' }),
+  doc: (...segs: unknown[]) => ({ __kind: 'doc', id: 'room-new', path: segs.map(String).join('/') }),
+  getDoc: (ref: { path: string }) =>
+    ref.path.endsWith('arenas/arena1')
+      ? Promise.resolve({ exists: () => true, data: () => ({ showPlayers: state.arenaShowPlayers }) })
+      : Promise.resolve({ exists: () => false, data: () => ({}) }),
   where: () => ({ __kind: 'where' }),
   query: (col: unknown) => ({ __kind: 'qry', col }),
   serverTimestamp: () => 0,
@@ -39,10 +44,10 @@ import { useMatch } from './useMatch';
 const me = { uid: 'u1', nickname: '일호', avatar: 'cat' };
 const ids20 = Array.from({ length: 20 }, (_, i) => `p${i + 1}`);
 
-function openRoomDoc(problemIds: string[]) {
+function openRoomDoc(problemIds: string[], id = 'room-open') {
   return {
-    id: 'room-open',
-    ref: { id: 'room-open' },
+    id,
+    ref: { id },
     data: () => ({
       players: [{ uid: 'u2', nickname: '이호', avatar: 'dog' }],
       problemIds,
@@ -92,5 +97,29 @@ describe('useMatch problemIds (10 fixed per room)', () => {
     expect(result.current.roomId).toBeNull();
     expect(result.current.error).toBe('선생님이 문제를 준비 중이에요');
     expect(state.setCalls).toHaveLength(0);
+  });
+
+  it('picks a random open room when several are waiting', async () => {
+    const existing = Array.from({ length: 10 }, (_, i) => `p${i + 1}`);
+    state.waitingDocs = [openRoomDoc(existing, 'room-a'), openRoomDoc(existing, 'room-b')];
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    const { result } = renderHook(() => useMatch('arena1', me));
+    await act(async () => {
+      await result.current.findOrCreate();
+    });
+    spy.mockRestore();
+    expect(result.current.roomId).toBe('room-b');
+    expect(state.setCalls).toHaveLength(0);
+  });
+
+  it('snapshots the arena showPlayers setting onto the new room', async () => {
+    state.arenaShowPlayers = true;
+    const { result } = renderHook(() => useMatch('arena1', me));
+    await act(async () => {
+      await result.current.findOrCreate();
+    });
+    expect(state.setCalls).toHaveLength(1);
+    expect(state.setCalls[0].data.showPlayers).toBe(true);
+    state.arenaShowPlayers = false;
   });
 });

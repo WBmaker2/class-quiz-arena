@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   query,
   runTransaction,
@@ -9,7 +10,7 @@ import {
   where,
 } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { pickBattleProblems } from '../lib/battle';
+import { pickBattleProblems, pickRandom } from '../lib/battle';
 
 export interface Me {
   uid: string;
@@ -36,12 +37,21 @@ export function useMatch(arenaId: string, me: Me) {
         setError(ARENA_NOT_READY_MSG);
         return;
       }
+      // 아레나의 참가자 공개 설정을 방에 복사해 고정한다.
+      // 게임 중 선생님이 바꿔도 진행 중인 방은 안 바뀐다.
+      const arenaSnap = await getDoc(doc(db, 'arenas', arenaId));
+      const showPlayers = arenaSnap.exists() ? ((arenaSnap.data().showPlayers as boolean) ?? false) : false;
       const id = await runTransaction(db, async (tx) => {
         const snap = await getDocs(
           query(collection(db, 'rooms'), where('arenaId', '==', arenaId), where('status', '==', 'waiting')),
         );
-        const open = snap.docs.find(
-          (d) => (d.data().players as { uid: string }[]).length === 1 && (d.data().players as { uid: string }[])[0].uid !== me.uid,
+        // 대기 방이 여러 개면 무작위로 하나를 골라 들어간다
+        const open = pickRandom(
+          snap.docs.filter(
+            (d) =>
+              (d.data().players as { uid: string }[]).length === 1 &&
+              (d.data().players as { uid: string }[])[0].uid !== me.uid,
+          ),
         );
         if (open) {
           const data = open.data();
@@ -63,6 +73,7 @@ export function useMatch(arenaId: string, me: Me) {
           status: 'waiting',
           players: [{ uid: me.uid, nickname: me.nickname, avatar: me.avatar, score: 0, ready: false, answers: [] }],
           problemIds,
+          showPlayers,
           currentRound: 0,
           roundEndsAt: 0,
           winnerUid: null,
