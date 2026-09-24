@@ -157,6 +157,10 @@ export function useArenaAdmin(classroomId: string | null) {
     await setDoc(doc(db, 'arenas', id), { showPlayers }, { merge: true });
   };
 
+  const setTtsEnabled = async (id: string, ttsEnabled: boolean) => {
+    await setDoc(doc(db, 'arenas', id), { ttsEnabled }, { merge: true });
+  };
+
   /** 은행 아레나를 내 학급에 비공개 복제한다. */
   const copyArena = async (sourceId: string) => {
     const sourceSnap = await getDoc(doc(db, 'arenas', sourceId));
@@ -188,5 +192,5 @@ export function useArenaAdmin(classroomId: string | null) {
     return ref.id;
   };
 
-  return { arenas, bank, saveArena, loadProblems, removeArena, setLocked, setShowPlayers, copyArena };
+  return { arenas, bank, saveArena, loadProblems, removeArena, setLocked, setShowPlayers, setTtsEnabled, copyArena };
 }

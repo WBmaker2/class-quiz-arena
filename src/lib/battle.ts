@@ -23,6 +23,8 @@ export interface RoomData {
   problemIds: string[];
   /** 방 생성 시 아레나 showPlayers 복사값. 없으면 비공개로 간주. */
   showPlayers?: boolean;
+  /** 방 생성 시 아레나 ttsEnabled 복사값. 없으면 off. */
+  ttsEnabled?: boolean;
 }
 
 export const XP_PER_CORRECT = 10;

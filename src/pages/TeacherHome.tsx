@@ -20,6 +20,8 @@ export interface ArenaRow {
   locked: boolean;
   /** true면 학생에게 상대 공개. 없으면 비공개로 간주. */
   showPlayers?: boolean;
+  /** true면 대결 화면 읽어주기 버튼. 없으면 off. */
+  ttsEnabled?: boolean;
   standards?: string[];
 }
 
@@ -46,6 +48,7 @@ export default function TeacherHome({
   onDeleteArena,
   onToggleLock,
   onToggleShowPlayers,
+  onToggleTts,
   onCopyArena,
   onNewArena,
   onSignOut,
@@ -71,6 +74,7 @@ export default function TeacherHome({
   onDeleteArena: (id: string) => void;
   onToggleLock: (id: string, locked: boolean) => void;
   onToggleShowPlayers: (id: string, showPlayers: boolean) => void;
+  onToggleTts: (id: string, ttsEnabled: boolean) => void;
   onCopyArena?: (id: string) => void;
   onNewArena: () => void;
   onSignOut: () => void;
@@ -177,9 +181,12 @@ export default function TeacherHome({
                 <button type="button" onClick={() => onToggleShowPlayers(a.id, !(a.showPlayers ?? false))}>
                   {(a.showPlayers ?? false) ? '참가자 비공개' : '참가자 공개'}
                 </button>
+                <button type="button" onClick={() => onToggleTts(a.id, !(a.ttsEnabled ?? false))}>
+                  {(a.ttsEnabled ?? false) ? '읽어주기 끄기' : '읽어주기 켜기'}
+                </button>
               </div>
             ))}
-            <p className="font-bold mt-4">문제은행에서 가져오기</p>
+            <p className="font-bold mt-4">다른 반 공개 아레나 가져오기</p>
             {(bank ?? []).length === 0 ? (
               <p>가져올 수 있는 아레나가 없어요</p>
             ) : (
@@ -239,7 +246,7 @@ export default function TeacherHome({
                   <p>
                     맞힌 문제 평균 {avg.avgCorrect} vs 틀린 문제 평균 {avg.avgWrong}
                   </p>
-                  <p className="font-bold mt-4">우리 반이 어려워해요 Top 3 (최근 7일)</p>
+                  <p className="font-bold mt-4">우리 반이 어려워해요 Top 3 (최근 30일)</p>
                   {weak.length === 0 ? (
                     <p>성취기준별 기록이 아직 없어요</p>
                   ) : (

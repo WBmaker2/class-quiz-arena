@@ -173,3 +173,50 @@ describe('BattleRoom report and tts', () => {
     expect(screen.queryByRole('button', { name: '문제 읽어주기' })).toBeNull();
   });
 });
+
+describe('BattleRoom arena tts setting', () => {
+  function stubSpeech() {
+    function Utterance(this: { text?: string }, text: string) {
+      this.text = text;
+    }
+    vi.stubGlobal('window', {
+      speechSynthesis: { speak: vi.fn(), cancel: vi.fn() },
+      SpeechSynthesisUtterance: Utterance,
+    });
+  }
+
+  function playingRoom(ttsEnabled?: boolean) {
+    let room = joinRoomData(createRoomData('a1', host, 1000), guest, 2000)!;
+    return { ...room, status: 'playing' as const, currentRound: 0, roundEndsAt: Date.now() + 30000, ttsEnabled };
+  }
+
+  it('shows the read-aloud button when the arena enables it', () => {
+    stubSpeech();
+    render(
+      <BattleRoom
+        room={playingRoom(true)}
+        meUid="u1"
+        problem={{ text: 'Q', options: ['1', '2', '3', '4'] }}
+        onReady={() => {}}
+        onExit={() => {}}
+      />,
+    );
+    expect(screen.getByRole('button', { name: '문제 읽어주기' })).toBeTruthy();
+    vi.unstubAllGlobals();
+  });
+
+  it('hides the read-aloud button when the arena disables it', () => {
+    stubSpeech();
+    render(
+      <BattleRoom
+        room={playingRoom(false)}
+        meUid="u1"
+        problem={{ text: 'Q', options: ['1', '2', '3', '4'] }}
+        onReady={() => {}}
+        onExit={() => {}}
+      />,
+    );
+    expect(screen.queryByRole('button', { name: '문제 읽어주기' })).toBeNull();
+    vi.unstubAllGlobals();
+  });
+});

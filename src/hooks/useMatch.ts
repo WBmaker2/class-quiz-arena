@@ -41,6 +41,7 @@ export function useMatch(arenaId: string, me: Me) {
       // 게임 중 선생님이 바꿔도 진행 중인 방은 안 바뀐다.
       const arenaSnap = await getDoc(doc(db, 'arenas', arenaId));
       const showPlayers = arenaSnap.exists() ? ((arenaSnap.data().showPlayers as boolean) ?? false) : false;
+      const ttsEnabled = arenaSnap.exists() ? ((arenaSnap.data().ttsEnabled as boolean) ?? false) : false;
       const id = await runTransaction(db, async (tx) => {
         const snap = await getDocs(
           query(collection(db, 'rooms'), where('arenaId', '==', arenaId), where('status', '==', 'waiting')),
@@ -74,6 +75,7 @@ export function useMatch(arenaId: string, me: Me) {
           players: [{ uid: me.uid, nickname: me.nickname, avatar: me.avatar, score: 0, ready: false, answers: [] }],
           problemIds,
           showPlayers,
+          ttsEnabled,
           currentRound: 0,
           roundEndsAt: 0,
           winnerUid: null,

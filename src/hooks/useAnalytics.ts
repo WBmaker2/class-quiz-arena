@@ -5,7 +5,7 @@ import type { RoundRecord } from '../lib/analytics';
 import { isCorrectAnswer } from '../lib/battle';
 import type { ProblemKind } from '../lib/arena';
 
-export const ANALYTICS_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
+export const ANALYTICS_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
 
 interface LoadedProblem {
   id: string;

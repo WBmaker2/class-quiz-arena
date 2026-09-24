@@ -23,6 +23,7 @@ function toRoomData(id: string, data: Record<string, unknown>): RoomData {
     ...(r as RoomData),
     problemIds: Array.isArray(r.problemIds) ? (r.problemIds as string[]) : [],
     showPlayers: (r as RoomData).showPlayers ?? false,
+    ttsEnabled: (r as RoomData).ttsEnabled ?? false,
   };
 }
 

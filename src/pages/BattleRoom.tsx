@@ -80,7 +80,7 @@ export default function BattleRoom({
         <Timer endsAt={room.roundEndsAt} nowMs={nowMs} />
         <p className="text-sm">대전 상대: {opponentName}</p>
         <p className="text-lg font-bold">{problem.text}</p>
-        {ttsSupported() && (
+        {ttsSupported() && (room.ttsEnabled ?? false) && (
           <button
             type="button"
             aria-label="문제 읽어주기"

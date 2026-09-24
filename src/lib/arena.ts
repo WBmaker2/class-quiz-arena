@@ -13,6 +13,8 @@ export interface Arena {
   status?: 'draft' | 'published';
   /** true면 학생에게 상대 이름·아바타 공개. 없으면 비공개로 간주. */
   showPlayers?: boolean;
+  /** true면 대결 화면에 읽어주기 버튼 표시. 없으면 off. */
+  ttsEnabled?: boolean;
 }
 
 export interface Problem {

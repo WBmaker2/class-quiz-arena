@@ -14,7 +14,7 @@
 ## F3-7. 취약점 리포트 (성취기준 Top3)
 
 - `useAnalytics`가 방의 `problemIds` 순서와 문제의 `standardCode`를 이어서 `RoundRecord.standardCode`를 채운다. 단답형 채점은 `isCorrectAnswer`로 (기존 번호비교는 단답형 오답 처리 버그).
-- 기본 범위 최근 7일(`rooms.updatedAt` 기준, 필터 param).
+- 기본 범위 최근 30일(`rooms.updatedAt` 기준, 필터 param).
 - `weakStandards(rounds, 3)`: 기준별 정답률 집계 → 낮은 순 3개 + 푼 횟수 표시. 분석 탭에 "우리 반이 어려워해요 Top3" 섹션.
 
 ## F3-8. 커버리지 지도

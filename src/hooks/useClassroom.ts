@@ -3,6 +3,7 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { TEACHER_NOT_ALLOWLISTED } from '../lib/admin';
 import { generateInviteCode, isValidInviteCode, normalizeInviteCode } from '../lib/classroom';
+import { validateNickname } from '../lib/nickname';
 
 export interface JoinInfo {
   nickname: string;
@@ -24,6 +25,11 @@ export function useClassroom() {
     const normalized = normalizeInviteCode(code);
     if (!isValidInviteCode(code)) {
       setError('초대 코드 6자리를 확인해주세요');
+      return;
+    }
+    const nameError = validateNickname(info.nickname);
+    if (nameError) {
+      setError(nameError);
       return;
     }
     try {
@@ -50,6 +56,11 @@ export function useClassroom() {
 
   const create = async (name: string, uid: string, nickname: string, avatar: string) => {
     if (!mounted.current) return;
+    const nameError = validateNickname(nickname);
+    if (nameError) {
+      setError(nameError);
+      return;
+    }
     try {
       const code = generateInviteCode();
       await setDoc(doc(db, 'classrooms', code), {

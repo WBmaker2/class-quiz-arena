@@ -6,6 +6,7 @@ const state = vi.hoisted(() => ({
   problemDocs: [] as { id: string }[],
   waitingDocs: [] as { id: string; data: () => Record<string, unknown>; ref: { id: string } }[],
   arenaShowPlayers: false,
+  arenaTtsEnabled: false,
   setCalls: [] as { ref: unknown; data: Record<string, unknown> }[],
   updateCalls: [] as { ref: unknown; data: Record<string, unknown> }[],
 }));
@@ -25,7 +26,7 @@ vi.mock('firebase/firestore', () => ({
   doc: (...segs: unknown[]) => ({ __kind: 'doc', id: 'room-new', path: segs.map(String).join('/') }),
   getDoc: (ref: { path: string }) =>
     ref.path.endsWith('arenas/arena1')
-      ? Promise.resolve({ exists: () => true, data: () => ({ showPlayers: state.arenaShowPlayers }) })
+      ? Promise.resolve({ exists: () => true, data: () => ({ showPlayers: state.arenaShowPlayers, ttsEnabled: state.arenaTtsEnabled }) })
       : Promise.resolve({ exists: () => false, data: () => ({}) }),
   where: () => ({ __kind: 'where' }),
   query: (col: unknown) => ({ __kind: 'qry', col }),
@@ -121,5 +122,16 @@ describe('useMatch problemIds (10 fixed per room)', () => {
     expect(state.setCalls).toHaveLength(1);
     expect(state.setCalls[0].data.showPlayers).toBe(true);
     state.arenaShowPlayers = false;
+  });
+
+  it('snapshots the arena tts setting onto the new room', async () => {
+    state.arenaTtsEnabled = true;
+    const { result } = renderHook(() => useMatch('arena1', me));
+    await act(async () => {
+      await result.current.findOrCreate();
+    });
+    expect(state.setCalls).toHaveLength(1);
+    expect(state.setCalls[0].data.ttsEnabled).toBe(true);
+    state.arenaTtsEnabled = false;
   });
 });

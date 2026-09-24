@@ -98,7 +98,10 @@ export default function App() {
               }}
             />
           ) : (
-            <ClassJoin onJoin={(code) => { void join(code, user?.uid ?? 'local-test', { nickname: user?.displayName ?? '학생', role: role ?? 'student', avatar: animal }); setView('student'); }} />
+            <ClassJoin
+              defaultNickname={user?.displayName ?? '학생'}
+              onJoin={(code, nickname) => { void join(code, user?.uid ?? 'local-test', { nickname, role: role ?? 'student', avatar: animal }); setView('student'); }}
+            />
           )}
         </div>
       </div>
@@ -163,7 +166,7 @@ export default function App() {
 function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: string | null; userEmail: string | null; onSignOut: () => void }) {
   const showAdmin = isMasterEmail(userEmail);
   const { live, abandoned, finished, forceClose } = useTeacherRooms();
-  const { arenas, bank, saveArena, loadProblems, removeArena, setLocked, setShowPlayers, copyArena } = useArenaAdmin(classroomId);
+  const { arenas, bank, saveArena, loadProblems, removeArena, setLocked, setShowPlayers, setTtsEnabled, copyArena } = useArenaAdmin(classroomId);
   const { students, removeStudent } = useStudents(classroomId);
   const { reports, resolveReport } = useReports(classroomId);
   const { teachers, addTeacher, removeTeacher } = useTeacherAllowlist(showAdmin);
@@ -253,7 +256,7 @@ function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: stri
       live={live.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
       abandoned={abandoned.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
       finished={finished.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
-      arenas={arenas.map((a) => ({ id: a.id, title: a.title, locked: a.locked, showPlayers: a.showPlayers ?? false, standards: a.standards ?? [] }))}
+      arenas={arenas.map((a) => ({ id: a.id, title: a.title, locked: a.locked, showPlayers: a.showPlayers ?? false, ttsEnabled: a.ttsEnabled ?? false, standards: a.standards ?? [] }))}
       bank={bank}
       classroomCode={classroomId ?? ''}
       students={students}
@@ -274,6 +277,9 @@ function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: stri
       }}
       onToggleShowPlayers={(id, showPlayers) => {
         void setShowPlayers(id, showPlayers);
+      }}
+      onToggleTts={(id, ttsEnabled) => {
+        void setTtsEnabled(id, ttsEnabled);
       }}
       onCopyArena={(id) => {
         void copyArena(id);
