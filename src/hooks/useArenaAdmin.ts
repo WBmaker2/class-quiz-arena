@@ -8,12 +8,17 @@ export interface ArenaInput {
   desc: string;
   subject: string;
   aiCount: number;
+  grade?: number;
+  topic?: string;
+  standards?: string[];
+  status?: 'draft' | 'published';
 }
 
 export interface EditableProblem {
   text: string;
   options: [string, string, string, string];
   answerIndex: number;
+  explanation?: string;
 }
 
 function toEditable(data: Record<string, unknown>): EditableProblem {
@@ -22,6 +27,7 @@ function toEditable(data: Record<string, unknown>): EditableProblem {
     text: (data.text as string) ?? '',
     options: [options[0] ?? '', options[1] ?? '', options[2] ?? '', options[3] ?? ''],
     answerIndex: (data.answerIndex as number) ?? 0,
+    explanation: (data.explanation as string) ?? '',
   };
 }
 
@@ -40,6 +46,10 @@ export function useArenaAdmin(classroomId: string | null) {
   }, [classroomId]);
 
   const saveArena = async (id: string | null, input: ArenaInput, problems: EditableProblem[]) => {
+    // 공개는 10문제 이상일 때만 (Task 4 대결 <10 차단과 짝을 이루는 에디터 가드)
+    if (input.status === 'published' && problems.length < 10) {
+      throw new Error('문제를 10개 이상 넣어주세요');
+    }
     const ref = id ? doc(db, 'arenas', id) : doc(collection(db, 'arenas'));
     await setDoc(
       ref,
@@ -51,6 +61,11 @@ export function useArenaAdmin(classroomId: string | null) {
         aiCount: input.aiCount,
         // 수정 시 기존 잠금 유지 (새로 만들 때만 false)
         ...(id ? {} : { locked: false }),
+        // 새로 만들 때만 draft 기본값, 수정 시 기존 상태 유지
+        ...(input.status ? { status: input.status } : id ? {} : { status: 'draft' }),
+        ...(input.grade !== undefined ? { grade: input.grade } : {}),
+        ...(input.topic !== undefined ? { topic: input.topic } : {}),
+        ...(input.standards !== undefined ? { standards: input.standards } : {}),
       },
       { merge: true },
     );
@@ -69,7 +84,7 @@ export function useArenaAdmin(classroomId: string | null) {
     return snap.docs
       .map((d) => ({ id: d.id, ...toEditable(d.data()) }))
       .sort((a, b) => parseInt(a.id.slice(1), 10) - parseInt(b.id.slice(1), 10))
-      .map(({ text, options, answerIndex }) => ({ text, options, answerIndex }));
+      .map(({ text, options, answerIndex, explanation }) => ({ text, options, answerIndex, explanation }));
   };
 
   const removeArena = async (id: string) => {
