@@ -12,7 +12,9 @@ export async function finishAndAward(args: {
 }): Promise<number> {
   const earned = xpAward(args.winnerUid === args.myUid, args.winnerUid === null, args.myCorrect);
   await runTransaction(db, async (tx) => {
-    const battleRef = doc(db, 'battles', args.roomId);
+    // 멱등 가드는 사용자별 문서로 둔다. 양쪽 클라이언트가 각자 호출하므로,
+    // roomId 공유 문서로 막으면 먼저 커밋한 쪽이 상대방 지급까지 막는다.
+    const battleRef = doc(db, 'battles', `${args.roomId}_${args.myUid}`);
     const existing = await tx.get(battleRef);
     if (existing.exists() && (existing.data().awarded as boolean)) return;
     const userRef = doc(db, 'users', args.myUid);
