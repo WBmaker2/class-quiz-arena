@@ -2,6 +2,24 @@ export type ProblemKind = 'choice' | 'ox' | 'short';
 
 export type CardStyle = 'color' | 'illust';
 
+/** 과목 기본 카드 테마. 새로 만들 때 자동 지정 (기본 6개와 같은 색). */
+export function subjectTheme(subject: string): { bg: string; emoji: string } {
+  switch (subject) {
+    case '수학':
+      return { bg: '#E3F2FD', emoji: '➗' };
+    case '국어':
+      return { bg: '#FCE4EC', emoji: '📖' };
+    case '사회':
+      return { bg: '#E8F5E9', emoji: '🗺️' };
+    case '과학':
+      return { bg: '#E1F5FE', emoji: '💧' };
+    case '영어':
+      return { bg: '#FFF3E0', emoji: '🔤' };
+    default:
+      return { bg: '#E8ECF3', emoji: '🎲' };
+  }
+}
+
 export interface Arena {
   id: string;
   title: string;

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, setDoc, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import type { Arena, CardStyle, ProblemKind } from '../lib/arena';
+import { subjectTheme } from '../lib/arena';
 import { seedDefaultArenas } from '../lib/seedDefaults';
 
 export interface ArenaInput {
@@ -121,8 +122,8 @@ export function useArenaAdmin(classroomId: string | null) {
         desc: input.desc,
         subject: input.subject,
         questionCount: input.questionCount,
-        // 수정 시 기존 잠금 유지 (새로 만들 때만 false)
-        ...(id ? {} : { locked: false }),
+        // 수정 시 기존 잠금 유지 (새로 만들 때만 false + 과목 기본 테마)
+        ...(id ? {} : { locked: false, cardTheme: subjectTheme(input.subject) }),
         // 새로 만들 때만 draft 기본값, 수정 시 기존 상태 유지
         ...(input.status ? { status: input.status } : id ? {} : { status: 'draft' }),
         ...(input.grade !== undefined ? { grade: input.grade } : {}),
