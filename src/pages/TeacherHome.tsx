@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
+import InviteQR from '../components/InviteQR';
+import { avgCorrectVsWrong, hardProblems, problemStats, type RoundRecord } from '../lib/analytics';
+import type { RosterStudent } from '../lib/roster';
 
 export interface LiveRoom {
   id: string;
@@ -19,6 +22,11 @@ export default function TeacherHome({
   abandoned,
   finished,
   arenas,
+  classroomCode,
+  students,
+  onDeleteStudent,
+  onExportCsv,
+  rounds,
   onForceClose,
   onEditArena,
   onDeleteArena,
@@ -30,6 +38,11 @@ export default function TeacherHome({
   abandoned: LiveRoom[];
   finished: LiveRoom[];
   arenas: ArenaRow[];
+  classroomCode: string;
+  students: RosterStudent[];
+  onDeleteStudent: (uid: string) => void;
+  onExportCsv: () => void;
+  rounds: RoundRecord[];
   onForceClose: (id: string) => void;
   onEditArena: (id: string) => void;
   onDeleteArena: (id: string) => void;
@@ -39,6 +52,10 @@ export default function TeacherHome({
 }) {
   const [tab, setTab] = useState<'live' | 'arenas' | 'students' | 'analysis'>('live');
   const [confirmId, setConfirmId] = useState<string | null>(null);
+
+  const stats = problemStats(rounds);
+  const hard = hardProblems(stats, 3);
+  const avg = avgCorrectVsWrong(rounds);
 
   return (
     <div className="min-h-screen px-6 py-10">
@@ -117,12 +134,43 @@ export default function TeacherHome({
         )}
         {tab === 'students' && (
           <Card>
-            <p>학생 관리는 다음 단계에서 열려요</p>
+            <p className="font-bold mb-2">학생 일괄 관리</p>
+            <InviteQR code={classroomCode} />
+            <p>학급 초대 QR — 탭해서 확대</p>
+            {students.length === 0 ? (
+              <EmptyState title="아직 등록된 학생이 없어요" />
+            ) : (
+              students.map((s) => (
+                <div key={s.uid}>
+                  <p>{s.nickname}</p>
+                  <button type="button" onClick={() => onDeleteStudent(s.uid)}>
+                    학생 삭제
+                  </button>
+                </div>
+              ))
+            )}
+            <button type="button" onClick={onExportCsv}>
+              명단 내려받기
+            </button>
           </Card>
         )}
         {tab === 'analysis' && (
           <Card>
-            <p>아직 분석할 기록이 없어요</p>
+            {rounds.length === 0 ? (
+              <EmptyState title="아직 분석할 기록이 없어요" />
+            ) : (
+              <div>
+                <p>어려운 문제 {hard.length}개</p>
+                {hard.map((h) => (
+                  <p key={h.problemIndex}>
+                    {h.problemIndex + 1}번 문제 — {h.correct}/{h.asked} 정답
+                  </p>
+                ))}
+                <p>
+                  맞힌 문제 평균 {avg.avgCorrect} vs 틀린 문제 평균 {avg.avgWrong}
+                </p>
+              </div>
+            )}
           </Card>
         )}
       </div>
