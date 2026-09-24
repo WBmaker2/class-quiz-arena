@@ -4,12 +4,21 @@ import ClassJoin from './pages/ClassJoin';
 import LoginScreen from './pages/LoginScreen';
 import RoleSelect, { type Role } from './pages/RoleSelect';
 import StudentHome from './pages/StudentHome';
+import TeacherHome from './pages/TeacherHome';
+import ArenaEditor from './pages/ArenaEditor';
 import EmptyState from './components/EmptyState';
+import type { Animal } from './components/Avatar';
+import { useAnalytics } from './hooks/useAnalytics';
+import { useArenaAdmin } from './hooks/useArenaAdmin';
 import { useArenas } from './hooks/useArenas';
 import { useAuth } from './hooks/useAuth';
 import { useClassroom } from './hooks/useClassroom';
 import { useMatch } from './hooks/useMatch';
 import { useProfile } from './hooks/useProfile';
+import { useStudents } from './hooks/useStudents';
+import { useTeacherRooms } from './hooks/useTeacherRooms';
+import { avgCorrectVsWrong, hardProblems, problemStats } from './lib/analytics';
+import { buildRosterCsv } from './lib/roster';
 import { useRoom } from './hooks/useRoom';
 import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
 import { db } from './lib/firebase';
@@ -28,6 +37,7 @@ export interface PendingArena {
 export default function App() {
   const [view, setView] = useState<View>('login');
   const [role, setRole] = useState<Role | null>(null);
+  const [animal, setAnimal] = useState<Animal>('cat');
   const [pendingArena, setPendingArena] = useState<PendingArena | null>(null);
   const { classroomId, join } = useClassroom();
   const { user, loading, signInWithGoogle, signOut } = useAuth();
@@ -55,8 +65,9 @@ export default function App() {
       <div className="min-h-screen grid place-items-center px-6 py-10">
         <div className="w-full max-w-md">
           <RoleSelect
-            onSelect={(r: Role) => {
+            onSelect={(r: Role, a: Animal) => {
               setRole(r);
+              setAnimal(a);
               setView('join');
             }}
           />
@@ -69,7 +80,7 @@ export default function App() {
     return (
       <div className="min-h-screen grid place-items-center px-6 py-10">
         <div className="w-full max-w-md">
-          <ClassJoin onJoin={(code) => { void join(code); setView(role === 'teacher' ? 'teacher' : 'student'); }} />
+          <ClassJoin onJoin={(code) => { void join(code, user?.uid ?? 'local-test', { nickname: user?.displayName ?? '학생', role: role ?? 'student', avatar: animal }); setView(role === 'teacher' ? 'teacher' : 'student'); }} />
         </div>
       </div>
     );
@@ -81,10 +92,23 @@ export default function App() {
         uid={user?.uid ?? 'local-test'}
         nickname={user?.displayName ?? '학생'}
         classroomId={classroomId}
+        animal={animal}
         onEnter={(arenaId, me, myWins, myStreak) => {
           setPendingArena({ arenaId, me, myWins, myStreak });
           setView('battle');
         }}
+        onSignOut={() => {
+          void signOut();
+          setView('login');
+        }}
+      />
+    );
+  }
+
+  if (view === 'teacher') {
+    return (
+      <TeacherShell
+        classroomId={classroomId}
         onSignOut={() => {
           void signOut();
           setView('login');
@@ -114,16 +138,97 @@ export default function App() {
   );
 }
 
+function TeacherShell({ classroomId, onSignOut }: { classroomId: string | null; onSignOut: () => void }) {
+  const { live, abandoned, finished, forceClose } = useTeacherRooms();
+  const { arenas, saveArena, removeArena, setLocked } = useArenaAdmin(classroomId);
+  const { students, removeStudent } = useStudents(classroomId);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [analysisArenaId, setAnalysisArenaId] = useState<string | null>(null);
+  const { rounds } = useAnalytics(analysisArenaId);
+  const stats = problemStats(rounds);
+  const hard = hardProblems(stats, 3);
+  const avg = avgCorrectVsWrong(rounds);
+
+  useEffect(() => {
+    if (!analysisArenaId && arenas.length > 0) setAnalysisArenaId(arenas[0].id);
+  }, [analysisArenaId, arenas]);
+
+  const downloadCsv = () => {
+    const blob = new Blob([buildRosterCsv(students)], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'roster.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  if (creating || editingId) {
+    const arena = arenas.find((a) => a.id === editingId);
+    return (
+      <ArenaEditor
+        initial={
+          arena
+            ? { title: arena.title, desc: arena.desc, subject: arena.subject, aiCount: (arena as unknown as { aiCount?: number }).aiCount ?? 0 }
+            : { title: '', desc: '', subject: '수학', aiCount: 0 }
+        }
+        problems={[]}
+        onSave={(input, problems) => {
+          void saveArena(editingId, input, problems.map((p) => ({ ...p, roundTimeSec: 30 }))).then(() => {
+            setCreating(false);
+            setEditingId(null);
+          });
+        }}
+        onCancel={() => {
+          setCreating(false);
+          setEditingId(null);
+        }}
+      />
+    );
+  }
+
+  return (
+    <TeacherHome
+      live={live.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
+      abandoned={abandoned.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
+      finished={finished.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
+      arenas={arenas.map((a) => ({ id: a.id, title: a.title, locked: a.locked }))}
+      classroomCode={classroomId ?? ''}
+      students={students}
+      onDeleteStudent={(uid) => {
+        void removeStudent(uid);
+      }}
+      onExportCsv={downloadCsv}
+      rounds={rounds}
+      onForceClose={(id) => {
+        void forceClose(id);
+      }}
+      onEditArena={setEditingId}
+      onDeleteArena={(id) => {
+        void removeArena(id);
+      }}
+      onToggleLock={(id, locked) => {
+        void setLocked(id, locked);
+      }}
+      onNewArena={() => setCreating(true)}
+      onSignOut={onSignOut}
+    />
+  );
+}
+
 function StudentShell({
   uid,
   nickname,
   classroomId,
+  animal,
   onEnter,
   onSignOut,
 }: {
   uid: string;
   nickname: string;
   classroomId: string | null;
+  animal: Animal;
   onEnter: (arenaId: string, me: { uid: string; nickname: string; avatar: string }, myWins: number, myStreak: number) => void;
   onSignOut: () => void;
 }) {
@@ -157,7 +262,7 @@ function StudentShell({
       leaders={leaders}
       profile={profile ?? { nickname, xp: 0, level: 1, streak: 0, winCount: 0, correctRate: 0 }}
       onEnter={(arenaId) =>
-        onEnter(arenaId, { uid, nickname, avatar: 'cat' }, profile?.winCount ?? 0, profile?.streak ?? 0)
+        onEnter(arenaId, { uid, nickname, avatar: animal }, profile?.winCount ?? 0, profile?.streak ?? 0)
       }
       onSignOut={onSignOut}
     />
@@ -189,7 +294,7 @@ function BattleShell({
 
   useEffect(() => {
     if (!roomId) return;
-    void getDocs(collection(db, 'arenas', arenaId, 'problems'))
+    void getDocs(query(collection(db, 'arenas', arenaId, 'problems'), orderBy('__name__')))
       .then((snap) => {
         setProblems(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Problem, 'id'>) })));
       })
@@ -236,6 +341,7 @@ function BattleShell({
           room={room}
           meUid={me.uid}
           problem={problem ? { text: problem.text, options: problem.options } : undefined}
+          problemsLoaded={problems.length > 0}
           onReady={() => {
             void ready(me.uid);
           }}

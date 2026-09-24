@@ -8,7 +8,7 @@ describe('join flow', () => {
     const onSelect = vi.fn();
     render(<RoleSelect onSelect={onSelect} />);
     fireEvent.click(screen.getByRole('button', { name: '선생님으로 시작' }));
-    expect(onSelect).toHaveBeenCalledWith('teacher');
+    expect(onSelect).toHaveBeenCalledWith('teacher', 'cat');
   });
 
   it('shows error for short invite code', () => {
@@ -30,6 +30,6 @@ describe('join flow', () => {
     const onSelect = vi.fn();
     render(<RoleSelect onSelect={onSelect} />);
     fireEvent.click(screen.getByRole('button', { name: '학생으로 시작' }));
-    expect(onSelect).toHaveBeenCalledWith('student');
+    expect(onSelect).toHaveBeenCalledWith('student', 'cat');
   });
 });

@@ -16,9 +16,13 @@ export function useProfile(uid: string | null) {
 
   useEffect(() => {
     if (!uid) return;
-    return onSnapshot(doc(db, 'users', uid), (snap) => {
-      if (snap.exists()) setProfile(snap.data() as Profile);
-    });
+    return onSnapshot(
+      doc(db, 'users', uid),
+      (snap) => {
+        if (snap.exists()) setProfile(snap.data() as Profile);
+      },
+      () => {},
+    );
   }, [uid]);
 
   return { profile };

@@ -30,4 +30,38 @@ for (const [i, p] of problems.entries()) {
   await db.doc(`arenas/arena-basics/problems/p${i + 1}`).set(p);
 }
 
+await db.doc('users/teacher-demo').set({
+  nickname: '김선생',
+  role: 'teacher',
+  avatar: 'cat',
+  classroomId: 'A1B2C3',
+  xp: 0,
+  level: 1,
+  streak: 0,
+  winCount: 0,
+  correctRate: 0,
+});
+await db.doc('users/student-demo-1').set({
+  nickname: '일호',
+  role: 'student',
+  avatar: 'dog',
+  classroomId: 'A1B2C3',
+  xp: 250,
+  level: 3,
+  streak: 2,
+  winCount: 5,
+  correctRate: 70,
+});
+await db.doc('users/student-demo-2').set({
+  nickname: '이호',
+  role: 'student',
+  avatar: 'frog',
+  classroomId: 'A1B2C3',
+  xp: 120,
+  level: 2,
+  streak: 0,
+  winCount: 2,
+  correctRate: 55,
+});
+
 console.log('seeded: classroom A1B2C3, arena-basics, 3 problems');
