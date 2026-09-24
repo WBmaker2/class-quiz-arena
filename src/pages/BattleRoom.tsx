@@ -12,11 +12,13 @@ export default function BattleRoom({
   onAnswer,
   onClaimWin,
   onExit,
+  problemsLoaded,
 }: {
   room: RoomData;
   meUid: string;
   problem?: { text: string; options: string[] };
   nowMs?: number;
+  problemsLoaded?: boolean;
   onReady: () => void;
   onAnswer?: (idx: number) => void;
   onClaimWin?: () => void;
@@ -72,7 +74,11 @@ export default function BattleRoom({
       <p className="text-sm">문제 라운드 {room.currentRound + 1}</p>
       <p className="text-lg font-bold">???</p>
       {!me?.ready ? (
-        <PrimaryButton onClick={onReady}>네! 준비됐어요!</PrimaryButton>
+        problemsLoaded === false ? (
+          <p>문제를 불러오는 중...</p>
+        ) : (
+          <PrimaryButton onClick={onReady}>네! 준비됐어요!</PrimaryButton>
+        )
       ) : opponent && !opponent.ready ? (
         <p>상대 준비 기다리는 중...</p>
       ) : (

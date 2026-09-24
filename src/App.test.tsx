@@ -36,15 +36,6 @@ describe('App', () => {
     expect(screen.getByText('선생님 공간은 다음 단계에서 열려요')).toBeTruthy();
   });
 
-  it('routes student to student stub', () => {
-    render(<App />);
-    fireEvent.click(screen.getByRole('button', { name: 'Google 계정으로 시작하기' }));
-    fireEvent.click(screen.getByRole('button', { name: '학생으로 시작' }));
-    fireEvent.change(screen.getByLabelText('초대 코드'), { target: { value: 'A1B2C3' } });
-    fireEvent.click(screen.getByRole('button', { name: '학급 들어가기' }));
-    expect(screen.getByRole('button', { name: '지금 바로 대결!' })).toBeTruthy();
-  });
-
   it('enters student home after join as student', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Google 계정으로 시작하기' }));

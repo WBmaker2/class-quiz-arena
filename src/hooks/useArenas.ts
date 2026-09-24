@@ -9,10 +9,16 @@ export function useArenas() {
 
   useEffect(
     () =>
-      onSnapshot(query(collection(db, 'arenas'), where('locked', '==', false)), (snap) => {
-        setArenas(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Arena, 'id'>) })));
-        setLoading(false);
-      }),
+      onSnapshot(
+        query(collection(db, 'arenas'), where('locked', '==', false)),
+        (snap) => {
+          setArenas(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Arena, 'id'>) })));
+          setLoading(false);
+        },
+        () => {
+          setLoading(false);
+        },
+      ),
     [],
   );
 

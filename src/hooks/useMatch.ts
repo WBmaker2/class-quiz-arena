@@ -19,6 +19,7 @@ export interface Me {
 export function useMatch(arenaId: string, me: Me) {
   const [roomId, setRoomId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const findOrCreate = async () => {
     setBusy(true);
@@ -55,10 +56,17 @@ export function useMatch(arenaId: string, me: Me) {
         return ref.id;
       });
       setRoomId(id);
+    } catch {
+      setError('매칭에 실패했어요. 다시 시도해주세요');
     } finally {
       setBusy(false);
     }
   };
 
-  return { roomId, busy, findOrCreate };
+  const retry = async () => {
+    setError(null);
+    await findOrCreate();
+  };
+
+  return { roomId, busy, error, findOrCreate, retry };
 }
