@@ -1452,6 +1452,7 @@ npx firebase-tools emulators:start
 npx vitest run src/lib/award.emu.test.ts
 ```
 Expected: PASS (1 test). 에뮬레이터 정지 후 `firestore-debug.log` 삭제.
+(주의: 위 명시 실행이 exclude에 걸려 0파일로 끝나면 임시 config 오버라이드로 실행하고, Plan 3에서 `vitest.emu.config.ts` 상시 파일을 둔다. CLI 우회 플래그는 검증 없이 문서화하지 않는다.)
 
 - [ ] **Step 3: Commit**
 
