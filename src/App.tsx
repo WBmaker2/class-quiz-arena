@@ -14,6 +14,7 @@ import { useArenaAdmin, type EditableProblem } from './hooks/useArenaAdmin';
 import { useArenas } from './hooks/useArenas';
 import { useAuth } from './hooks/useAuth';
 import { useClassroom } from './hooks/useClassroom';
+import { useLeaderboard } from './hooks/useLeaderboard';
 import { useMatch } from './hooks/useMatch';
 import { useProfile } from './hooks/useProfile';
 import { useStudents } from './hooks/useStudents';
@@ -23,7 +24,7 @@ import { useTeacherRooms } from './hooks/useTeacherRooms';
 import { avgCorrectVsWrong, hardProblems, problemStats } from './lib/analytics';
 import { buildRosterCsv } from './lib/roster';
 import { useRoom, orderBattleProblems } from './hooks/useRoom';
-import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
+import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from './lib/firebase';
 import type { Problem } from './lib/arena';
 import { finishAndAward } from './lib/award';
@@ -212,8 +213,16 @@ function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: stri
       <ArenaEditor
         initial={
           arena
-            ? { title: arena.title, desc: arena.desc, subject: arena.subject, aiCount: (arena as unknown as { aiCount?: number }).aiCount ?? 0 }
-            : { title: '', desc: '', subject: '수학', aiCount: 0 }
+            ? {
+                title: arena.title,
+                desc: arena.desc,
+                subject: arena.subject,
+                aiCount: (arena as unknown as { aiCount?: number }).aiCount ?? 0,
+                grade: arena.grade ?? 3,
+                topic: arena.topic ?? '',
+                standards: arena.standards ?? [],
+              }
+            : { title: '', desc: '', subject: '수학', aiCount: 0, grade: 3, topic: '', standards: [] }
         }
         problems={editingProblems ?? []}
         onSave={(input, problems) => {
@@ -284,33 +293,17 @@ function StudentShell({
 }) {
   const { arenas } = useArenas();
   const { profile } = useProfile(uid);
-  const [leaders, setLeaders] = useState<{ nickname: string; xp: number }[]>([]);
-
-  useEffect(() => {
-    let alive = true;
-    void getDocs(query(collection(db, 'users'), orderBy('xp', 'desc'), limit(10)))
-      .then((snap) => {
-        if (!alive) return;
-        setLeaders(
-          snap.docs.map((d) => ({ nickname: (d.data().nickname as string) ?? '이름 없음', xp: (d.data().xp as number) ?? 0 })),
-        );
-      })
-      .catch(() => {
-        if (!alive) return;
-        setLeaders([]);
-      });
-    return () => {
-      alive = false;
-    };
-  }, []);
+  const { top20, myRank } = useLeaderboard(classroomId, uid);
 
   const mine = classroomId ? arenas.filter((a) => (a as unknown as { classroomId?: string }).classroomId === classroomId) : arenas;
 
   return (
     <StudentHome
       arenas={mine}
-      leaders={leaders}
+      leaders={top20}
       profile={profile ?? { nickname, xp: 0, level: 1, streak: 0, winCount: 0, correctRate: 0 }}
+      myUid={uid}
+      myRank={myRank}
       onEnter={(arenaId) =>
         onEnter(arenaId, { uid, nickname, avatar: animal }, profile?.winCount ?? 0, profile?.streak ?? 0)
       }

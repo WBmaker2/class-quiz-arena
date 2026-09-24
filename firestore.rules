@@ -35,6 +35,7 @@ service cloud.firestore {
       allow write: if isMaster();
     }
     match /users/{uid} {
+      // 학급 Top20 리더보드는 classroomId+xp 조회, 로그인한 사용자만 읽는다 (최소 권한 유지).
       allow read: if isSignedIn();
       // role은 생성 시에만 정해지고 이후 본인이 바꿀 수 없음 (교사 사칭 방지).
       // 생성 시 teacher role은 명단·마스터만 가능 (join 사칭 방지).
