@@ -52,7 +52,7 @@
 
 **Interfaces:**
 - Consumes: 기존 파일 전부 (수정 없음, 테스트만 추가).
-- Produces: 공용 cleanup, 보강된 5개 케이스 (Task 2가 전제).
+- Produces: 공용 cleanup, 보강된 6개 케이스 (Task 2가 전제).
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -162,7 +162,7 @@ afterEach(() => {
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `npm test`
-Expected: PASS (기존 12 + 신규 5 = 17 tests)
+Expected: PASS (기존 12 + 신규 6 = 18 tests)
 
 - [ ] **Step 5: Commit**
 
@@ -391,7 +391,7 @@ export default function App() {
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `npm test`
-Expected: PASS (17 + 4 = 21 tests: 기존 17, App 신규 3, classroom 신규 1)
+Expected: PASS (18 + 4 = 22 tests: 기존 18, App 신규 3, classroom 신규 1)
 
 - [ ] **Step 5: Commit**
 
@@ -1365,7 +1365,7 @@ export default function BattleRoom({
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `npm test`
-Expected: PASS (21 + 3 = 24 tests)
+Expected: PASS (22 + 3 = 25 tests)
 
 - [ ] **Step 5: Commit**
 
@@ -1828,7 +1828,7 @@ useEffect(() => {
 - [ ] **Step 4: 전체 테스트 + 빌드 + 에뮬레이터 시드 검증**
 
 Run: `npm test && npm run build`
-Expected: PASS (24 + 4 = 28 tests)
+Expected: PASS (25 + 4 = 29 tests)
 
 Run (에뮬레이터 별도 터미널에서 `npx firebase-tools emulators:start` 실행 중일 때):
 ```bash
