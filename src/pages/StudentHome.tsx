@@ -3,6 +3,7 @@ import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import PrimaryButton from '../components/PrimaryButton';
 import Avatar, { type Animal } from '../components/Avatar';
+import ArenaCard from '../components/ArenaCard';
 import type { Arena } from '../lib/arena';
 import { validateNickname } from '../lib/nickname';
 import {
@@ -121,33 +122,33 @@ export default function StudentHome({
               <EmptyState title="아직 참여 중인 아레나가 없어요" />
             ) : (
               arenas.map((a) => (
-                <div
+                <ArenaCard
                   key={a.id}
-                  className="mb-3"
-                  style={
-                    a.cardTheme?.bg
-                      ? { background: a.cardTheme.bg, borderRadius: 12, padding: 12 }
-                      : undefined
+                  bg={a.cardTheme?.bg}
+                  emoji={a.cardTheme?.emoji}
+                  illustId={a.illustId}
+                  useIllust={(a.cardStyle ?? 'color') === 'illust'}
+                  badges={
+                    <>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{a.subject}</span>
+                      {a.grade != null && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{a.grade}학년</span>
+                      )}
+                    </>
                   }
-                >
-                  <div className="flex gap-1 mb-1">
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{a.subject}</span>
-                    {a.grade != null && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{a.grade}학년</span>
-                    )}
-                  </div>
-                  <p className="font-bold">
-                    {a.cardTheme?.emoji ? `${a.cardTheme.emoji} ` : ''}
-                    {a.title}
-                  </p>
-                  {a.topic && <p className="text-sm">{a.topic}</p>}
-                  {a.desc && <p className="text-sm opacity-70">{a.desc}</p>}
-                  <p className="text-sm mt-1">20문제 중 10문제 대결</p>
-                  <p className="text-xs mt-1">
-                    <span className="px-2 py-0.5 rounded-full bg-white/70">대결 준비됨</span>
-                  </p>
-                  <PrimaryButton onClick={() => onEnter(a.id)}>지금 바로 대결!</PrimaryButton>
-                </div>
+                  title={a.title}
+                  body={
+                    <>
+                      {a.topic && <p className="text-sm">{a.topic}</p>}
+                      {a.desc && <p className="text-sm opacity-70">{a.desc}</p>}
+                      <p className="text-sm mt-1">20문제 중 10문제 대결</p>
+                      <p className="text-xs mt-1">
+                        <span className="px-2 py-0.5 rounded-full bg-white/70">대결 준비됨</span>
+                      </p>
+                    </>
+                  }
+                  footer={<PrimaryButton onClick={() => onEnter(a.id)}>지금 바로 대결!</PrimaryButton>}
+                />
               ))
             )}
           </Card>

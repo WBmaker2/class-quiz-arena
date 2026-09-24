@@ -6,6 +6,8 @@ import { avgCorrectVsWrong, hardProblems, problemStats, weakStandards, type Roun
 import { GRADES, SUBJECTS, coverageOf, findStandard, getStandards } from '../data/curriculum2022';
 import { containsBanned } from '../lib/nickname';
 import Toggle from '../components/Toggle';
+import ArenaCard from '../components/ArenaCard';
+import type { CardStyle } from '../lib/arena';
 import type { NameReport } from '../hooks/useReports';
 import type { RosterStudent } from '../lib/roster';
 
@@ -18,12 +20,18 @@ export interface LiveRoom {
 export interface ArenaRow {
   id: string;
   title: string;
+  desc?: string;
+  subject?: string;
+  grade?: number;
   locked: boolean;
   /** true면 학생에게 상대 공개. 없으면 비공개로 간주. */
   showPlayers?: boolean;
   /** true면 대결 화면 읽어주기 버튼. 없으면 off. */
   ttsEnabled?: boolean;
   standards?: string[];
+  cardTheme?: { bg: string; emoji: string };
+  cardStyle?: CardStyle;
+  illustId?: string;
 }
 
 export interface BankArena {
@@ -31,6 +39,9 @@ export interface BankArena {
   title: string;
   subject: string;
   grade?: number;
+  cardTheme?: { bg: string; emoji: string };
+  cardStyle?: CardStyle;
+  illustId?: string;
 }
 
 export default function TeacherHome({
@@ -197,43 +208,85 @@ export default function TeacherHome({
             )}
             {arenas.length === 0 && <p>아직 만든 아레나가 없어요</p>}
             {arenas.map((a) => (
-              <div key={a.id}>
-                <p>{a.title}</p>
-                <button type="button" onClick={() => onEditArena(a.id)}>
-                  아레나 수정
-                </button>
-                <button type="button" onClick={() => onDeleteArena(a.id)}>
-                  아레나 삭제
-                </button>
-                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
-                  <Toggle checked={a.locked} onChange={(next) => onToggleLock(a.id, next)} label="잠금" />
-                  <Toggle
-                    checked={a.showPlayers ?? false}
-                    onChange={(next) => onToggleShowPlayers(a.id, next)}
-                    label="참가자 공개"
-                  />
-                  <Toggle
-                    checked={a.ttsEnabled ?? false}
-                    onChange={(next) => onToggleTts(a.id, next)}
-                    label="읽어주기"
-                  />
-                </div>
-              </div>
+              <ArenaCard
+                key={a.id}
+                bg={a.cardTheme?.bg}
+                emoji={a.cardTheme?.emoji}
+                illustId={a.illustId}
+                useIllust={(a.cardStyle ?? 'color') === 'illust'}
+                badges={
+                  <>
+                    {a.subject && <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{a.subject}</span>}
+                    {a.grade != null && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{a.grade}학년</span>
+                    )}
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">
+                      {a.locked ? '비공개' : '공개 중'}
+                    </span>
+                  </>
+                }
+                title={a.title}
+                body={
+                  <>
+                    {a.desc && <p className="text-sm opacity-70">{a.desc}</p>}
+                    {(a.standards ?? []).length > 0 && (
+                      <p className="text-xs mt-1">성취기준 {(a.standards ?? []).length}개</p>
+                    )}
+                  </>
+                }
+                footer={
+                  <>
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
+                      <Toggle checked={a.locked} onChange={(next) => onToggleLock(a.id, next)} label="잠금" />
+                      <Toggle
+                        checked={a.showPlayers ?? false}
+                        onChange={(next) => onToggleShowPlayers(a.id, next)}
+                        label="참가자 공개"
+                      />
+                      <Toggle
+                        checked={a.ttsEnabled ?? false}
+                        onChange={(next) => onToggleTts(a.id, next)}
+                        label="읽어주기"
+                      />
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <button type="button" onClick={() => onEditArena(a.id)}>
+                        아레나 수정
+                      </button>
+                      <button type="button" onClick={() => onDeleteArena(a.id)}>
+                        아레나 삭제
+                      </button>
+                    </div>
+                  </>
+                }
+              />
             ))}
             <p className="font-bold mt-4">다른 반 공개 아레나 가져오기</p>
             {(bank ?? []).length === 0 ? (
               <p>가져올 수 있는 아레나가 없어요</p>
             ) : (
               (bank ?? []).map((b) => (
-                <div key={b.id}>
-                  <p>
-                    {b.title} · {b.subject}
-                    {b.grade != null ? ` · ${b.grade}학년` : ''}
-                  </p>
-                  <button type="button" onClick={() => onCopyArena?.(b.id)}>
-                    가져오기
-                  </button>
-                </div>
+                <ArenaCard
+                  key={b.id}
+                  bg={b.cardTheme?.bg}
+                  emoji={b.cardTheme?.emoji}
+                  illustId={b.illustId}
+                  useIllust={(b.cardStyle ?? 'color') === 'illust'}
+                  badges={
+                    <>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{b.subject}</span>
+                      {b.grade != null && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{b.grade}학년</span>
+                      )}
+                    </>
+                  }
+                  title={b.title}
+                  footer={
+                    <button type="button" onClick={() => onCopyArena?.(b.id)}>
+                      가져오기
+                    </button>
+                  }
+                />
               ))
             )}
           </Card>

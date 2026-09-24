@@ -1,5 +1,5 @@
 import rawArenas from '../../scripts/defaultArenas.json';
-import type { ProblemKind } from '../lib/arena';
+import type { CardStyle, ProblemKind } from '../lib/arena';
 
 export interface DefaultProblem {
   text: string;
@@ -22,6 +22,8 @@ export interface DefaultArena {
   standards: string[];
   questionCount: number;
   cardTheme: { bg: string; emoji: string };
+  cardStyle?: CardStyle;
+  illustId?: string;
   problems: DefaultProblem[];
 }
 
@@ -45,6 +47,8 @@ export function buildDefaultArenaDocs(classroomId: string, ownerUid: string): {
       standards: a.standards,
       questionCount: a.problems.length,
       cardTheme: a.cardTheme,
+      cardStyle: a.cardStyle ?? 'color',
+      ...(a.illustId ? { illustId: a.illustId } : {}),
       // 선생님이 직접 공개하기로 할 때까지 숨김
       locked: true,
       showPlayers: false,

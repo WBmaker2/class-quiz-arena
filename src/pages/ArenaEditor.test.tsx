@@ -146,3 +146,26 @@ describe('ArenaEditor question kinds', () => {
     expect(screen.getByDisplayValue('세종대왕')).toBeTruthy();
   });
 });
+
+describe('ArenaEditor card style', () => {
+  it('saves illust style with picked illustration', () => {
+    const onSave = vi.fn();
+    render(
+      <ArenaEditor initial={baseInitial} problems={makeProblems(10)} onSave={onSave} onCancel={() => {}} />,
+    );
+    fireEvent.click(screen.getByLabelText('일러스트 카드'));
+    fireEvent.click(screen.getByRole('button', { name: '피자 분수 그림 고르기' }));
+    fireEvent.click(screen.getByRole('button', { name: '공개하기' }));
+    expect(onSave).toHaveBeenCalledTimes(1);
+    expect(onSave.mock.calls[0][0]).toMatchObject({ cardStyle: 'illust', illustId: 'math-pizza' });
+  });
+
+  it('defaults to color style', () => {
+    const onSave = vi.fn();
+    render(
+      <ArenaEditor initial={baseInitial} problems={makeProblems(10)} onSave={onSave} onCancel={() => {}} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '공개하기' }));
+    expect(onSave.mock.calls[0][0]).toMatchObject({ cardStyle: 'color' });
+  });
+});

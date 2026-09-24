@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import Card from '../components/Card';
 import { getStandards } from '../data/curriculum2022';
-import type { ProblemKind } from '../lib/arena';
+import { Illust, illustsOf } from '../components/illustrations';
+import type { CardStyle, ProblemKind } from '../lib/arena';
 import type { ArenaInput, EditableProblem } from '../hooks/useArenaAdmin';
 
 const GRADES = [1, 2, 3, 4, 5, 6];
@@ -112,6 +113,8 @@ export default function ArenaEditor({
   const [selected, setSelected] = useState<string[]>(initial.standards ?? []);
   const [count, setCount] = useState(initial.questionCount >= MIN_COUNT && initial.questionCount <= MAX_COUNT ? initial.questionCount : DEFAULT_COUNT);
   const [topic, setTopic] = useState(initial.topic ?? '');
+  const [cardStyle, setCardStyle] = useState<CardStyle>(initial.cardStyle ?? 'color');
+  const [illustId, setIllustId] = useState(initial.illustId ?? illustsOf(SUBJECTS.includes(initial.subject) ? initial.subject : '수학')[0]?.id ?? 'math-plus');
   const [items, setItems] = useState<EditableProblem[]>(problems);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
@@ -131,6 +134,8 @@ export default function ArenaEditor({
     setSubject(next);
     const codes = new Set(getStandards(grade, next).map((s) => s.code));
     setSelected((prev) => prev.filter((c) => codes.has(c)));
+    const gallery = illustsOf(next);
+    setIllustId((prev) => (gallery.some((g) => g.id === prev) ? prev : (gallery[0]?.id ?? 'math-plus')));
   };
 
   const toggleStandard = (code: string) => {
@@ -183,7 +188,7 @@ export default function ArenaEditor({
   const publish = () => {
     if (!canPublish) return;
     onSave(
-      { title, desc, subject, questionCount: clampCount(count), grade, topic, standards: selected, status: 'published' },
+      { title, desc, subject, questionCount: clampCount(count), grade, topic, standards: selected, status: 'published', cardStyle, illustId },
       items,
     );
   };
@@ -241,6 +246,47 @@ export default function ArenaEditor({
         placeholder="예: 받아올림이 있는 덧셈"
         onChange={(e) => setTopic(e.target.value)}
       />
+
+      <fieldset>
+        <legend>카드 그림 (2가지 중 고르기)</legend>
+        <label>
+          <input
+            type="radio"
+            name="card-style"
+            checked={cardStyle === 'color'}
+            onChange={() => setCardStyle('color')}
+          />
+          색상 카드
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="card-style"
+            checked={cardStyle === 'illust'}
+            onChange={() => setCardStyle('illust')}
+          />
+          일러스트 카드
+        </label>
+      </fieldset>
+      {cardStyle === 'illust' && (
+        <fieldset>
+          <legend>{subject} 그림 고르기</legend>
+          <div className="flex flex-wrap gap-2">
+            {illustsOf(subject).map((g) => (
+              <button
+                key={g.id}
+                type="button"
+                className="illust-pick"
+                aria-label={`${g.label} 그림 고르기`}
+                aria-pressed={illustId === g.id}
+                onClick={() => setIllustId(g.id)}
+              >
+                <Illust id={g.id} size={56} />
+              </button>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       <button type="button" onClick={() => void makeDraft()} disabled={aiBusy || selected.length === 0}>
         {aiBusy ? 'AI가 문제를 만드는 중...' : 'AI로 초안 만들기'}

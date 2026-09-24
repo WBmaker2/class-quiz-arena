@@ -32,3 +32,15 @@ describe('defaultArenas', () => {
     }
   });
 });
+
+describe('default arena card art', () => {
+  it('uses known illustrations', async () => {
+    const { ILLUSTS } = await import('../components/illustrations');
+    const ids = new Set(ILLUSTS.map((m) => m.id));
+    for (const d of buildDefaultArenaDocs('A1B2C3', 'teacher-1')) {
+      expect((d.meta as { cardStyle: string }).cardStyle).toBe('illust');
+      const illustId = (d.meta as { illustId: string }).illustId;
+      expect(ids.has(illustId)).toBe(true);
+    }
+  });
+});

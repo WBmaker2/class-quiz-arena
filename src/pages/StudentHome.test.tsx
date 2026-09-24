@@ -196,3 +196,21 @@ describe('StudentHome shop and rename', () => {
     expect(onRename).toHaveBeenCalledWith('삼호');
   });
 });
+
+describe('StudentHome graphic cards', () => {
+  it('renders an illustration header for illust-style arenas', () => {
+    const { container } = render(
+      <StudentHome
+        arenas={[
+          { id: 'a1', title: '분수 첫걸음', desc: '설명', subject: '수학', locked: false, grade: 4, cardStyle: 'illust', illustId: 'math-pizza', cardTheme: { bg: '#FFF8E1', emoji: '🍕' } },
+        ]}
+        leaders={[]}
+        profile={profile}
+        onEnter={() => {}}
+        onSignOut={() => {}}
+      />,
+    );
+    expect(container.querySelector('svg')).toBeTruthy();
+    expect(screen.getByText('분수 첫걸음')).toBeTruthy();
+  });
+});

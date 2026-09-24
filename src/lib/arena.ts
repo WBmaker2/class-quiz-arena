@@ -1,5 +1,7 @@
 export type ProblemKind = 'choice' | 'ox' | 'short';
 
+export type CardStyle = 'color' | 'illust';
+
 export interface Arena {
   id: string;
   title: string;
@@ -15,6 +17,10 @@ export interface Arena {
   showPlayers?: boolean;
   /** true면 대결 화면에 읽어주기 버튼 표시. 없으면 off. */
   ttsEnabled?: boolean;
+  /** 카드 그래픽 종류. 없으면 'color'. */
+  cardStyle?: CardStyle;
+  /** illust 스타일일 때 쓰는 그림 ID. */
+  illustId?: string;
 }
 
 export interface Problem {

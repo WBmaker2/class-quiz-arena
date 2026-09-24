@@ -281,7 +281,9 @@
         "standardCode": "3수01-02",
         "roundTimeSec": 30
       }
-    ]
+    ],
+    "cardStyle": "illust",
+    "illustId": "math-plus"
   },
   {
     "id": "arena-idiom-6",
@@ -564,7 +566,9 @@
         "standardCode": "6국02-01",
         "roundTimeSec": 30
       }
-    ]
+    ],
+    "cardStyle": "illust",
+    "illustId": "kor-scroll"
   },
   {
     "id": "arena-fraction-4",
@@ -847,7 +851,9 @@
         "standardCode": "4수02-01",
         "roundTimeSec": 30
       }
-    ]
+    ],
+    "cardStyle": "illust",
+    "illustId": "math-pizza"
   },
   {
     "id": "arena-water-5",
@@ -1130,7 +1136,9 @@
         "standardCode": "5과03-01",
         "roundTimeSec": 30
       }
-    ]
+    ],
+    "cardStyle": "illust",
+    "illustId": "sci-drop"
   },
   {
     "id": "arena-map-4",
@@ -1413,7 +1421,9 @@
         "standardCode": "4사01-01",
         "roundTimeSec": 30
       }
-    ]
+    ],
+    "cardStyle": "illust",
+    "illustId": "soc-map"
   },
   {
     "id": "arena-english-5",
@@ -1696,6 +1706,8 @@
         "standardCode": "5영01-01",
         "roundTimeSec": 30
       }
-    ]
+    ],
+    "cardStyle": "illust",
+    "illustId": "eng-abc"
   }
 ]

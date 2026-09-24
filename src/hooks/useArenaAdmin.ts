@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, setDoc, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import type { Arena, ProblemKind } from '../lib/arena';
+import type { Arena, CardStyle, ProblemKind } from '../lib/arena';
 import { seedDefaultArenas } from '../lib/seedDefaults';
 
 export interface ArenaInput {
@@ -13,6 +13,8 @@ export interface ArenaInput {
   topic?: string;
   standards?: string[];
   status?: 'draft' | 'published';
+  cardStyle?: CardStyle;
+  illustId?: string;
 }
 
 export interface EditableProblem {
@@ -47,11 +49,14 @@ export interface BankArena {
   desc: string;
   subject: string;
   grade?: number;
+  cardTheme?: { bg: string; emoji: string };
+  cardStyle?: CardStyle;
+  illustId?: string;
 }
 
 /** 은행 복제용 순수 조립. 테스트에서 가져오기 결과를 검증한다. */
 export function buildArenaCopy(
-  source: BankArena & { topic?: string; standards?: string[]; questionCount?: number },
+  source: BankArena & { topic?: string; standards?: string[]; questionCount?: number; cardStyle?: CardStyle; illustId?: string },
   problems: EditableProblem[],
 ): { input: ArenaInput; problems: EditableProblem[] } {
   return {
@@ -64,6 +69,8 @@ export function buildArenaCopy(
       topic: source.topic,
       standards: source.standards,
       status: 'published',
+      cardStyle: source.cardStyle,
+      illustId: source.illustId,
     },
     problems,
   };
@@ -93,7 +100,7 @@ export function useArenaAdmin(classroomId: string | null) {
           snap.docs
             .map((d) => ({ id: d.id, ...(d.data() as Omit<BankArena, 'id'> & { classroomId?: string; status?: string }) }))
             .filter((a) => a.classroomId !== classroomId && a.status !== 'draft')
-            .map(({ id, title, desc, subject, grade }) => ({ id, title, desc, subject, grade })),
+            .map(({ id, title, desc, subject, grade, cardTheme, cardStyle, illustId }) => ({ id, title, desc, subject, grade, cardTheme, cardStyle, illustId })),
         );
       },
       () => {},
@@ -121,6 +128,8 @@ export function useArenaAdmin(classroomId: string | null) {
         ...(input.grade !== undefined ? { grade: input.grade } : {}),
         ...(input.topic !== undefined ? { topic: input.topic } : {}),
         ...(input.standards !== undefined ? { standards: input.standards } : {}),
+        ...(input.cardStyle !== undefined ? { cardStyle: input.cardStyle } : {}),
+        ...(input.illustId !== undefined ? { illustId: input.illustId } : {}),
       },
       { merge: true },
     );
@@ -176,6 +185,8 @@ export function useArenaAdmin(classroomId: string | null) {
       topic?: string;
       standards?: string[];
       questionCount?: number;
+      cardStyle?: CardStyle;
+      illustId?: string;
     };
     const probSnap = await getDocs(collection(db, 'arenas', sourceId, 'problems'));
     const problems = probSnap.docs
