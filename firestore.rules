@@ -8,14 +8,19 @@ service cloud.firestore {
   function masterEmail() {
     return 'ketarou85@gmail.com';
   }
+  // 익명 로그인은 토큰에 email이 없어서 바로 읽으면 평가 오류가 난다.
+  // 먼저 있는지 확인하고 읽는다.
+  function tokenEmail() {
+    return 'email' in request.auth.token ? request.auth.token.email : null;
+  }
   function isMaster() {
-    return isSignedIn() && request.auth.token.email == masterEmail();
+    return isSignedIn() && tokenEmail() == masterEmail();
   }
   // 선생님 명단에 든 학교 계정인지 (이메일 키, 읽기 권한 없이 존재 확인용)
   function isAllowlisted() {
     return isSignedIn()
-      && request.auth.token.email != null
-      && exists(/databases/(default)/documents/teacherAllowlist/$(request.auth.token.email));
+      && tokenEmail() != null
+      && exists(/databases/(default)/documents/teacherAllowlist/$(tokenEmail()));
   }
   function teacherOf(classroomId) {
     return isSignedIn()
@@ -30,7 +35,7 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // 선생님 명단: 본인 문서 단건 확인 + 마스터 전체 관리
     match /teacherAllowlist/{email} {
-      allow get: if isMaster() || (isSignedIn() && request.auth.token.email == email);
+      allow get: if isMaster() || (isSignedIn() && tokenEmail() == email);
       allow list: if isMaster();
       allow write: if isMaster();
     }
@@ -59,8 +64,10 @@ service cloud.firestore {
     }
     match /arenas/{id} {
       allow read: if isSignedIn();
-      // 자기 학급의 선생님만 (타 학급 쓰기 방지)
-      allow write: if teacherOf(request.resource.data.classroomId);
+      // 자기 학급의 선생님만 (타 학급 쓰기 방지).
+      // 삭제 시 request.resource는 null이라 resource(기존 문서)로 확인한다.
+      allow create, update: if teacherOf(request.resource.data.classroomId);
+      allow delete: if teacherOf(resource.data.classroomId);
     }
     match /arenas/{arenaId}/problems/{pid} {
       allow read: if isSignedIn();
