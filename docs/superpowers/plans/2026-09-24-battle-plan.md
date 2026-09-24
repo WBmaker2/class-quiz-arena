@@ -1125,7 +1125,9 @@ export async function finishAndAward(args: {
 }): Promise<number> {
   const earned = xpAward(args.winnerUid === args.myUid, args.winnerUid === null, args.myCorrect);
   await runTransaction(db, async (tx) => {
-    const battleRef = doc(db, 'battles', args.roomId);
+    // 멱등 가드는 사용자별 문서로 둔다. 양쪽 클라이언트가 각자 호출하므로,
+    // roomId 공유 문서로 막으면 먼저 커밋한 쪽이 상대방 지급까지 막는다.
+    const battleRef = doc(db, 'battles', `${args.roomId}_${args.myUid}`);
     const existing = await tx.get(battleRef);
     if (existing.exists() && (existing.data().awarded as boolean)) return;
     const userRef = doc(db, 'users', args.myUid);
@@ -1374,6 +1376,88 @@ Expected: PASS (35 + 3 = 38 tests)
 ```bash
 git add src/lib/award.ts src/hooks/useRoom.ts src/components/Timer.tsx src/pages/BattleRoom.tsx src/pages/BattleRoom.test.tsx
 git commit -m "feat: add round play, results, and XP award flow"
+```
+
+### Task 5b: XP 지급 에뮬레이터 테스트 (Critical 대응)
+
+**Files:**
+- Create: `src/lib/award.emu.test.ts`
+- Modify: `vite.config.ts` (exclude에 `'**/*.emu.test.ts'` 추가)
+
+**Interfaces:**
+- Consumes: `finishAndAward` (per-user guard), 에뮬레이터 Auth 9099 + Firestore 8080.
+- Produces: 양쪽 플레이어 지급 + 중복 호출 멱등 증거.
+
+- [ ] **Step 1: Write the test**
+
+`src/lib/award.emu.test.ts`:
+```ts
+import { describe, expect, it } from 'vitest';
+import { signInAnonymously } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
+import { auth, db } from './firebase';
+import { finishAndAward } from './award';
+
+describe('finishAndAward on emulator', () => {
+  it('pays both players once, even on duplicate calls', async () => {
+    const roomId = `r-${Date.now()}`;
+
+    const credA = await signInAnonymously(auth);
+    const uidA = credA.user.uid;
+    const earnedA = await finishAndAward({
+      roomId,
+      winnerUid: uidA,
+      myUid: uidA,
+      myCorrect: 2,
+      myWins: 0,
+      myStreak: 0,
+    });
+    expect(earnedA).toBe(70);
+    const dupA = await finishAndAward({
+      roomId,
+      winnerUid: uidA,
+      myUid: uidA,
+      myCorrect: 2,
+      myWins: 0,
+      myStreak: 0,
+    });
+    expect(dupA).toBe(70);
+    await auth.signOut();
+
+    const credB = await signInAnonymously(auth);
+    const uidB = credB.user.uid;
+    const earnedB = await finishAndAward({
+      roomId,
+      winnerUid: uidA,
+      myUid: uidB,
+      myCorrect: 1,
+      myWins: 0,
+      myStreak: 0,
+    });
+    expect(earnedB).toBe(10);
+
+    const snapA = await getDoc(doc(db, 'users', uidA));
+    const snapB = await getDoc(doc(db, 'users', uidB));
+    expect(snapA.data()?.xp).toBe(70);
+    expect(snapB.data()?.xp).toBe(10);
+  }, 30000);
+});
+```
+`vite.config.ts` exclude에 `'**/*.emu.test.ts'` 추가 (기본 `npm test`에서 제외, 에뮬레이터 기동 시에만 명시 실행).
+
+- [ ] **Step 2: Run against live emulators**
+
+```bash
+npx firebase-tools emulators:start
+npx vitest run src/lib/award.emu.test.ts
+```
+Expected: PASS (1 test). 에뮬레이터 정지 후 `firestore-debug.log` 삭제.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/lib/award.ts src/lib/award.emu.test.ts vite.config.ts
+git commit -m "fix: per-user award idempotency with emulator test"
 ```
 
 ---
