@@ -761,23 +761,23 @@ service cloud.firestore {
 }
 ```
 
-`scripts/seed.mjs`:
+`scripts/seed.mjs` (Admin SDK 버전 — 클라이언트 SDK로는 규칙상 쓰기가 막히므로 시드는 Admin으로만):
 ```js
-import { initializeApp } from 'firebase/app';
-import { connectFirestoreEmulator, doc, getFirestore, setDoc } from 'firebase/firestore';
+import admin from 'firebase-admin';
 
-const app = initializeApp({ apiKey: 'demo-key', authDomain: 'demo.local', projectId: 'demo-quiz-arena' });
-const db = getFirestore(app);
-connectFirestoreEmulator(db, '127.0.0.1', 8080);
+process.env.FIRESTORE_EMULATOR_HOST ??= '127.0.0.1:8080';
 
-await setDoc(doc(db, 'classrooms', 'A1B2C3'), {
+admin.initializeApp({ projectId: 'demo-quiz-arena' });
+const db = admin.firestore();
+
+await db.doc('classrooms/A1B2C3').set({
   name: '4학년 3반',
   inviteCode: 'A1B2C3',
   teacherId: 'teacher-demo',
   locked: false,
 });
 
-await setDoc(doc(db, 'arenas', 'arena-basics'), {
+await db.doc('arenas/arena-basics').set({
   classroomId: 'A1B2C3',
   title: '기초 덧셈 아레나',
   desc: '두 자리 수 덧셈 3문제',
@@ -792,12 +792,14 @@ const problems = [
   { text: '34 + 58 = ?', options: ['82', '92', '102', '112'], answerIndex: 1, roundTimeSec: 30 },
 ];
 for (const [i, p] of problems.entries()) {
-  await setDoc(doc(db, 'arenas', 'arena-basics', 'problems', `p${i + 1}`), p);
+  await db.doc(`arenas/arena-basics/problems/p${i + 1}`).set(p);
 }
 
 console.log('seeded: classroom A1B2C3, arena-basics, 3 problems');
 ```
-실행: `node scripts/seed.mjs` (에뮬레이터 실행 중에만).
+필요 의존성: `"firebase-admin": "^13.0.0"` (devDependencies에 추가 후 `npm install`).
+실행 (에뮬레이터 실행 중에만): `FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node scripts/seed.mjs`.
+(자바 미설치 환경에서는 `npx firebase-tools emulators:start` 전에 `export JAVA_HOME=/opt/homebrew/opt/openjdk PATH="$JAVA_HOME/bin:$PATH"` — 이 머신에서 확인된 경로.)
 
 - [ ] **Step 4: Run tests + seed dry check**
 
@@ -1620,8 +1622,13 @@ export interface PendingArena {
 App 컴포넌트 상단 state (기존 `view`·`role` 유지, 3줄 추가):
 ```tsx
 const [pendingArena, setPendingArena] = useState<PendingArena | null>(null);
-const { classroomId } = useClassroom();
+const { classroomId, join } = useClassroom();
 ```
+join 분기 (학급 필터링이 동작하도록 코드를 classroomId에 저장):
+```tsx
+<ClassJoin onJoin={(code) => { void join(code); setView(role === 'teacher' ? 'teacher' : 'student'); }} />
+```
+(`join`은 await 없이 동기 상태 갱신이므로 기존 테스트 흐름에 영향 없다.)
 `useAuth` 구조분해에 `signOut` 추가:
 ```tsx
 const { user, loading, signInWithGoogle, signOut } = useAuth();
@@ -1832,7 +1839,7 @@ Expected: PASS (38 + 4 = 42 tests)
 
 Run (에뮬레이터 별도 터미널에서 `npx firebase-tools emulators:start` 실행 중일 때):
 ```bash
-node scripts/seed.mjs
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node scripts/seed.mjs
 ```
 Expected: `seeded: classroom A1B2C3, arena-basics, 3 problems`
 
