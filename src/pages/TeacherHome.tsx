@@ -1,0 +1,131 @@
+import { useState } from 'react';
+import Card from '../components/Card';
+import EmptyState from '../components/EmptyState';
+
+export interface LiveRoom {
+  id: string;
+  arenaTitle: string;
+  players: string[];
+}
+
+export interface ArenaRow {
+  id: string;
+  title: string;
+  locked: boolean;
+}
+
+export default function TeacherHome({
+  live,
+  abandoned,
+  finished,
+  arenas,
+  onForceClose,
+  onEditArena,
+  onDeleteArena,
+  onToggleLock,
+  onNewArena,
+  onSignOut,
+}: {
+  live: LiveRoom[];
+  abandoned: LiveRoom[];
+  finished: LiveRoom[];
+  arenas: ArenaRow[];
+  onForceClose: (id: string) => void;
+  onEditArena: (id: string) => void;
+  onDeleteArena: (id: string) => void;
+  onToggleLock: (id: string, locked: boolean) => void;
+  onNewArena: () => void;
+  onSignOut: () => void;
+}) {
+  const [tab, setTab] = useState<'live' | 'arenas' | 'students' | 'analysis'>('live');
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+
+  return (
+    <div className="min-h-screen px-6 py-10">
+      <div className="w-full max-w-md mx-auto">
+        <p className="font-bold mb-2">선생님 워크스페이스</p>
+        <div className="flex gap-2 mb-4">
+          <button type="button" onClick={() => setTab('live')}>
+            현재 대결
+          </button>
+          <button type="button" onClick={() => setTab('arenas')}>
+            아레나
+          </button>
+          <button type="button" onClick={() => setTab('students')}>
+            학생
+          </button>
+          <button type="button" onClick={() => setTab('analysis')}>
+            분석
+          </button>
+          <button type="button" onClick={onSignOut}>
+            로그아웃
+          </button>
+        </div>
+        {tab === 'live' && (
+          <Card>
+            <p className="font-bold mb-2">진행 중인 대결</p>
+            {live.length === 0 ? (
+              <EmptyState title="지금은 진행 중인 대결이 없어요" />
+            ) : (
+              live.map((r) => (
+                <div key={r.id}>
+                  <p>
+                    {r.arenaTitle} — {r.players.join(' vs ')}
+                  </p>
+                  {confirmId === r.id ? (
+                    <div>
+                      <p>이 대결을 강제 종료할까요?</p>
+                      <button type="button" onClick={() => { onForceClose(r.id); setConfirmId(null); }}>
+                        끝내기
+                      </button>
+                    </div>
+                  ) : (
+                    <button type="button" onClick={() => setConfirmId(r.id)}>
+                      강제 종료
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
+            <p className="font-bold mt-4">방치된 대결</p>
+            {abandoned.length === 0 ? <p>방치된 대결이 없어요</p> : abandoned.map((r) => <p key={r.id}>{r.arenaTitle}</p>)}
+            <p className="font-bold mt-4">최근 종료된 대결</p>
+            {finished.length === 0 ? <p>종료된 대결이 아직 없어요</p> : finished.map((r) => <p key={r.id}>{r.arenaTitle}</p>)}
+          </Card>
+        )}
+        {tab === 'arenas' && (
+          <Card>
+            <button type="button" onClick={onNewArena}>
+              새 아레나 만들기
+            </button>
+            {arenas.length === 0 && <p>아직 만든 아레나가 없어요</p>}
+            {arenas.map((a) => (
+              <div key={a.id}>
+                <p>{a.title}</p>
+                <button type="button" onClick={() => onEditArena(a.id)}>
+                  아레나 수정
+                </button>
+                <button type="button" onClick={() => onDeleteArena(a.id)}>
+                  아레나 삭제
+                </button>
+                <button type="button" onClick={() => onToggleLock(a.id, !a.locked)}>
+                  {a.locked ? '잠금 해제' : '잠금'}
+                </button>
+              </div>
+            ))}
+          </Card>
+        )}
+        {tab === 'students' && (
+          <Card>
+            <p>학생 관리는 다음 단계에서 열려요</p>
+          </Card>
+        )}
+        {tab === 'analysis' && (
+          <Card>
+            <p>아직 분석할 기록이 없어요</p>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
