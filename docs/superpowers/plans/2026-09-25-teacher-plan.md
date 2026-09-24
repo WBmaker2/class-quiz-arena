@@ -169,12 +169,15 @@ Expected: FAIL (`generateInviteCode` 없음 + 기대값 불일치)
 ```ts
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-export function generateInviteCode(): string {
-  const bytes = crypto.getRandomValues(new Uint8Array(6));
-  return Array.from(bytes, (b) => CODE_CHARS[b % CODE_CHARS.length]).join('');
+export function generateInviteCode(random: () => number = Math.random): string {
+  let code = '';
+  for (let i = 0; i < 6; i += 1) {
+    code += CODE_CHARS[Math.floor(random() * CODE_CHARS.length)];
+  }
+  return code;
 }
 ```
-(헷갈리는 문자 I/O/0/1 제외.)
+(헷갈리는 문자 I/O/0/1 제외. `crypto` 대신 `Math.random` 기본값 — jsdom 테스트 환경 호환. 결정적 테스트가 필요하면 `random`을 주입한다.)
 
 `src/hooks/useClassroom.ts` 교체:
 ```ts
@@ -1119,8 +1122,8 @@ git commit -m "feat: add roster management and battle analytics"
 ### Task 6: 규칙 강화 + App 연결 + 전체 검증
 
 **Files:**
-- Modify: `firestore.rules`, `src/App.tsx` (teacher 분기), `src/App.test.tsx` (teacher 진입 1건), `scripts/seed.mjs` (데모 사용자 3건)
-- Create: `vitest.emu.config.ts`
+- Modify: `firestore.rules`, `firebase.json`, `src/App.tsx` (teacher 분기), `src/App.test.tsx` (teacher 진입 1건), `scripts/seed.mjs` (데모 사용자 3건)
+- Create: `vitest.emu.config.ts`, `firestore.indexes.json`
 
 **Interfaces:**
 - Consumes: Task 2–5 전부.
@@ -1156,6 +1159,32 @@ export default defineConfig({
 });
 ```
 실행: `npx vitest run --config vitest.emu.config.ts` (에뮬레이터 기동 중에만).
+
+`firestore.indexes.json` (운영 배포용 복합 인덱스 — 에뮬레이터는 강제하지 않지만 실프로젝트에서는 필수):
+```json
+{
+  "indexes": [
+    {
+      "collectionGroup": "rooms",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "updatedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "rooms",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "arenaId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}
+```
+`firebase.json`의 firestore 블록에 `"indexes": "firestore.indexes.json"` 추가.
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -1378,7 +1407,7 @@ Expected: 시드 로그 + emu 1/1 PASS.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add firestore.rules src/App.tsx src/App.test.tsx scripts/seed.mjs vitest.emu.config.ts
+git add firestore.rules firebase.json firestore.indexes.json src/App.tsx src/App.test.tsx scripts/seed.mjs vitest.emu.config.ts
 git commit -m "feat: harden rules and wire teacher workspace with verification"
 ```
 
