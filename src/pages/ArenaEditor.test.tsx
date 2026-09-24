@@ -53,8 +53,7 @@ describe('ArenaEditor', () => {
     expect(screen.queryByText(/3수01-01/)).toBeNull();
   });
 
-  it('shows error and keeps manual items when AI draft fails', async () => {
-    const failingCall = vi.fn().mockRejectedValue(new Error('GEMINI_API_KEY is not configured'));
+  it('shows error and keeps manual items when AI draft fails', async () => {    const failingCall = vi.fn().mockRejectedValue(new Error('GEMINI_API_KEY is not configured'));
     vi.mocked(httpsCallable).mockReturnValue(failingCall as never);
     render(<ArenaEditor initial={baseInitial} problems={makeProblems(1)} onSave={() => {}} onCancel={() => {}} />);
     fireEvent.click(screen.getByRole('checkbox', { name: /3수01-01/ }));
@@ -62,5 +61,17 @@ describe('ArenaEditor', () => {
     expect(await screen.findByText(/실패/)).toBeTruthy();
     // 직접 쓴 문제는 그대로 남는다
     expect(screen.getByDisplayValue('문제 1')).toBeTruthy();
+  });
+
+  it('keeps and shows standardCode of loaded problems', () => {
+    render(
+      <ArenaEditor
+        initial={baseInitial}
+        problems={[{ text: 'Q', options: ['1', '2', '3', '4'], answerIndex: 0, standardCode: '3수01-01' }]}
+        onSave={() => {}}
+        onCancel={() => {}}
+      />,
+    );
+    expect(screen.getByText('3수01-01')).toBeTruthy();
   });
 });

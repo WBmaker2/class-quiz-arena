@@ -21,7 +21,7 @@ interface GenerateArenaRequest {
 }
 
 interface GenerateArenaResponse {
-  problems: { text: string; options: string[]; answerIndex: number; explanation?: string }[];
+  problems: { text: string; options: string[]; answerIndex: number; explanation?: string; standardCode?: string }[];
 }
 
 function clampCount(n: number): number {
@@ -41,7 +41,13 @@ function normalizeDraft(p: GenerateArenaResponse['problems'][number]): EditableP
     string,
   ];
   const answerIndex = Number.isInteger(p.answerIndex) ? Math.min(3, Math.max(0, p.answerIndex)) : 0;
-  return { text: p.text ?? '', options, answerIndex, explanation: p.explanation ?? '' };
+  return {
+    text: p.text ?? '',
+    options,
+    answerIndex,
+    explanation: p.explanation ?? '',
+    ...(typeof p.standardCode === 'string' && p.standardCode ? { standardCode: p.standardCode } : {}),
+  };
 }
 
 export default function ArenaEditor({
@@ -201,6 +207,7 @@ export default function ArenaEditor({
       {items.length === 0 && <p>아직 등록된 문제가 없어요</p>}
       {items.map((p, i) => (
         <div key={`problem-${i}`}>
+          {p.standardCode ? <p>{p.standardCode}</p> : null}
           <label>
             문제 {i + 1} 내용
             <input value={p.text} onChange={(e) => updateItem(i, { text: e.target.value })} />

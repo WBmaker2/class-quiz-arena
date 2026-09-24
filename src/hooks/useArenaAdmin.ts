@@ -19,6 +19,7 @@ export interface EditableProblem {
   options: [string, string, string, string];
   answerIndex: number;
   explanation?: string;
+  standardCode?: string;
 }
 
 function toEditable(data: Record<string, unknown>): EditableProblem {
@@ -28,6 +29,7 @@ function toEditable(data: Record<string, unknown>): EditableProblem {
     options: [options[0] ?? '', options[1] ?? '', options[2] ?? '', options[3] ?? ''],
     answerIndex: (data.answerIndex as number) ?? 0,
     explanation: (data.explanation as string) ?? '',
+    standardCode: (data.standardCode as string) ?? '',
   };
 }
 
@@ -84,7 +86,7 @@ export function useArenaAdmin(classroomId: string | null) {
     return snap.docs
       .map((d) => ({ id: d.id, ...toEditable(d.data()) }))
       .sort((a, b) => parseInt(a.id.slice(1), 10) - parseInt(b.id.slice(1), 10))
-      .map(({ text, options, answerIndex, explanation }) => ({ text, options, answerIndex, explanation }));
+      .map(({ text, options, answerIndex, explanation, standardCode }) => ({ text, options, answerIndex, explanation, standardCode }));
   };
 
   const removeArena = async (id: string) => {
