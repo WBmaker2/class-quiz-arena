@@ -25,6 +25,19 @@ describe('design system', () => {
     expect(screen.getByText('🐢')).toBeTruthy();
   });
 
+  it('maps remaining animals', () => {
+    const { rerender } = render(<Avatar animal="dog" />);
+    expect(screen.getByText('🐶')).toBeTruthy();
+    rerender(<Avatar animal="tiger" />);
+    expect(screen.getByText('🐯')).toBeTruthy();
+    rerender(<Avatar animal="frog" />);
+    expect(screen.getByText('🐸')).toBeTruthy();
+    rerender(<Avatar animal="unicorn" />);
+    expect(screen.getByText('🦄')).toBeTruthy();
+    rerender(<Avatar animal="dragon" />);
+    expect(screen.getByText('🐲')).toBeTruthy();
+  });
+
   it('renders empty state with action', () => {
     const onAction = vi.fn();
     render(<EmptyState title="아직 없어요" actionLabel="만들기" onAction={onAction} />);
