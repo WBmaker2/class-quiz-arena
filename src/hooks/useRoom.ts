@@ -17,7 +17,27 @@ import {
 
 function toRoomData(id: string, data: Record<string, unknown>): RoomData {
   void id;
-  return data as unknown as RoomData;
+  const r = data as unknown as RoomData & { problemIds?: unknown };
+  return {
+    ...(r as RoomData),
+    problemIds: Array.isArray(r.problemIds) ? (r.problemIds as string[]) : [],
+  };
+}
+
+function totalRoundsOf(room: RoomData, problems: Problem[]): number {
+  return room.problemIds.length > 0 ? room.problemIds.length : problems.length;
+}
+
+export function orderBattleProblems(problems: Problem[], problemIds: string[]): Problem[] {
+  if (problemIds.length === 0) return problems;
+  return problemIds
+    .map((id) => problems.find((p) => p.id === id))
+    .filter((p): p is Problem => Boolean(p));
+}
+
+function battleProblemsOf(room: RoomData, problems: Problem[]): Problem[] {
+  const ordered = orderBattleProblems(problems, room.problemIds);
+  return ordered.length > 0 ? ordered : problems;
 }
 
 export function useRoom(roomId: string | null, problems: Problem[]) {
@@ -63,8 +83,9 @@ export function useRoom(roomId: string | null, problems: Problem[]) {
       const next = submitAnswerData(r, uid, idx, Date.now());
       tx.update(ref, { players: next.players, updatedAt: serverTimestamp() });
       if (bothAnswered(next)) {
-        const correct = problems[r.currentRound]?.answerIndex ?? -1;
-        const adv = advanceData(next, correct, Date.now(), problems[r.currentRound]?.roundTimeSec ?? 30, problems.length);
+        const battle = battleProblemsOf(r, problems);
+        const correct = battle[r.currentRound]?.answerIndex ?? -1;
+        const adv = advanceData(next, correct, Date.now(), battle[r.currentRound]?.roundTimeSec ?? 30, totalRoundsOf(r, battle));
         const fin = adv.status === 'finished' ? finishData(adv, Date.now()) : adv;
         tx.update(ref, {
           status: fin.status,
@@ -87,8 +108,9 @@ export function useRoom(roomId: string | null, problems: Problem[]) {
       if (!snap.exists()) return;
       const r = toRoomData(snap.id, snap.data());
       if (r.status !== 'playing' || roundRemainingMs(r, Date.now()) > 0) return;
-      const correct = problems[r.currentRound]?.answerIndex ?? -1;
-      const adv = advanceData(r, correct, Date.now(), problems[r.currentRound]?.roundTimeSec ?? 30, problems.length);
+      const battle = battleProblemsOf(r, problems);
+      const correct = battle[r.currentRound]?.answerIndex ?? -1;
+      const adv = advanceData(r, correct, Date.now(), battle[r.currentRound]?.roundTimeSec ?? 30, totalRoundsOf(r, battle));
       const fin = adv.status === 'finished' ? finishData(adv, Date.now()) : adv;
       tx.update(ref, {
         status: fin.status,

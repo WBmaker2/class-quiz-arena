@@ -17,6 +17,7 @@ export interface RoomData {
   roundEndsAt: number;
   winnerUid: string | null;
   updatedAt: number;
+  problemIds: string[];
 }
 
 export const XP_PER_CORRECT = 10;
@@ -28,6 +29,7 @@ export function createRoomData(
   arenaId: string,
   host: { uid: string; nickname: string; avatar: string },
   nowMs: number,
+  problemIds: string[] = [],
 ): RoomData {
   return {
     arenaId,
@@ -37,6 +39,7 @@ export function createRoomData(
     roundEndsAt: 0,
     winnerUid: null,
     updatedAt: nowMs,
+    problemIds,
   };
 }
 

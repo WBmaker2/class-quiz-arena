@@ -22,7 +22,7 @@ import { isMasterEmail } from './lib/admin';
 import { useTeacherRooms } from './hooks/useTeacherRooms';
 import { avgCorrectVsWrong, hardProblems, problemStats } from './lib/analytics';
 import { buildRosterCsv } from './lib/roster';
-import { useRoom } from './hooks/useRoom';
+import { useRoom, orderBattleProblems } from './hooks/useRoom';
 import { collection, getDocs, limit, orderBy, query } from 'firebase/firestore';
 import { db } from './lib/firebase';
 import type { Problem } from './lib/arena';
@@ -332,7 +332,7 @@ function BattleShell({
   myStreak: number;
   onExit: () => void;
 }) {
-  const { roomId, busy, findOrCreate } = useMatch(arenaId, me);
+  const { roomId, busy, error, findOrCreate } = useMatch(arenaId, me);
   const [problems, setProblems] = useState<Problem[]>([]);
   const { room, ready, answer, tick, claimWin } = useRoom(roomId, problems);
   const [awarded, setAwarded] = useState(false);
@@ -353,6 +353,9 @@ function BattleShell({
       });
   }, [roomId, arenaId]);
 
+  // 방에 고정된 10문제 순서대로 대결한다. problemIds가 없는 옛 방은 전체를 그대로 쓴다.
+  const ordered = orderBattleProblems(problems, room?.problemIds ?? []);
+
   useEffect(() => {
     if (!room || room.status !== 'playing') return;
     const t = setInterval(() => {
@@ -362,9 +365,9 @@ function BattleShell({
   }, [room, roomId, tick]);
 
   useEffect(() => {
-    if (!room || room.status !== 'finished' || awarded || problems.length === 0) return;
+    if (!room || room.status !== 'finished' || awarded || ordered.length === 0) return;
     setAwarded(true);
-    const correct = room.players.find((p) => p.uid === me.uid)?.answers.filter((a, i) => a === problems[i]?.answerIndex).length ?? 0;
+    const correct = room.players.find((p) => p.uid === me.uid)?.answers.filter((a, i) => a === ordered[i]?.answerIndex).length ?? 0;
     void finishAndAward({
       roomId: roomId!,
       winnerUid: room.winnerUid,
@@ -373,7 +376,20 @@ function BattleShell({
       myWins,
       myStreak,
     });
-  }, [room, awarded, problems, roomId, me.uid, myWins, myStreak]);
+  }, [room, awarded, ordered, roomId, me.uid, myWins, myStreak]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen grid place-items-center px-6">
+        <div className="w-full max-w-md text-center">
+          <p>{error}</p>
+          <button type="button" className="btn-primary mt-4" onClick={onExit}>
+            아레나로 돌아가기
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (busy || !room) {
     return (
@@ -383,7 +399,7 @@ function BattleShell({
     );
   }
 
-  const problem = problems[room.currentRound];
+  const problem = ordered[room.currentRound];
   return (
     <div className="min-h-screen grid place-items-center px-6 py-10">
       <div className="w-full max-w-md">
@@ -391,7 +407,7 @@ function BattleShell({
           room={room}
           meUid={me.uid}
           problem={problem ? { text: problem.text, options: problem.options } : undefined}
-          problemsLoaded={problems.length > 0}
+          problemsLoaded={ordered.length > 0}
           onReady={() => {
             void ready(me.uid);
           }}
