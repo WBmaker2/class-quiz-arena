@@ -5,6 +5,7 @@ import InviteQR from '../components/InviteQR';
 import { avgCorrectVsWrong, hardProblems, problemStats, weakStandards, type RoundRecord } from '../lib/analytics';
 import { GRADES, SUBJECTS, coverageOf, findStandard, getStandards } from '../data/curriculum2022';
 import { containsBanned } from '../lib/nickname';
+import type { NameReport } from '../hooks/useReports';
 import type { RosterStudent } from '../lib/roster';
 
 export interface LiveRoom {
@@ -48,6 +49,8 @@ export default function TeacherHome({
   onCopyArena,
   onNewArena,
   onSignOut,
+  reports,
+  onResolveReport,
   showAdmin,
   teachers,
   onAddTeacher,
@@ -71,12 +74,14 @@ export default function TeacherHome({
   onCopyArena?: (id: string) => void;
   onNewArena: () => void;
   onSignOut: () => void;
+  reports?: NameReport[];
+  onResolveReport?: (id: string) => void;
   showAdmin?: boolean;
   teachers?: string[];
   onAddTeacher?: (email: string) => void;
   onRemoveTeacher?: (email: string) => void;
 }) {
-  const [tab, setTab] = useState<'live' | 'arenas' | 'students' | 'analysis' | 'admin'>('live');
+  const [tab, setTab] = useState<'live' | 'arenas' | 'students' | 'analysis' | 'reports' | 'admin'>('live');
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [teacherEmail, setTeacherEmail] = useState('');
   const [coverageGrade, setCoverageGrade] = useState(3);
@@ -106,6 +111,9 @@ export default function TeacherHome({
           </button>
           <button type="button" onClick={() => setTab('analysis')}>
             분석
+          </button>
+          <button type="button" onClick={() => setTab('reports')}>
+            신고
           </button>
           {showAdmin && (
             <button type="button" onClick={() => setTab('admin')}>
@@ -278,6 +286,28 @@ export default function TeacherHome({
               ))}
             </Card>
           </>
+        )}
+        {tab === 'reports' && (
+          <Card>
+            <p className="font-bold mb-2">이름 신고 목록</p>
+            {(reports ?? []).length === 0 ? (
+              <EmptyState title="접수된 신고가 없어요" />
+            ) : (
+              (reports ?? []).map((r) => (
+                <div key={r.id}>
+                  <p>
+                    {r.reportedNickname} (신고: {r.reporterNickname}) —{' '}
+                    {r.status === 'open' ? '확인 중' : '처리됨'}
+                  </p>
+                  {r.status === 'open' && (
+                    <button type="button" onClick={() => onResolveReport?.(r.id)}>
+                      처리완료
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
+          </Card>
         )}
         {tab === 'admin' && showAdmin && (
           <Card>

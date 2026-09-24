@@ -143,3 +143,33 @@ describe('BattleRoom mixed types and privacy', () => {
     expect(screen.getByText('상대 이호와의 대결이었어요')).toBeTruthy();
   });
 });
+
+describe('BattleRoom report and tts', () => {
+  function finishedRoom() {
+    let room = joinRoomData(createRoomData('a1', host, 1000), guest, 2000)!;
+    return { ...room, status: 'finished' as const, winnerUid: 'u1' };
+  }
+
+  it('files a name report from the result screen', () => {
+    const onReport = vi.fn();
+    render(<BattleRoom room={finishedRoom()} meUid="u1" onReady={() => {}} onExit={() => {}} onReport={onReport} />);
+    fireEvent.click(screen.getByRole('button', { name: '상대 이름 신고하기' }));
+    expect(onReport).toHaveBeenCalledTimes(1);
+    expect(screen.getByText('신고가 접수됐어요. 선생님이 확인할 거예요.')).toBeTruthy();
+  });
+
+  it('shows a read-aloud button when supported', () => {    let room = joinRoomData(createRoomData('a1', host, 1000), guest, 2000)!;
+    room = { ...room, status: 'playing', currentRound: 0, roundEndsAt: Date.now() + 30000 };
+    render(
+      <BattleRoom
+        room={room}
+        meUid="u1"
+        problem={{ text: 'Q', options: ['1', '2', '3', '4'] }}
+        onReady={() => {}}
+        onExit={() => {}}
+      />,
+    );
+    // jsdom에는 speechSynthesis가 없어 버튼이 안 보여야 함
+    expect(screen.queryByRole('button', { name: '문제 읽어주기' })).toBeNull();
+  });
+});

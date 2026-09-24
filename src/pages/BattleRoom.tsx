@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
 import Timer from '../components/Timer';
 import type { ProblemKind } from '../lib/arena';
+import { speakProblem, stopSpeaking, ttsSupported } from '../lib/tts';
 import { canClaimWin, roundRemainingMs, type AnswerValue, type RoomData } from '../lib/battle';
 
 export default function BattleRoom({
@@ -16,6 +17,7 @@ export default function BattleRoom({
   onExit,
   problemsLoaded,
   showPlayers,
+  onReport,
 }: {
   room: RoomData;
   meUid: string;
@@ -28,6 +30,7 @@ export default function BattleRoom({
   onExit: () => void;
   /** 방 생성 시 복사된 아레나 설정. 없으면 방 값 → 그것도 없으면 비공개. */
   showPlayers?: boolean;
+  onReport?: () => void;
 }) {
   const now = nowMs ?? Date.now();
   const me = room.players.find((p) => p.uid === meUid);
@@ -35,6 +38,12 @@ export default function BattleRoom({
   const visible = showPlayers ?? room.showPlayers ?? false;
   // 결과에서는 누구와 붙었는지 항상 공개
   const opponentName = visible || room.status === 'finished' ? (opponent?.nickname ?? '???') : '???';
+  const [reported, setReported] = useState(false);
+
+  // 라운드가 바뀌거나 끝나면 읽기를 멈춘다
+  useEffect(() => {
+    stopSpeaking();
+  }, [room.currentRound, room.status]);
 
   if (room.status === 'finished') {
     const won = room.winnerUid === meUid;
@@ -46,6 +55,18 @@ export default function BattleRoom({
           내 점수 {me?.score ?? 0} : {opponent?.score ?? 0} 상대 점수
         </p>
         {opponent && <p>상대 {opponent.nickname}와의 대결이었어요</p>}
+        {opponent && !reported && onReport ? (
+          <button
+            type="button"
+            onClick={() => {
+              onReport();
+              setReported(true);
+            }}
+          >
+            상대 이름 신고하기
+          </button>
+        ) : null}
+        {reported && <p>신고가 접수됐어요. 선생님이 확인할 거예요.</p>}
         <PrimaryButton onClick={onExit}>아레나로 돌아가기</PrimaryButton>
       </Card>
     );
@@ -59,6 +80,15 @@ export default function BattleRoom({
         <Timer endsAt={room.roundEndsAt} nowMs={nowMs} />
         <p className="text-sm">대전 상대: {opponentName}</p>
         <p className="text-lg font-bold">{problem.text}</p>
+        {ttsSupported() && (
+          <button
+            type="button"
+            aria-label="문제 읽어주기"
+            onClick={() => speakProblem(problem.text, problem.options, problem.kind ?? 'choice')}
+          >
+            🔊
+          </button>
+        )}
         {timedOut ? (
           <p>시간이 지난 문제예요. 다음 라운드로 넘어가요.</p>
         ) : isShort ? (

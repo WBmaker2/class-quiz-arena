@@ -211,10 +211,54 @@ describe('TeacherHome growth tools', () => {
       <TeacherHome
         {...base}
         arenas={[]}
-        students={[{ uid: 'u1', nickname: '시발', classroomId: 'C' }]}
+        students={[{ uid: 'u1', nickname: '시발', xp: 0 }]}
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: '학생' }));
     expect(screen.getByText(/이름 확인 필요/)).toBeTruthy();
+  });
+});
+
+describe('TeacherHome reports tab', () => {
+  const base = {
+    live: [],
+    abandoned: [],
+    finished: [],
+    classroomCode: '',
+    students: [],
+    onDeleteStudent: noop,
+    onExportCsv: noop,
+    rounds: [],
+    onForceClose: noop,
+    onEditArena: noop,
+    onDeleteArena: noop,
+    onToggleLock: noop,
+    onToggleShowPlayers: noop,
+    onNewArena: noop,
+    onSignOut: noop,
+  };
+
+  it('lists reports and resolves them', () => {
+    const onResolveReport = vi.fn();
+    render(
+      <TeacherHome
+        {...base}
+        arenas={[]}
+        reports={[
+          { id: 'rep1', reporterUid: 'u1', reporterNickname: '일호', reportedUid: 'u2', reportedNickname: '나쁜이름', arenaId: 'a', classroomId: 'C', status: 'open' },
+        ]}
+        onResolveReport={onResolveReport}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '신고' }));
+    expect(screen.getByText(/나쁜이름/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '처리완료' }));
+    expect(onResolveReport).toHaveBeenCalledWith('rep1');
+  });
+
+  it('shows an empty state without reports', () => {
+    render(<TeacherHome {...base} arenas={[]} />);
+    fireEvent.click(screen.getByRole('button', { name: '신고' }));
+    expect(screen.getByText('접수된 신고가 없어요')).toBeTruthy();
   });
 });

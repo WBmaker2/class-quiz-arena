@@ -23,6 +23,7 @@ import { isMasterEmail } from './lib/admin';
 import { useTeacherRooms } from './hooks/useTeacherRooms';
 import { avgCorrectVsWrong, hardProblems, problemStats } from './lib/analytics';
 import { buildRosterCsv } from './lib/roster';
+import { useReports } from './hooks/useReports';
 import { useRoom, orderBattleProblems } from './hooks/useRoom';
 import { isCorrectAnswer } from './lib/battle';
 import { TITLE_GOODS } from './data/shop';
@@ -36,7 +37,9 @@ export type View = 'login' | 'role' | 'join' | 'student' | 'teacher' | 'battle';
 
 export interface PendingArena {
   arenaId: string;
+  classroomId: string | null;
   me: { uid: string; nickname: string; avatar: string };
+  reporterNickname: string;
   myWins: number;
   myStreak: number;
 }
@@ -109,8 +112,8 @@ export default function App() {
         nickname={user?.displayName ?? '학생'}
         classroomId={classroomId}
         animal={animal}
-        onEnter={(arenaId, me, myWins, myStreak) => {
-          setPendingArena({ arenaId, me, myWins, myStreak });
+        onEnter={(arenaId, me, myWins, myStreak, reporterNickname) => {
+          setPendingArena({ arenaId, classroomId, me, reporterNickname, myWins, myStreak });
           setView('battle');
         }}
         onSignOut={() => {
@@ -138,7 +141,9 @@ export default function App() {
     return (
       <BattleShell
         arenaId={pendingArena.arenaId}
+        classroomId={pendingArena.classroomId}
         me={pendingArena.me}
+        reporterNickname={pendingArena.reporterNickname}
         myWins={pendingArena.myWins}
         myStreak={pendingArena.myStreak}
         onExit={() => setView('student')}
@@ -160,6 +165,7 @@ function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: stri
   const { live, abandoned, finished, forceClose } = useTeacherRooms();
   const { arenas, bank, saveArena, loadProblems, removeArena, setLocked, setShowPlayers, copyArena } = useArenaAdmin(classroomId);
   const { students, removeStudent } = useStudents(classroomId);
+  const { reports, resolveReport } = useReports(classroomId);
   const { teachers, addTeacher, removeTeacher } = useTeacherAllowlist(showAdmin);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -248,6 +254,7 @@ function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: stri
       abandoned={abandoned.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
       finished={finished.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
       arenas={arenas.map((a) => ({ id: a.id, title: a.title, locked: a.locked, showPlayers: a.showPlayers ?? false, standards: a.standards ?? [] }))}
+      bank={bank}
       classroomCode={classroomId ?? ''}
       students={students}
       onDeleteStudent={(uid) => {
@@ -270,6 +277,10 @@ function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: stri
       }}
       onCopyArena={(id) => {
         void copyArena(id);
+      }}
+      reports={reports}
+      onResolveReport={(id) => {
+        void resolveReport(id);
       }}
       onNewArena={() => setCreating(true)}
       onSignOut={onSignOut}
@@ -297,7 +308,7 @@ function StudentShell({
   nickname: string;
   classroomId: string | null;
   animal: Animal;
-  onEnter: (arenaId: string, me: { uid: string; nickname: string; avatar: string }, myWins: number, myStreak: number) => void;
+  onEnter: (arenaId: string, me: { uid: string; nickname: string; avatar: string }, myWins: number, myStreak: number, reporterNickname: string) => void;
   onSignOut: () => void;
 }) {
   const { arenas } = useArenas();
@@ -318,7 +329,7 @@ function StudentShell({
       myUid={uid}
       myRank={myRank}
       onEnter={(arenaId) =>
-        onEnter(arenaId, { uid, nickname, avatar: animal }, profile?.winCount ?? 0, profile?.streak ?? 0)
+        onEnter(arenaId, { uid, nickname, avatar: animal }, profile?.winCount ?? 0, profile?.streak ?? 0, profile?.nickname ?? nickname)
       }
       onSignOut={onSignOut}
       onBuyAvatar={(id, price) => {
@@ -350,13 +361,17 @@ function StudentShell({
 
 function BattleShell({
   arenaId,
+  classroomId,
   me,
+  reporterNickname,
   myWins,
   myStreak,
   onExit,
 }: {
   arenaId: string;
+  classroomId: string | null;
   me: { uid: string; nickname: string; avatar: string };
+  reporterNickname: string;
   myWins: number;
   myStreak: number;
   onExit: () => void;
@@ -446,6 +461,20 @@ function BattleShell({
           }}
           onClaimWin={() => {
             void claimWin(me.uid);
+          }}
+          onReport={() => {
+            const opponent = room.players.find((p) => p.uid !== me.uid);
+            if (!opponent || !classroomId) return;
+            void setDoc(doc(collection(db, 'reports')), {
+              reporterUid: me.uid,
+              reporterNickname,
+              reportedUid: opponent.uid,
+              reportedNickname: opponent.nickname,
+              arenaId,
+              classroomId,
+              status: 'open',
+              createdAt: Date.now(),
+            });
           }}
           onExit={onExit}
         />

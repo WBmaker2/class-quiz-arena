@@ -99,5 +99,15 @@ service cloud.firestore {
       allow update: if false;
       allow delete: if false;
     }
+    match /reports/{id} {
+      // 신고 읽기·처리는 해당 학급 선생님만
+      allow read: if isSignedIn() && teacherOf(resource.data.classroomId);
+      // 신고는 본인 이름으로만, open 상태로만 만든다
+      allow create: if isSignedIn()
+        && request.resource.data.reporterUid == request.auth.uid
+        && request.resource.data.status == 'open';
+      allow update: if isSignedIn() && teacherOf(resource.data.classroomId);
+      allow delete: if false;
+    }
   }
 }
