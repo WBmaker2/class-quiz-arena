@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeInviteCode, isValidInviteCode } from './classroom';
+import { normalizeInviteCode, isValidInviteCode, generateInviteCode } from './classroom';
 
 describe('normalizeInviteCode', () => {
   it('trims and uppercases', () => {
@@ -12,5 +12,14 @@ describe('normalizeInviteCode', () => {
 
   it('rejects non-alphanumeric code', () => {
     expect(isValidInviteCode('AB!@#%')).toBe(false);
+  });
+
+  it('generates 6-char alphanumeric codes', () => {
+    expect(generateInviteCode()).toMatch(/^[A-Z0-9]{6}$/);
+  });
+
+  it('generates unique codes', () => {
+    const set = new Set(Array.from({ length: 100 }, () => generateInviteCode()));
+    expect(set.size).toBeGreaterThan(90);
   });
 });

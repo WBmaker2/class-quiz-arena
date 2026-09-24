@@ -5,6 +5,7 @@ import LoginScreen from './pages/LoginScreen';
 import RoleSelect, { type Role } from './pages/RoleSelect';
 import StudentHome from './pages/StudentHome';
 import EmptyState from './components/EmptyState';
+import type { Animal } from './components/Avatar';
 import { useArenas } from './hooks/useArenas';
 import { useAuth } from './hooks/useAuth';
 import { useClassroom } from './hooks/useClassroom';
@@ -28,6 +29,7 @@ export interface PendingArena {
 export default function App() {
   const [view, setView] = useState<View>('login');
   const [role, setRole] = useState<Role | null>(null);
+  const [animal, setAnimal] = useState<Animal>('cat');
   const [pendingArena, setPendingArena] = useState<PendingArena | null>(null);
   const { classroomId, join } = useClassroom();
   const { user, loading, signInWithGoogle, signOut } = useAuth();
@@ -55,8 +57,9 @@ export default function App() {
       <div className="min-h-screen grid place-items-center px-6 py-10">
         <div className="w-full max-w-md">
           <RoleSelect
-            onSelect={(r: Role) => {
+            onSelect={(r: Role, a: Animal) => {
               setRole(r);
+              setAnimal(a);
               setView('join');
             }}
           />
@@ -69,7 +72,7 @@ export default function App() {
     return (
       <div className="min-h-screen grid place-items-center px-6 py-10">
         <div className="w-full max-w-md">
-          <ClassJoin onJoin={(code) => { void join(code); setView(role === 'teacher' ? 'teacher' : 'student'); }} />
+          <ClassJoin onJoin={(code) => { void join(code, user?.uid ?? 'local-test', { nickname: user?.displayName ?? '학생', role: role ?? 'student', avatar: animal }); setView(role === 'teacher' ? 'teacher' : 'student'); }} />
         </div>
       </div>
     );
