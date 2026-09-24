@@ -6,7 +6,8 @@ export default function ClassJoin({ onJoin }: { onJoin: (code: string) => void }
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const submit = () => {
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
     if (!isValidInviteCode(code)) {
       setError('초대 코드 6자리를 확인해주세요');
       return;
@@ -18,17 +19,20 @@ export default function ClassJoin({ onJoin }: { onJoin: (code: string) => void }
   return (
     <Card>
       <h1>어떤 학급에 들어갈까요?</h1>
-      <label htmlFor="invite-code">초대 코드</label>
-      <input
-        id="invite-code"
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-        placeholder="예: A1B2C3"
-      />
-      {error && <p role="alert">{error}</p>}
-      <button type="button" className="btn-primary w-full" onClick={submit}>
-        학급 들어가기
-      </button>
+      <form onSubmit={submit}>
+        <label htmlFor="invite-code">초대 코드</label>
+        <input
+          id="invite-code"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="예: A1B2C3"
+          maxLength={8}
+        />
+        {error && <p role="alert">{error}</p>}
+        <button type="submit" className="btn-primary w-full">
+          학급 들어가기
+        </button>
+      </form>
     </Card>
   );
 }

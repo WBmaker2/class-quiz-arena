@@ -19,4 +19,27 @@ describe('App', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Google 계정으로 시작하기' }));
     expect(screen.getByText('반가워요! 누구신가요?')).toBeTruthy();
   });
+
+  it('shows login when signed out', () => {
+    render(<App />);
+    expect(screen.getByText('선생님 문제로 친구와 1:1 퀴즈 대결!')).toBeTruthy();
+  });
+
+  it('routes teacher to teacher stub', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Google 계정으로 시작하기' }));
+    fireEvent.click(screen.getByRole('button', { name: '선생님으로 시작' }));
+    fireEvent.change(screen.getByLabelText('초대 코드'), { target: { value: 'A1B2C3' } });
+    fireEvent.click(screen.getByRole('button', { name: '학급 들어가기' }));
+    expect(screen.getByText('선생님 공간은 다음 단계에서 열려요')).toBeTruthy();
+  });
+
+  it('routes student to student stub', () => {
+    render(<App />);
+    fireEvent.click(screen.getByRole('button', { name: 'Google 계정으로 시작하기' }));
+    fireEvent.click(screen.getByRole('button', { name: '학생으로 시작' }));
+    fireEvent.change(screen.getByLabelText('초대 코드'), { target: { value: 'A1B2C3' } });
+    fireEvent.click(screen.getByRole('button', { name: '학급 들어가기' }));
+    expect(screen.getByText('학생 홈은 다음 단계에서 열려요')).toBeTruthy();
+  });
 });
