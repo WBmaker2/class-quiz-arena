@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #faf6ec;
+  --color-ink: #26211a;
+  --color-primary: #2545a0;
+  --font-sans: "Pretendard Variable", Pretendard, ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+.card-ink {
+  background: #fffdf6;
+  border: 2px solid #26211a;
+  border-radius: 16px;
+  box-shadow: #26211a 0px 6px 0px, rgba(38, 33, 26, 0.15) 0px 20px 50px;
+}
+
+.btn-primary {
+  background: #2545a0;
+  color: #fff;
+  border: 2px solid #26211a;
+  border-radius: 16px;
+  box-shadow: #26211a 0px 3px 0px;
+  height: 52px;
+  font-weight: 700;
+  font-size: 16px;
+}
