@@ -1365,7 +1365,7 @@ export default function BattleRoom({
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `npm test`
-Expected: PASS (22 + 3 = 25 tests)
+Expected: PASS (35 + 3 = 38 tests)
 
 - [ ] **Step 5: Commit**
 
@@ -1828,7 +1828,7 @@ useEffect(() => {
 - [ ] **Step 4: 전체 테스트 + 빌드 + 에뮬레이터 시드 검증**
 
 Run: `npm test && npm run build`
-Expected: PASS (25 + 4 = 29 tests)
+Expected: PASS (38 + 4 = 42 tests)
 
 Run (에뮬레이터 별도 터미널에서 `npx firebase-tools emulators:start` 실행 중일 때):
 ```bash
