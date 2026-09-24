@@ -29,7 +29,7 @@ export default function App() {
   const [view, setView] = useState<View>('login');
   const [role, setRole] = useState<Role | null>(null);
   const [pendingArena, setPendingArena] = useState<PendingArena | null>(null);
-  const { classroomId } = useClassroom();
+  const { classroomId, join } = useClassroom();
   const { user, loading, signInWithGoogle, signOut } = useAuth();
 
   const startLogin = () => {
@@ -69,7 +69,7 @@ export default function App() {
     return (
       <div className="min-h-screen grid place-items-center px-6 py-10">
         <div className="w-full max-w-md">
-          <ClassJoin onJoin={() => setView(role === 'teacher' ? 'teacher' : 'student')} />
+          <ClassJoin onJoin={(code) => { void join(code); setView(role === 'teacher' ? 'teacher' : 'student'); }} />
         </div>
       </div>
     );

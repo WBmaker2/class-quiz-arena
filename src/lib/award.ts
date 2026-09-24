@@ -1,4 +1,4 @@
-import { doc, increment, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { db } from './firebase';
 import { computeLevel, xpAward } from './battle';
 

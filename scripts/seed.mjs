@@ -1,18 +1,18 @@
-import { initializeApp } from 'firebase/app';
-import { connectFirestoreEmulator, doc, getFirestore, setDoc } from 'firebase/firestore';
+import admin from 'firebase-admin';
 
-const app = initializeApp({ apiKey: 'demo-key', authDomain: 'demo.local', projectId: 'demo-quiz-arena' });
-const db = getFirestore(app);
-connectFirestoreEmulator(db, '127.0.0.1', 8080);
+process.env.FIRESTORE_EMULATOR_HOST ??= '127.0.0.1:8080';
 
-await setDoc(doc(db, 'classrooms', 'A1B2C3'), {
+admin.initializeApp({ projectId: 'demo-quiz-arena' });
+const db = admin.firestore();
+
+await db.doc('classrooms/A1B2C3').set({
   name: '4학년 3반',
   inviteCode: 'A1B2C3',
   teacherId: 'teacher-demo',
   locked: false,
 });
 
-await setDoc(doc(db, 'arenas', 'arena-basics'), {
+await db.doc('arenas/arena-basics').set({
   classroomId: 'A1B2C3',
   title: '기초 덧셈 아레나',
   desc: '두 자리 수 덧셈 3문제',
@@ -27,7 +27,7 @@ const problems = [
   { text: '34 + 58 = ?', options: ['82', '92', '102', '112'], answerIndex: 1, roundTimeSec: 30 },
 ];
 for (const [i, p] of problems.entries()) {
-  await setDoc(doc(db, 'arenas', 'arena-basics', 'problems', `p${i + 1}`), p);
+  await db.doc(`arenas/arena-basics/problems/p${i + 1}`).set(p);
 }
 
 console.log('seeded: classroom A1B2C3, arena-basics, 3 problems');
