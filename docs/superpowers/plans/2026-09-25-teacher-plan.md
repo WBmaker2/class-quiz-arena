@@ -1131,7 +1131,7 @@ git commit -m "feat: add roster management and battle analytics"
 
 - [ ] **Step 1: Write the failing test**
 
-`src/App.test.tsx`에 1건 추가:
+`src/App.test.tsx`의 기존 `'routes teacher to teacher stub'` 테스트 1건을 아래 테스트로 교체한다 (추가 아님 — 동일 흐름의 기대문 교체이므로 테스트 수는 그대로):
 ```tsx
 it('enters teacher workspace after join as teacher', () => {
   render(<App />);
@@ -1142,7 +1142,9 @@ it('enters teacher workspace after join as teacher', () => {
   expect(screen.getByText('선생님 워크스페이스')).toBeTruthy();
 });
 ```
-(기존 'routes teacher to teacher stub' 테스트는 스텁 문구를 보므로 실패한다 — 기대문을 위 워크스페이스 문구로 교체한다. 계획된 교체.)
+(기존 'routes teacher to teacher stub' 테스트는 스텁 문구를 보므로 삭제가 아니라 위 테스트로의 교체다 — 교체 후 App.test 전체 개수는 그대로 유지된다.)
+
+`vitest.emu.config.ts`:
 
 `vitest.emu.config.ts`:
 ```ts
@@ -1395,9 +1397,9 @@ await db.doc('users/student-demo-2').set({
 - [ ] **Step 4: 전체 테스트 + 빌드 + 에뮬레이터 검증**
 
 Run: `npm test && npm run build`
-Expected: PASS (59 + 1 = 60 tests)
+Expected: PASS (59 tests: 교체이므로 개수 동일)
 
-Run (에뮬레이터 기동 중):
+Run (에뮬레이터 기동 중 — 프로젝트 지정 필요 시 `npx firebase-tools emulators:start --project demo-quiz-arena`):
 ```bash
 FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node scripts/seed.mjs
 npx vitest run --config vitest.emu.config.ts
