@@ -18,7 +18,7 @@ describe('StudentHome', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: '지금 바로 대결!' }));
     expect(onEnter).toHaveBeenCalledWith('a1');
-    expect(screen.getByRole('button', { name: '둘러보기' })).toHaveClass('tab-active');
+    expect(screen.getByRole('button', { name: '둘러보기' }).classList.contains('tab-active')).toBe(true);
   });
 
   it('switches to leaderboard tab', () => {
