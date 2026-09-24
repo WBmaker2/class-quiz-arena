@@ -320,7 +320,7 @@ describe('TeacherHome classroom management', () => {
   it('renames the classroom', () => {
     const onRenameClassroom = vi.fn();
     render(<TeacherHome {...base} arenas={[]} onRenameClassroom={onRenameClassroom} />);
-    fireEvent.click(screen.getByRole('button', { name: '학생' }));
+    fireEvent.click(screen.getByRole('button', { name: '학급' }));
     fireEvent.change(screen.getByLabelText('학급 이름'), { target: { value: '5학년 1반' } });
     fireEvent.click(screen.getByRole('button', { name: '이름 저장' }));
     expect(onRenameClassroom).toHaveBeenCalledWith('5학년 1반');
@@ -329,7 +329,7 @@ describe('TeacherHome classroom management', () => {
   it('opens the new-classroom form', () => {
     const onNewClassroom = vi.fn();
     render(<TeacherHome {...base} arenas={[]} onNewClassroom={onNewClassroom} />);
-    fireEvent.click(screen.getByRole('button', { name: '학생' }));
+    fireEvent.click(screen.getByRole('button', { name: '학급' }));
     fireEvent.click(screen.getByRole('button', { name: '새 학급 만들기' }));
     expect(onNewClassroom).toHaveBeenCalledTimes(1);
   });

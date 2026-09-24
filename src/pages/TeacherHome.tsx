@@ -91,7 +91,7 @@ export default function TeacherHome({
   onAddTeacher?: (email: string) => void;
   onRemoveTeacher?: (email: string) => void;
 }) {
-  const [tab, setTab] = useState<'live' | 'arenas' | 'students' | 'analysis' | 'reports' | 'admin'>('live');
+  const [tab, setTab] = useState<'live' | 'arenas' | 'students' | 'analysis' | 'reports' | 'classroom' | 'admin'>('live');
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [teacherEmail, setTeacherEmail] = useState('');
   const [coverageGrade, setCoverageGrade] = useState(3);
@@ -135,6 +135,9 @@ export default function TeacherHome({
           </button>
           <button type="button" onClick={() => setTab('reports')}>
             신고
+          </button>
+          <button type="button" onClick={() => setTab('classroom')}>
+            학급
           </button>
           {showAdmin && (
             <button type="button" onClick={() => setTab('admin')}>
@@ -223,20 +226,6 @@ export default function TeacherHome({
         )}
         {tab === 'students' && (
           <Card>
-            <p className="font-bold mb-2">학급 관리</p>
-            <label htmlFor="classroom-name">학급 이름</label>
-            <input
-              id="classroom-name"
-              value={className}
-              maxLength={30}
-              onChange={(e) => setClassName(e.target.value)}
-            />
-            <button type="button" onClick={() => onRenameClassroom?.(className)}>
-              이름 저장
-            </button>
-            <button type="button" onClick={() => onNewClassroom?.()}>
-              새 학급 만들기
-            </button>
             <p className="font-bold mb-2">학생 일괄 관리</p>
             <InviteQR code={classroomCode} />
             <p>학급 초대 QR — 탭해서 확대</p>
@@ -345,6 +334,25 @@ export default function TeacherHome({
                 </div>
               ))
             )}
+          </Card>
+        )}
+        {tab === 'classroom' && (
+          <Card>
+            <p className="font-bold mb-2">학급 관리</p>
+            <label htmlFor="classroom-name">학급 이름</label>
+            <input
+              id="classroom-name"
+              value={className}
+              maxLength={30}
+              onChange={(e) => setClassName(e.target.value)}
+            />
+            <button type="button" onClick={() => onRenameClassroom?.(className)}>
+              이름 저장
+            </button>
+            <button type="button" onClick={() => onNewClassroom?.()}>
+              새 학급 만들기
+            </button>
+            <p className="text-sm mt-2">초대 코드: {classroomCode}</p>
           </Card>
         )}
         {tab === 'admin' && showAdmin && (
