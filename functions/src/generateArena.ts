@@ -1,4 +1,3 @@
-import * as admin from 'firebase-admin';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
 import {
@@ -9,13 +8,9 @@ import {
   type GenerateArenaInput,
 } from './validate';
 
-admin.initializeApp();
-const db = admin.firestore();
-
-// TODO: wire the real key at deploy time via Secret Manager / env config;
-// the Gemini call below reads process.env.GEMINI_API_KEY.
 const GEMINI_MODEL = 'gemini-2.0-flash';
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+// NOTE: deploy-time wiring — set GEMINI_API_KEY via Secret Manager / env config.
 
 /** Request shape Task 5's editor sends (all fields plain JSON). */
 export interface GenerateArenaRequest {
@@ -26,9 +21,9 @@ export interface GenerateArenaRequest {
   topic?: string;
 }
 
-/** Response shape Task 5's editor receives. */
+/** Response: problems only. Nothing is persisted — the editor saves
+ * the final arena after teacher review, so no orphan docs accumulate. */
 export interface GenerateArenaResponse {
-  arenaId: string;
   problems: DraftProblem[];
 }
 
@@ -113,25 +108,6 @@ export const generateArena = onCall(
       throw new HttpsError('internal', 'No valid problems generated');
     }
 
-    const arenaRef = await db.collection('arenas').add({
-      grade: parsed.value.grade,
-      subject: parsed.value.subject,
-      standards: parsed.value.standards,
-      ...(parsed.value.topic ? { topic: parsed.value.topic } : {}),
-      status: 'draft',
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    const batch = db.batch();
-    problems.forEach((p, i) => {
-      batch.set(arenaRef.collection('problems').doc(), {
-        ...p,
-        order: i,
-        status: 'draft',
-      });
-    });
-    await batch.commit();
-
-    return { arenaId: arenaRef.id, problems };
+    return { problems };
   },
 );

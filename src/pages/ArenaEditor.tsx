@@ -21,7 +21,6 @@ interface GenerateArenaRequest {
 }
 
 interface GenerateArenaResponse {
-  arenaId: string;
   problems: { text: string; options: string[]; answerIndex: number; explanation?: string }[];
 }
 
