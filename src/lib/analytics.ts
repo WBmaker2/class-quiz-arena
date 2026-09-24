@@ -3,6 +3,7 @@ export interface RoundRecord {
   arenaId: string;
   problemIndex: number;
   answers: { uid: string; correct: boolean }[];
+  standardCode?: string;
 }
 
 export interface ProblemStat {
@@ -50,4 +51,27 @@ export function activeStudents(rounds: RoundRecord[], minRounds: number): string
     }
   }
   return [...count.entries()].filter(([, c]) => c >= minRounds).map(([uid]) => uid);
+}
+
+export interface StandardStat {
+  code: string;
+  asked: number;
+  correct: number;
+  rate: number;
+}
+
+/** 성취기준별 정답률 → 낮은 순. 기준 없는 라운드는 제외. */
+export function weakStandards(rounds: RoundRecord[], count: number): StandardStat[] {
+  const map = new Map<string, { asked: number; correct: number }>();
+  for (const r of rounds) {
+    if (!r.standardCode) continue;
+    const cur = map.get(r.standardCode) ?? { asked: 0, correct: 0 };
+    cur.asked += r.answers.length;
+    cur.correct += r.answers.filter((a) => a.correct).length;
+    map.set(r.standardCode, cur);
+  }
+  return [...map.entries()]
+    .map(([code, v]) => ({ code, asked: v.asked, correct: v.correct, rate: v.asked === 0 ? 1 : v.correct / v.asked }))
+    .sort((a, b) => a.rate - b.rate || b.asked - a.asked)
+    .slice(0, count);
 }

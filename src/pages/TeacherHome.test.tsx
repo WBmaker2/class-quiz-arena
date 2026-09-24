@@ -139,3 +139,82 @@ describe('TeacherHome arena privacy', () => {
     expect(screen.getByRole('button', { name: '참가자 비공개' })).toBeTruthy();
   });
 });
+
+describe('TeacherHome growth tools', () => {
+  const base = {
+    live: [],
+    abandoned: [],
+    finished: [],
+    classroomCode: '',
+    students: [],
+    onDeleteStudent: noop,
+    onExportCsv: noop,
+    rounds: [],
+    onForceClose: noop,
+    onEditArena: noop,
+    onDeleteArena: noop,
+    onToggleLock: noop,
+    onToggleShowPlayers: noop,
+    onNewArena: noop,
+    onSignOut: noop,
+  };
+
+  it('shows weak standards Top3 with summaries', () => {
+    render(
+      <TeacherHome
+        {...base}
+        arenas={[]}
+        rounds={[
+          { roomId: 'r1', arenaId: 'a', problemIndex: 0, standardCode: '3수01-02', answers: [{ uid: 'u1', correct: false }] },
+          { roomId: 'r1', arenaId: 'a', problemIndex: 1, standardCode: '3수01-01', answers: [{ uid: 'u1', correct: true }] },
+        ]}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '분석' }));
+    expect(screen.getByText('우리 반이 어려워해요 Top 3 (최근 7일)')).toBeTruthy();
+    expect(screen.getAllByText(/3수01-02/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/정답률 0%/)).toBeTruthy();
+  });
+
+  it('paints the coverage map from classroom arenas', () => {
+    render(
+      <TeacherHome
+        {...base}
+        arenas={[{ id: 'a1', title: '덧셈', locked: false, standards: ['3수01-01'] }]}
+        rounds={[]}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '분석' }));
+    expect(screen.getByText('2개 중 1개 출제')).toBeTruthy();
+    expect(screen.getByText(/출제됨/)).toBeTruthy();
+    expect(screen.getByText(/안 됨/)).toBeTruthy();
+  });
+
+  it('copies an arena from the bank', () => {
+    const onCopyArena = vi.fn();
+    render(
+      <TeacherHome
+        {...base}
+        arenas={[]}
+        bank={[{ id: 'b1', title: '남의 덧셈', subject: '수학', grade: 3 }]}
+        onCopyArena={onCopyArena}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '아레나' }));
+    expect(screen.getByText('문제은행에서 가져오기')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '가져오기' }));
+    expect(onCopyArena).toHaveBeenCalledWith('b1');
+  });
+
+  it('flags banned nicknames in the roster', () => {
+    render(
+      <TeacherHome
+        {...base}
+        arenas={[]}
+        students={[{ uid: 'u1', nickname: '시발', classroomId: 'C' }]}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '학생' }));
+    expect(screen.getByText(/이름 확인 필요/)).toBeTruthy();
+  });
+});

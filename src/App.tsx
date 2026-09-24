@@ -158,7 +158,7 @@ export default function App() {
 function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: string | null; userEmail: string | null; onSignOut: () => void }) {
   const showAdmin = isMasterEmail(userEmail);
   const { live, abandoned, finished, forceClose } = useTeacherRooms();
-  const { arenas, saveArena, loadProblems, removeArena, setLocked, setShowPlayers } = useArenaAdmin(classroomId);
+  const { arenas, bank, saveArena, loadProblems, removeArena, setLocked, setShowPlayers, copyArena } = useArenaAdmin(classroomId);
   const { students, removeStudent } = useStudents(classroomId);
   const { teachers, addTeacher, removeTeacher } = useTeacherAllowlist(showAdmin);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -247,7 +247,7 @@ function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: stri
       live={live.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
       abandoned={abandoned.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
       finished={finished.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
-      arenas={arenas.map((a) => ({ id: a.id, title: a.title, locked: a.locked, showPlayers: a.showPlayers ?? false }))}
+      arenas={arenas.map((a) => ({ id: a.id, title: a.title, locked: a.locked, showPlayers: a.showPlayers ?? false, standards: a.standards ?? [] }))}
       classroomCode={classroomId ?? ''}
       students={students}
       onDeleteStudent={(uid) => {
@@ -267,6 +267,9 @@ function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: stri
       }}
       onToggleShowPlayers={(id, showPlayers) => {
         void setShowPlayers(id, showPlayers);
+      }}
+      onCopyArena={(id) => {
+        void copyArena(id);
       }}
       onNewArena={() => setCreating(true)}
       onSignOut={onSignOut}

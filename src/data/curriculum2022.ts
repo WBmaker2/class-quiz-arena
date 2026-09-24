@@ -14,3 +14,30 @@ const DATA: Record<string, Standard[]> = {
 export function getStandards(grade: number, subject: string): Standard[] {
   return DATA[`${grade}-${subject}`] ?? [];
 }
+
+export const GRADES = [1, 2, 3, 4, 5, 6];
+export const SUBJECTS = ['국어', '수학', '사회', '과학', '영어'];
+
+/** 코드로 기준 찾기 (학년·과목 정보 포함). */
+export function findStandard(code: string): { grade: number; subject: string; summary: string } | null {
+  for (const [key, list] of Object.entries(DATA)) {
+    const found = list.find((s) => s.code === code);
+    if (found) {
+      const [grade, subject] = key.split('-');
+      return { grade: Number(grade), subject, summary: found.summary };
+    }
+  }
+  return null;
+}
+
+/** 학급 아레나들의 standards[]에 코드가 하나라도 있으면 출제됨. */
+export function coverageOf(
+  standards: Standard[],
+  arenas: { standards?: string[] }[],
+): { code: string; summary: string; covered: boolean }[] {
+  const covered = new Set<string>();
+  for (const a of arenas) {
+    for (const c of a.standards ?? []) covered.add(c);
+  }
+  return standards.map((s) => ({ code: s.code, summary: s.summary, covered: covered.has(s.code) }));
+}

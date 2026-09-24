@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activeStudents, avgCorrectVsWrong, hardProblems, problemStats, type RoundRecord } from './analytics';
+import { activeStudents, avgCorrectVsWrong, hardProblems, problemStats, weakStandards, type RoundRecord } from './analytics';
 
 const rounds: RoundRecord[] = [
   { roomId: 'r1', arenaId: 'a1', problemIndex: 0, answers: [{ uid: 'u1', correct: true }, { uid: 'u2', correct: false }] },
@@ -31,5 +31,19 @@ describe('analytics', () => {
   it('handles empty rounds', () => {
     expect(avgCorrectVsWrong([])).toEqual({ avgCorrect: 0, avgWrong: 0 });
     expect(hardProblems([], 3)).toEqual([]);
+  });
+});
+
+describe('weakStandards', () => {
+  it('ranks standards by lowest correct rate', () => {
+    const rounds: RoundRecord[] = [
+      { roomId: 'r1', arenaId: 'a', problemIndex: 0, standardCode: '3수01-01', answers: [{ uid: 'u1', correct: true }, { uid: 'u2', correct: false }] },
+      { roomId: 'r1', arenaId: 'a', problemIndex: 1, standardCode: '3수01-02', answers: [{ uid: 'u1', correct: false }, { uid: 'u2', correct: false }] },
+      { roomId: 'r1', arenaId: 'a', problemIndex: 2, answers: [{ uid: 'u1', correct: false }] },
+    ];
+    const weak = weakStandards(rounds, 3);
+    expect(weak.map((w) => w.code)).toEqual(['3수01-02', '3수01-01']);
+    expect(weak[0]).toMatchObject({ asked: 2, correct: 0, rate: 0 });
+    expect(weak[1].rate).toBe(0.5);
   });
 });

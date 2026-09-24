@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { collection, deleteDoc, doc, getDocs, onSnapshot, orderBy, query, setDoc, where } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, orderBy, query, setDoc, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import type { Arena, Problem, ProblemKind } from '../lib/arena';
+import type { Arena, ProblemKind } from '../lib/arena';
 
 export interface ArenaInput {
   title: string;
@@ -40,8 +40,37 @@ function toEditable(data: Record<string, unknown>): EditableProblem {
   };
 }
 
+export interface BankArena {
+  id: string;
+  title: string;
+  desc: string;
+  subject: string;
+  grade?: number;
+}
+
+/** 은행 복제용 순수 조립. 테스트에서 가져오기 결과를 검증한다. */
+export function buildArenaCopy(
+  source: BankArena & { topic?: string; standards?: string[]; questionCount?: number },
+  problems: EditableProblem[],
+): { input: ArenaInput; problems: EditableProblem[] } {
+  return {
+    input: {
+      title: `${source.title} (복사)`,
+      desc: source.desc,
+      subject: source.subject,
+      questionCount: problems.length,
+      grade: source.grade,
+      topic: source.topic,
+      standards: source.standards,
+      status: 'published',
+    },
+    problems,
+  };
+}
+
 export function useArenaAdmin(classroomId: string | null) {
   const [arenas, setArenas] = useState<Arena[]>([]);
+  const [bank, setBank] = useState<BankArena[]>([]);
 
   useEffect(() => {
     if (!classroomId) return;
@@ -49,6 +78,22 @@ export function useArenaAdmin(classroomId: string | null) {
       query(collection(db, 'arenas'), where('classroomId', '==', classroomId)),
       (snap) => {
         setArenas(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Arena, 'id'>) })));
+      },
+      () => {},
+    );
+  }, [classroomId]);
+
+  useEffect(() => {
+    if (!classroomId) return;
+    return onSnapshot(
+      query(collection(db, 'arenas'), where('locked', '==', false)),
+      (snap) => {
+        setBank(
+          snap.docs
+            .map((d) => ({ id: d.id, ...(d.data() as Omit<BankArena, 'id'> & { classroomId?: string; status?: string }) }))
+            .filter((a) => a.classroomId !== classroomId && a.status !== 'draft')
+            .map(({ id, title, desc, subject, grade }) => ({ id, title, desc, subject, grade })),
+        );
       },
       () => {},
     );
@@ -112,5 +157,36 @@ export function useArenaAdmin(classroomId: string | null) {
     await setDoc(doc(db, 'arenas', id), { showPlayers }, { merge: true });
   };
 
-  return { arenas, saveArena, loadProblems, removeArena, setLocked, setShowPlayers };
+  /** 은행 아레나를 내 학급에 비공개 복제한다. */
+  const copyArena = async (sourceId: string) => {
+    const sourceSnap = await getDoc(doc(db, 'arenas', sourceId));
+    if (!sourceSnap.exists()) throw new Error('은행에 없는 아레나예요');
+    const source = sourceSnap.data() as BankArena & {
+      topic?: string;
+      standards?: string[];
+      questionCount?: number;
+    };
+    const probSnap = await getDocs(collection(db, 'arenas', sourceId, 'problems'));
+    const problems = probSnap.docs
+      .map((d) => ({ id: d.id, ...toEditable(d.data()) }))
+      .sort((a, b) => parseInt(a.id.slice(1), 10) - parseInt(b.id.slice(1), 10))
+      .map(({ text, kind, options, answerIndex, answerText, explanation, standardCode }) => ({
+        text,
+        kind,
+        options,
+        answerIndex,
+        answerText,
+        explanation,
+        standardCode,
+      }));
+    const { input, problems: items } = buildArenaCopy(source, problems);
+    const ref = doc(collection(db, 'arenas'));
+    await setDoc(ref, { ...input, classroomId, locked: true });
+    for (const [i, p] of items.entries()) {
+      await setDoc(doc(db, 'arenas', ref.id, 'problems', `p${i + 1}`), { ...p, roundTimeSec: 30 });
+    }
+    return ref.id;
+  };
+
+  return { arenas, bank, saveArena, loadProblems, removeArena, setLocked, setShowPlayers, copyArena };
 }

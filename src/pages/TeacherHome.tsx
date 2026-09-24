@@ -2,7 +2,9 @@ import { useState } from 'react';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import InviteQR from '../components/InviteQR';
-import { avgCorrectVsWrong, hardProblems, problemStats, type RoundRecord } from '../lib/analytics';
+import { avgCorrectVsWrong, hardProblems, problemStats, weakStandards, type RoundRecord } from '../lib/analytics';
+import { GRADES, SUBJECTS, coverageOf, findStandard, getStandards } from '../data/curriculum2022';
+import { containsBanned } from '../lib/nickname';
 import type { RosterStudent } from '../lib/roster';
 
 export interface LiveRoom {
@@ -17,6 +19,14 @@ export interface ArenaRow {
   locked: boolean;
   /** true면 학생에게 상대 공개. 없으면 비공개로 간주. */
   showPlayers?: boolean;
+  standards?: string[];
+}
+
+export interface BankArena {
+  id: string;
+  title: string;
+  subject: string;
+  grade?: number;
 }
 
 export default function TeacherHome({
@@ -24,6 +34,7 @@ export default function TeacherHome({
   abandoned,
   finished,
   arenas,
+  bank,
   classroomCode,
   students,
   onDeleteStudent,
@@ -34,6 +45,7 @@ export default function TeacherHome({
   onDeleteArena,
   onToggleLock,
   onToggleShowPlayers,
+  onCopyArena,
   onNewArena,
   onSignOut,
   showAdmin,
@@ -45,6 +57,7 @@ export default function TeacherHome({
   abandoned: LiveRoom[];
   finished: LiveRoom[];
   arenas: ArenaRow[];
+  bank?: BankArena[];
   classroomCode: string;
   students: RosterStudent[];
   onDeleteStudent: (uid: string) => void;
@@ -55,6 +68,7 @@ export default function TeacherHome({
   onDeleteArena: (id: string) => void;
   onToggleLock: (id: string, locked: boolean) => void;
   onToggleShowPlayers: (id: string, showPlayers: boolean) => void;
+  onCopyArena?: (id: string) => void;
   onNewArena: () => void;
   onSignOut: () => void;
   showAdmin?: boolean;
@@ -65,10 +79,16 @@ export default function TeacherHome({
   const [tab, setTab] = useState<'live' | 'arenas' | 'students' | 'analysis' | 'admin'>('live');
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [teacherEmail, setTeacherEmail] = useState('');
+  const [coverageGrade, setCoverageGrade] = useState(3);
+  const [coverageSubject, setCoverageSubject] = useState('수학');
 
   const stats = problemStats(rounds);
   const hard = hardProblems(stats, 3);
   const avg = avgCorrectVsWrong(rounds);
+  const weak = weakStandards(rounds, 3);
+  const coverageStandards = getStandards(coverageGrade, coverageSubject);
+  const coverage = coverageOf(coverageStandards, arenas);
+  const coveredCount = coverage.filter((c) => c.covered).length;
 
   return (
     <div className="min-h-screen px-6 py-10">
@@ -151,6 +171,22 @@ export default function TeacherHome({
                 </button>
               </div>
             ))}
+            <p className="font-bold mt-4">문제은행에서 가져오기</p>
+            {(bank ?? []).length === 0 ? (
+              <p>가져올 수 있는 아레나가 없어요</p>
+            ) : (
+              (bank ?? []).map((b) => (
+                <div key={b.id}>
+                  <p>
+                    {b.title} · {b.subject}
+                    {b.grade != null ? ` · ${b.grade}학년` : ''}
+                  </p>
+                  <button type="button" onClick={() => onCopyArena?.(b.id)}>
+                    가져오기
+                  </button>
+                </div>
+              ))
+            )}
           </Card>
         )}
         {tab === 'students' && (
@@ -164,7 +200,10 @@ export default function TeacherHome({
             ) : (
               students.map((s) => (
                 <div key={s.uid}>
-                  <p>{s.nickname}</p>
+                  <p>
+                    {s.nickname}
+                    {containsBanned(s.nickname) && <span className="ml-1 text-xs">⚠ 이름 확인 필요</span>}
+                  </p>
                   <button type="button" onClick={() => onDeleteStudent(s.uid)}>
                     학생 삭제
                   </button>
@@ -177,23 +216,68 @@ export default function TeacherHome({
           </Card>
         )}
         {tab === 'analysis' && (
-          <Card>
-            {rounds.length === 0 ? (
-              <EmptyState title="아직 분석할 기록이 없어요" />
-            ) : (
-              <div>
-                <p>어려운 문제 {hard.length}개</p>
-                {hard.map((h) => (
-                  <p key={h.problemIndex}>
-                    {h.problemIndex + 1}번 문제 — {h.correct}/{h.asked} 정답
+          <>
+            <Card>
+              {rounds.length === 0 ? (
+                <EmptyState title="아직 분석할 기록이 없어요" />
+              ) : (
+                <div>
+                  <p>어려운 문제 {hard.length}개</p>
+                  {hard.map((h) => (
+                    <p key={h.problemIndex}>
+                      {h.problemIndex + 1}번 문제 — {h.correct}/{h.asked} 정답
+                    </p>
+                  ))}
+                  <p>
+                    맞힌 문제 평균 {avg.avgCorrect} vs 틀린 문제 평균 {avg.avgWrong}
                   </p>
+                  <p className="font-bold mt-4">우리 반이 어려워해요 Top 3 (최근 7일)</p>
+                  {weak.length === 0 ? (
+                    <p>성취기준별 기록이 아직 없어요</p>
+                  ) : (
+                    weak.map((w) => (
+                      <p key={w.code}>
+                        {w.code} {findStandard(w.code)?.summary ?? ''} — 정답률{' '}
+                        {Math.round(w.rate * 100)}% ({w.correct}/{w.asked})
+                      </p>
+                    ))
+                  )}
+                </div>
+              )}
+            </Card>
+            <Card>
+              <p className="font-bold mb-2">교육과정 커버리지 지도</p>
+              <label htmlFor="coverage-grade">학년</label>
+              <select
+                id="coverage-grade"
+                value={coverageGrade}
+                onChange={(e) => setCoverageGrade(Number(e.target.value))}
+              >
+                {GRADES.map((g) => (
+                  <option key={g} value={g}>
+                    {g}학년
+                  </option>
                 ))}
-                <p>
-                  맞힌 문제 평균 {avg.avgCorrect} vs 틀린 문제 평균 {avg.avgWrong}
+              </select>
+              <label htmlFor="coverage-subject">과목</label>
+              <select id="coverage-subject" value={coverageSubject} onChange={(e) => setCoverageSubject(e.target.value)}>
+                {SUBJECTS.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+              <p className="text-sm">
+                {coverageStandards.length}개 중 {coveredCount}개 출제
+              </p>
+              {coverageStandards.length === 0 && <p>이 학년·과목에는 등록된 기준이 없어요</p>}
+              {coverage.map((c) => (
+                <p key={c.code} style={{ background: c.covered ? '#DFF5DF' : '#F0F0F0' }}>
+                  {c.code} {c.summary} — {c.covered ? '출제됨' : '안 됨'}
                 </p>
-              </div>
-            )}
-          </Card>
+              ))}
+            </Card>
+          </>
         )}
         {tab === 'admin' && showAdmin && (
           <Card>
