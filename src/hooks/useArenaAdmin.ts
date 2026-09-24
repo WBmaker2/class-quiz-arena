@@ -7,7 +7,7 @@ export interface ArenaInput {
   title: string;
   desc: string;
   subject: string;
-  aiCount: number;
+  questionCount: number;
   grade?: number;
   topic?: string;
   standards?: string[];
@@ -60,7 +60,7 @@ export function useArenaAdmin(classroomId: string | null) {
         title: input.title,
         desc: input.desc,
         subject: input.subject,
-        aiCount: input.aiCount,
+        questionCount: input.questionCount,
         // 수정 시 기존 잠금 유지 (새로 만들 때만 false)
         ...(id ? {} : { locked: false }),
         // 새로 만들 때만 draft 기본값, 수정 시 기존 상태 유지

@@ -16,7 +16,7 @@ describe('useArenaAdmin on emulator', () => {
     await act(async () => {
       id = await result.current.saveArena(
         null,
-        { title: 't', desc: 'd', subject: '수학', aiCount: 0 },
+        { title: 't', desc: 'd', subject: '수학', questionCount: 0 },
         [
           { text: 'Q1', options: ['O', 'X', '', ''], answerIndex: 0 },
           { text: 'Q2', options: ['O', 'X', '', ''], answerIndex: 1 },
@@ -32,7 +32,7 @@ describe('useArenaAdmin on emulator', () => {
       await result.current.setLocked(id, true);
     });
     await act(async () => {
-      await result.current.saveArena(id, { title: 't2', desc: 'd', subject: '수학', aiCount: 1 }, loaded);
+      await result.current.saveArena(id, { title: 't2', desc: 'd', subject: '수학', questionCount: 1 }, loaded);
     });
     const arena = (await getDoc(doc(db, 'arenas', id))).data() as { title: string; locked: boolean };
     expect(arena.title).toBe('t2');

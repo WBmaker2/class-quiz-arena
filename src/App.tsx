@@ -217,12 +217,12 @@ function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: stri
                 title: arena.title,
                 desc: arena.desc,
                 subject: arena.subject,
-                aiCount: (arena as unknown as { aiCount?: number }).aiCount ?? 0,
+                questionCount: (arena as unknown as { questionCount?: number }).questionCount ?? 0,
                 grade: arena.grade ?? 3,
                 topic: arena.topic ?? '',
                 standards: arena.standards ?? [],
               }
-            : { title: '', desc: '', subject: '수학', aiCount: 0, grade: 3, topic: '', standards: [] }
+            : { title: '', desc: '', subject: '수학', questionCount: 0, grade: 3, topic: '', standards: [] }
         }
         problems={editingProblems ?? []}
         onSave={(input, problems) => {

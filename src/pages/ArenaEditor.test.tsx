@@ -18,7 +18,7 @@ function makeProblems(n: number): EditableProblem[] {
   }));
 }
 
-const baseInitial = { title: '기초', desc: '', subject: '수학', aiCount: 0 };
+const baseInitial = { title: '기초', desc: '', subject: '수학', questionCount: 0 };
 
 function publishButton(): HTMLButtonElement {
   return screen.getByRole('button', { name: '공개하기' }) as HTMLButtonElement;

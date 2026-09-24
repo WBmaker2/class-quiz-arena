@@ -76,7 +76,7 @@ export default function ArenaEditor({
   const [grade, setGrade] = useState(initial.grade ?? 3);
   const [subject, setSubject] = useState(SUBJECTS.includes(initial.subject) ? initial.subject : '수학');
   const [selected, setSelected] = useState<string[]>(initial.standards ?? []);
-  const [count, setCount] = useState(initial.aiCount >= MIN_COUNT && initial.aiCount <= MAX_COUNT ? initial.aiCount : DEFAULT_COUNT);
+  const [count, setCount] = useState(initial.questionCount >= MIN_COUNT && initial.questionCount <= MAX_COUNT ? initial.questionCount : DEFAULT_COUNT);
   const [topic, setTopic] = useState(initial.topic ?? '');
   const [items, setItems] = useState<EditableProblem[]>(problems);
   const [aiBusy, setAiBusy] = useState(false);
@@ -149,7 +149,7 @@ export default function ArenaEditor({
   const publish = () => {
     if (!canPublish) return;
     onSave(
-      { title, desc, subject, aiCount: clampCount(count), grade, topic, standards: selected, status: 'published' },
+      { title, desc, subject, questionCount: clampCount(count), grade, topic, standards: selected, status: 'published' },
       items,
     );
   };
