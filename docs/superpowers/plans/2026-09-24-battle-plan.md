@@ -312,12 +312,11 @@ export default function ClassJoin({ onJoin }: { onJoin: (code: string) => void }
 
 `src/pages/LoginScreen.tsx` 태그라인 교체 (bold 복원, 단일 텍스트 노드 유지):
 ```tsx
-<p className="text-[15px] mb-7 whitespace-pre-line">
-  {'선생님 문제로\n'}
-  <span className="font-bold">친구와 1:1 퀴즈 대결!</span>
+<p className="text-[15px] mb-7 whitespace-pre-line font-bold">
+  {'선생님 문제로\n친구와 1:1 퀴즈 대결!'}
 </p>
 ```
-(주의: `getByText('선생님 문제로 친구와 1:1 퀴즈 대결!')`는 `<p>` 전체 정규화 텍스트와 매칭되므로 통과한다. Step 4에서 확인.)
+(단일 텍스트 노드를 유지해야 `getByText('선생님 문제로 친구와 1:1 퀴즈 대결!')`가 통과한다. 두 줄을 나눠 `<span>`으로 감싸면 매칭이 깨지므로, 줄 전체 bold로 강조를 살린다.)
 
 `src/App.tsx` 교체 (인증 게이트 + 역할 분기):
 ```tsx
@@ -984,11 +983,12 @@ export default function BattleRoom({
     <Card>
       <p className="text-sm">문제 라운드 {room.currentRound + 1}</p>
       <p className="text-lg font-bold">???</p>
-      {opponent && !opponent.ready && <p>상대 준비 기다리는 중...</p>}
       {!me?.ready ? (
         <PrimaryButton onClick={onReady}>네! 준비됐어요!</PrimaryButton>
-      ) : (
+      ) : opponent && !opponent.ready ? (
         <p>상대 준비 기다리는 중...</p>
+      ) : (
+        <p>곧 시작해요!</p>
       )}
       <button type="button" onClick={onExit}>
         나가기
@@ -997,7 +997,7 @@ export default function BattleRoom({
   );
 }
 ```
-(주의: 테스트 2는 내가 ready + 상대 미ready → 두 번째 분기의 "상대 준비 기다리는 중..."이 보인다. 테스트 1은 둘 다 미ready → opponent 미ready 분기가 보인다. 상대 이름은 항상 ??? 마스킹.)
+("상대 준비 기다리는 중..."은 한 번만 렌더해야 `getByText`가 깨지지 않는다. 내가 미준비면 버튼만, 내가 준비+상대 미준비면 힌트만, 둘 다 준비면 "곧 시작해요!".)
 
 - [ ] **Step 4: Run tests to verify they pass**
 
