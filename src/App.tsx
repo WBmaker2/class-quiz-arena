@@ -14,7 +14,7 @@ import { useAnalytics } from './hooks/useAnalytics';
 import { useArenaAdmin, type EditableProblem } from './hooks/useArenaAdmin';
 import { useArenas } from './hooks/useArenas';
 import { useAuth } from './hooks/useAuth';
-import { useClassroom, useTeacherClassrooms } from './hooks/useClassroom';
+import { useClassroom, useClassroomDoc, useTeacherClassrooms } from './hooks/useClassroom';
 import { useLeaderboard } from './hooks/useLeaderboard';
 import { useMatch } from './hooks/useMatch';
 import { useProfile } from './hooks/useProfile';
@@ -52,6 +52,8 @@ export default function App() {
   const [pendingArena, setPendingArena] = useState<PendingArena | null>(null);
   const { classroomId, join, create, select } = useClassroom();
   const { user, loading, signInWithGoogle, signOut } = useAuth();
+  // 선생님의 학생 화면 미리보기 (?preview=학급ID, 새 탭). 로그인 후 바로 학생홈.
+  const [previewClassroom] = useState(() => new URLSearchParams(window.location.search).get('preview'));
 
   const startLogin = () => {
     void Promise.resolve(signInWithGoogle()).catch(() => {});
@@ -69,6 +71,43 @@ export default function App() {
   }
   if (loading) {
     return <div className="min-h-screen grid place-items-center">불러오는 중...</div>;
+  }
+
+  if (previewClassroom && user) {
+    const previewEnter = (arenaId: string, me: { uid: string; nickname: string; avatar: string }, myWins: number, myStreak: number, reporterNickname: string) => {
+      setPendingArena({ arenaId, classroomId: previewClassroom, me, reporterNickname, myWins, myStreak });
+      setView('battle');
+    };
+    const previewExit = () => {
+      setPendingArena(null);
+      setView('login');
+    };
+    if (view === 'battle' && pendingArena) {
+      return (
+        <BattleShell
+          arenaId={pendingArena.arenaId}
+          classroomId={pendingArena.classroomId}
+          me={pendingArena.me}
+          reporterNickname={pendingArena.reporterNickname}
+          myWins={pendingArena.myWins}
+          myStreak={pendingArena.myStreak}
+          onExit={previewExit}
+        />
+      );
+    }
+    return (
+      <StudentShell
+        uid={user.uid}
+        nickname={user.displayName ?? '선생님'}
+        classroomId={previewClassroom}
+        animal={animal}
+        onEnter={previewEnter}
+        onSignOut={() => {
+          void signOut();
+          setView('login');
+        }}
+      />
+    );
   }
 
   if (view === 'role') {
@@ -138,6 +177,9 @@ export default function App() {
       <TeacherShell
         classroomId={classroomId}
         userEmail={user?.email ?? null}
+        uid={user?.uid ?? 'local-test'}
+        displayName={user?.displayName ?? '선생님'}
+        animal={animal}
         onSignOut={() => {
           void signOut();
           setView('login');
@@ -169,16 +211,19 @@ export default function App() {
   );
 }
 
-function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: string | null; userEmail: string | null; onSignOut: () => void }) {
+function TeacherShell({ classroomId, userEmail, uid, displayName, animal, onSignOut }: { classroomId: string | null; userEmail: string | null; uid: string; displayName: string; animal: Animal; onSignOut: () => void }) {
   const showAdmin = isMasterEmail(userEmail);
   const { live, abandoned, finished, forceClose } = useTeacherRooms();
   const { arenas, bank, saveArena, loadProblems, removeArena, setLocked, setShowPlayers, setTtsEnabled, copyArena } = useArenaAdmin(classroomId);
   const { students, removeStudent } = useStudents(classroomId);
   const { reports, resolveReport } = useReports(classroomId);
+  const { create, renameClassroom } = useClassroom();
+  const { name: classroomName } = useClassroomDoc(classroomId);
   const { teachers, addTeacher, removeTeacher } = useTeacherAllowlist(showAdmin);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [editingProblems, setEditingProblems] = useState<EditableProblem[] | null>(null);
+  const [creatingClass, setCreatingClass] = useState(false);
   const [analysisArenaId, setAnalysisArenaId] = useState<string | null>(null);
   const { rounds } = useAnalytics(analysisArenaId);
   const stats = problemStats(rounds);
@@ -218,8 +263,24 @@ function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: stri
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingId]);
 
-  if (creating || editingId) {
-    if (editingId && editingProblems === null) {
+  if (creatingClass) {
+    return (
+      <div className="min-h-screen grid place-items-center px-6 py-10">
+        <div className="w-full max-w-md">
+          <ClassCreate
+            onCreate={(name) => {
+              void create(name, uid, displayName, animal).then((id) => {
+                if (id) setCreatingClass(false);
+              });
+            }}
+            onCancel={() => setCreatingClass(false)}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  if (creating || editingId) {    if (editingId && editingProblems === null) {
       return (
         <div className="min-h-screen grid place-items-center px-6">
           <p>문제를 불러오는 중...</p>
@@ -265,6 +326,11 @@ function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: stri
       arenas={arenas.map((a) => ({ id: a.id, title: a.title, locked: a.locked, showPlayers: a.showPlayers ?? false, ttsEnabled: a.ttsEnabled ?? false, standards: a.standards ?? [] }))}
       bank={bank}
       classroomCode={classroomId ?? ''}
+      classroomName={classroomName}
+      onRenameClassroom={(name) => {
+        if (classroomId) void renameClassroom(classroomId, name);
+      }}
+      onNewClassroom={() => setCreatingClass(true)}
       students={students}
       onDeleteStudent={(uid) => {
         void removeStudent(uid);
@@ -351,7 +417,7 @@ export function TeacherGate({
   if (classrooms.length === 1) {
     return <p>학급으로 들어가는 중...</p>;
   }
-  return <ClassSelect classrooms={classrooms} onSelect={onDone} onCreateNew={() => setCreating(true)} />;
+  return <ClassSelect classrooms={classrooms} onSelect={onDone} />;
 }
 
 function StudentShell({

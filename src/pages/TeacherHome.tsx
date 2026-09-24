@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import InviteQR from '../components/InviteQR';
@@ -52,6 +52,9 @@ export default function TeacherHome({
   onCopyArena,
   onNewArena,
   onSignOut,
+  classroomName,
+  onRenameClassroom,
+  onNewClassroom,
   reports,
   onResolveReport,
   showAdmin,
@@ -78,6 +81,9 @@ export default function TeacherHome({
   onCopyArena?: (id: string) => void;
   onNewArena: () => void;
   onSignOut: () => void;
+  classroomName?: string;
+  onRenameClassroom?: (name: string) => void;
+  onNewClassroom?: () => void;
   reports?: NameReport[];
   onResolveReport?: (id: string) => void;
   showAdmin?: boolean;
@@ -90,6 +96,11 @@ export default function TeacherHome({
   const [teacherEmail, setTeacherEmail] = useState('');
   const [coverageGrade, setCoverageGrade] = useState(3);
   const [coverageSubject, setCoverageSubject] = useState('수학');
+  const [className, setClassName] = useState(classroomName ?? '');
+
+  useEffect(() => {
+    setClassName(classroomName ?? '');
+  }, [classroomName]);
 
   const stats = problemStats(rounds);
   const hard = hardProblems(stats, 3);
@@ -103,6 +114,12 @@ export default function TeacherHome({
     <div className="min-h-screen px-6 py-10">
       <div className="w-full max-w-md mx-auto">
         <p className="font-bold mb-2">선생님 워크스페이스</p>
+        <button
+          type="button"
+          onClick={() => window.open(`${window.location.origin}${window.location.pathname}?preview=${classroomCode}`, '_blank')}
+        >
+          학생 화면 미리보기
+        </button>
         <div className="flex gap-2 mb-4">
           <button type="button" onClick={() => setTab('live')}>
             현재 대결
@@ -206,6 +223,20 @@ export default function TeacherHome({
         )}
         {tab === 'students' && (
           <Card>
+            <p className="font-bold mb-2">학급 관리</p>
+            <label htmlFor="classroom-name">학급 이름</label>
+            <input
+              id="classroom-name"
+              value={className}
+              maxLength={30}
+              onChange={(e) => setClassName(e.target.value)}
+            />
+            <button type="button" onClick={() => onRenameClassroom?.(className)}>
+              이름 저장
+            </button>
+            <button type="button" onClick={() => onNewClassroom?.()}>
+              새 학급 만들기
+            </button>
             <p className="font-bold mb-2">학생 일괄 관리</p>
             <InviteQR code={classroomCode} />
             <p>학급 초대 QR — 탭해서 확대</p>

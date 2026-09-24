@@ -5,17 +5,15 @@ import type { TeacherClassroom } from '../hooks/useClassroom';
 export default function ClassSelect({
   classrooms,
   onSelect,
-  onCreateNew,
 }: {
   classrooms: TeacherClassroom[];
   onSelect: (id: string) => void;
-  onCreateNew: () => void;
 }) {
   return (
     <Card>
       <h1>어느 학급으로 들어갈까요?</h1>
       {classrooms.length === 0 ? (
-        <EmptyState title="만든 학급이 없어요. 새로 만들어보세요!" />
+        <EmptyState title="들어갈 학급이 없어요. 선생님께 초대 코드를 받아주세요!" />
       ) : (
         classrooms.map((c) => (
           <button
@@ -28,9 +26,6 @@ export default function ClassSelect({
           </button>
         ))
       )}
-      <button type="button" onClick={onCreateNew}>
-        새 학급 만들기
-      </button>
     </Card>
   );
 }

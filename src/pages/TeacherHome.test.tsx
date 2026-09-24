@@ -295,3 +295,52 @@ describe('TeacherHome tts toggle', () => {
     expect(onToggleTts).toHaveBeenCalledWith('a1', true);
   });
 });
+
+describe('TeacherHome classroom management', () => {
+  const base = {
+    live: [],
+    abandoned: [],
+    finished: [],
+    classroomCode: 'AAAAAA',
+    classroomName: '4학년 3반',
+    students: [],
+    onDeleteStudent: noop,
+    onExportCsv: noop,
+    rounds: [],
+    onForceClose: noop,
+    onEditArena: noop,
+    onDeleteArena: noop,
+    onToggleLock: noop,
+    onToggleShowPlayers: noop,
+    onToggleTts: noop,
+    onNewArena: noop,
+    onSignOut: noop,
+  };
+
+  it('renames the classroom', () => {
+    const onRenameClassroom = vi.fn();
+    render(<TeacherHome {...base} arenas={[]} onRenameClassroom={onRenameClassroom} />);
+    fireEvent.click(screen.getByRole('button', { name: '학생' }));
+    fireEvent.change(screen.getByLabelText('학급 이름'), { target: { value: '5학년 1반' } });
+    fireEvent.click(screen.getByRole('button', { name: '이름 저장' }));
+    expect(onRenameClassroom).toHaveBeenCalledWith('5학년 1반');
+  });
+
+  it('opens the new-classroom form', () => {
+    const onNewClassroom = vi.fn();
+    render(<TeacherHome {...base} arenas={[]} onNewClassroom={onNewClassroom} />);
+    fireEvent.click(screen.getByRole('button', { name: '학생' }));
+    fireEvent.click(screen.getByRole('button', { name: '새 학급 만들기' }));
+    expect(onNewClassroom).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens the student preview in a new tab', () => {
+    const openSpy = vi.fn();
+    vi.stubGlobal('open', openSpy);
+    Object.defineProperty(window, 'location', { value: { origin: 'https://x.web.app', pathname: '/' }, writable: true });
+    render(<TeacherHome {...base} arenas={[]} />);
+    fireEvent.click(screen.getByRole('button', { name: '학생 화면 미리보기' }));
+    expect(openSpy).toHaveBeenCalledWith('https://x.web.app/?preview=AAAAAA', '_blank');
+    vi.unstubAllGlobals();
+  });
+});

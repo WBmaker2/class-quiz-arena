@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Card from '../components/Card';
 
-export default function ClassCreate({ onCreate }: { onCreate: (name: string) => void }) {
+export default function ClassCreate({ onCreate, onCancel }: { onCreate: (name: string) => void; onCancel?: () => void }) {
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -31,6 +31,11 @@ export default function ClassCreate({ onCreate }: { onCreate: (name: string) => 
         <button type="submit" className="btn-primary w-full">
           학급 만들기
         </button>
+        {onCancel && (
+          <button type="button" onClick={onCancel}>
+            돌아가기
+          </button>
+        )}
       </form>
     </Card>
   );

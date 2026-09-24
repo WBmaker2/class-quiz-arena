@@ -12,9 +12,11 @@ vi.mock('./hooks/useClassroom', () => ({
     join: vi.fn(),
     create: vi.fn().mockResolvedValue('NEWC1'),
     select: vi.fn(),
+    renameClassroom: vi.fn(),
     error: null,
   }),
   useTeacherClassrooms: () => ({ classrooms: [], loading: false }),
+  useClassroomDoc: () => ({ name: '4학년 3반', inviteCode: 'NEWC1' }),
 }));
 
 import App from './App';

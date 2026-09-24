@@ -18,8 +18,7 @@ export interface TeacherClassroom {
 }
 
 /** 선생님이 개설한 학급 목록 (실시간). 실패하면 빈 목록. */
-export function useTeacherClassrooms(uid: string | null) {
-  const [classrooms, setClassrooms] = useState<TeacherClassroom[]>([]);
+export function useTeacherClassrooms(uid: string | null) {  const [classrooms, setClassrooms] = useState<TeacherClassroom[]>([]);
   // uid가 없으면(테스트) 조회 없이 끝난 상태로 시작한다
   const [loading, setLoading] = useState(uid !== null);
 
@@ -48,6 +47,29 @@ export function useTeacherClassrooms(uid: string | null) {
   }, [uid]);
 
   return { classrooms, loading };
+}
+
+/** 학급 문서 1개 구독 (이름·초대코드 표시용). */
+export function useClassroomDoc(classroomId: string | null) {
+  const [name, setName] = useState('');
+  const [inviteCode, setInviteCode] = useState('');
+
+  useEffect(() => {
+    if (!classroomId) return;
+    return onSnapshot(
+      doc(db, 'classrooms', classroomId),
+      (snap) => {
+        if (snap.exists()) {
+          const data = snap.data() as { name?: string; inviteCode?: string };
+          setName(data.name ?? '');
+          setInviteCode(data.inviteCode ?? classroomId);
+        }
+      },
+      () => {},
+    );
+  }, [classroomId]);
+
+  return { name, inviteCode };
 }
 
 export function useClassroom() {
@@ -133,5 +155,24 @@ export function useClassroom() {
     setClassroomId(id);
   };
 
-  return { classroomId, join, create, select, error };
+  /** 학급 이름 변경 (빈 이름 거부, 선생님 본인 학급만 규칙 통과). */
+  const renameClassroom = async (id: string, name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) {
+      setError('학급 이름을 입력해주세요');
+      return false;
+    }
+    try {
+      await setDoc(doc(db, 'classrooms', id), { name: trimmed }, { merge: true });
+      if (!mounted.current) return false;
+      setError(null);
+      return true;
+    } catch {
+      if (!mounted.current) return false;
+      setError('연결에 실패했어요. 다시 시도해주세요');
+      return false;
+    }
+  };
+
+  return { classroomId, join, create, select, renameClassroom, error };
 }

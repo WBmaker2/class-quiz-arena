@@ -12,7 +12,6 @@ describe('ClassSelect', () => {
           { id: 'C2', name: '5학년 1반', inviteCode: 'BBBBBB' },
         ]}
         onSelect={onSelect}
-        onCreateNew={() => {}}
       />,
     );
     expect(screen.getByText('어느 학급으로 들어갈까요?')).toBeTruthy();
@@ -20,10 +19,8 @@ describe('ClassSelect', () => {
     expect(onSelect).toHaveBeenCalledWith('C2');
   });
 
-  it('offers creation when empty', () => {
-    const onCreateNew = vi.fn();
-    render(<ClassSelect classrooms={[]} onSelect={() => {}} onCreateNew={onCreateNew} />);
-    fireEvent.click(screen.getByRole('button', { name: '새 학급 만들기' }));
-    expect(onCreateNew).toHaveBeenCalledTimes(1);
+  it('shows no create button in the picker', () => {
+    render(<ClassSelect classrooms={[{ id: 'C1', name: '4학년 3반', inviteCode: 'AAAAAA' }]} onSelect={() => {}} />);
+    expect(screen.queryByRole('button', { name: '새 학급 만들기' })).toBeNull();
   });
 });
