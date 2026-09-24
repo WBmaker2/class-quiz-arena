@@ -3,9 +3,11 @@ service cloud.firestore {
   function isSignedIn() {
     return request.auth != null;
   }
+  // (default) 리터럴 경로 사용: $(database) 변수는 에뮬레이터에서 null로 평가되어
+  // get()/exists()가 실패한다. 단일 (default) DB만 쓰므로 리터럴이 안전하다.
   function isTeacher() {
     return isSignedIn()
-      && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+      && get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'teacher';
   }
   function isOwner(uid) {
     return isSignedIn() && request.auth.uid == uid;

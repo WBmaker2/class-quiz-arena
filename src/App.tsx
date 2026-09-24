@@ -9,7 +9,7 @@ import ArenaEditor from './pages/ArenaEditor';
 import EmptyState from './components/EmptyState';
 import type { Animal } from './components/Avatar';
 import { useAnalytics } from './hooks/useAnalytics';
-import { useArenaAdmin } from './hooks/useArenaAdmin';
+import { useArenaAdmin, type EditableProblem } from './hooks/useArenaAdmin';
 import { useArenas } from './hooks/useArenas';
 import { useAuth } from './hooks/useAuth';
 import { useClassroom } from './hooks/useClassroom';
@@ -140,10 +140,11 @@ export default function App() {
 
 function TeacherShell({ classroomId, onSignOut }: { classroomId: string | null; onSignOut: () => void }) {
   const { live, abandoned, finished, forceClose } = useTeacherRooms();
-  const { arenas, saveArena, removeArena, setLocked } = useArenaAdmin(classroomId);
+  const { arenas, saveArena, loadProblems, removeArena, setLocked } = useArenaAdmin(classroomId);
   const { students, removeStudent } = useStudents(classroomId);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [editingProblems, setEditingProblems] = useState<EditableProblem[] | null>(null);
   const [analysisArenaId, setAnalysisArenaId] = useState<string | null>(null);
   const { rounds } = useAnalytics(analysisArenaId);
   const stats = problemStats(rounds);
@@ -164,7 +165,33 @@ function TeacherShell({ classroomId, onSignOut }: { classroomId: string | null; 
     URL.revokeObjectURL(url);
   };
 
+  useEffect(() => {
+    if (!editingId) {
+      setEditingProblems(null);
+      return;
+    }
+    let alive = true;
+    void loadProblems(editingId)
+      .then((ps) => {
+        if (alive) setEditingProblems(ps);
+      })
+      .catch(() => {
+        if (alive) setEditingProblems([]);
+      });
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingId]);
+
   if (creating || editingId) {
+    if (editingId && editingProblems === null) {
+      return (
+        <div className="min-h-screen grid place-items-center px-6">
+          <p>문제를 불러오는 중...</p>
+        </div>
+      );
+    }
     const arena = arenas.find((a) => a.id === editingId);
     return (
       <ArenaEditor
@@ -173,7 +200,7 @@ function TeacherShell({ classroomId, onSignOut }: { classroomId: string | null; 
             ? { title: arena.title, desc: arena.desc, subject: arena.subject, aiCount: (arena as unknown as { aiCount?: number }).aiCount ?? 0 }
             : { title: '', desc: '', subject: '수학', aiCount: 0 }
         }
-        problems={[]}
+        problems={editingProblems ?? []}
         onSave={(input, problems) => {
           void saveArena(editingId, input, problems.map((p) => ({ ...p, roundTimeSec: 30 }))).then(() => {
             setCreating(false);

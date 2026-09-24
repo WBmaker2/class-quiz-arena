@@ -1,13 +1,7 @@
 import { useState } from 'react';
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
-import type { ArenaInput } from '../hooks/useArenaAdmin';
-
-export interface EditableProblem {
-  text: string;
-  options: [string, string, string, string];
-  answerIndex: number;
-}
+import type { ArenaInput, EditableProblem } from '../hooks/useArenaAdmin';
 
 export default function ArenaEditor({
   initial,
