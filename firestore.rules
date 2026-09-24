@@ -1,31 +1,56 @@
 rules_version = '2';
 service cloud.firestore {
+  function isSignedIn() {
+    return request.auth != null;
+  }
+  function isTeacher() {
+    return isSignedIn()
+      && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+  }
+  function isOwner(uid) {
+    return isSignedIn() && request.auth.uid == uid;
+  }
   match /databases/{database}/documents {
     match /users/{uid} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read: if isSignedIn();
+      allow write: if isOwner(uid);
+      allow delete: if isTeacher();
     }
     match /classrooms/{id} {
-      allow read: if request.auth != null;
-      allow write: if false;
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && resource.data.teacherId == request.auth.uid;
+      allow delete: if false;
     }
     match /arenas/{id} {
-      allow read: if request.auth != null;
-      allow write: if false;
+      allow read: if isSignedIn();
+      allow write: if isTeacher();
     }
     match /arenas/{arenaId}/problems/{pid} {
-      allow read: if request.auth != null;
-      allow write: if false;
+      allow read: if isSignedIn();
+      allow write: if isTeacher();
     }
     match /rooms/{roomId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null;
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn()
+        && request.resource.data.status in ['waiting', 'ready', 'playing', 'finished', 'abandoned']
+        && request.resource.data.players.size() >= 1
+        && request.resource.data.players.size() <= 2
+        && (
+          (request.resource.data.players.size() == 1
+            && (request.resource.data.winnerUid == null
+              || request.resource.data.winnerUid == request.resource.data.players[0].uid))
+          || (request.resource.data.players.size() == 2
+            && (request.resource.data.winnerUid == null
+              || request.resource.data.winnerUid == request.resource.data.players[0].uid
+              || request.resource.data.winnerUid == request.resource.data.players[1].uid))
+        );
       allow delete: if false;
     }
     match /battles/{battleId} {
-      allow read: if request.auth != null;
-      allow create: if request.auth != null;
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
       allow update: if false;
       allow delete: if false;
     }

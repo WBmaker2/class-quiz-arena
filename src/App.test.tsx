@@ -27,13 +27,13 @@ describe('App', () => {
     expect(screen.getByText('선생님 문제로 친구와 1:1 퀴즈 대결!')).toBeTruthy();
   });
 
-  it('routes teacher to teacher stub', () => {
+  it('enters teacher workspace after join as teacher', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Google 계정으로 시작하기' }));
     fireEvent.click(screen.getByRole('button', { name: '선생님으로 시작' }));
     fireEvent.change(screen.getByLabelText('초대 코드'), { target: { value: 'A1B2C3' } });
     fireEvent.click(screen.getByRole('button', { name: '학급 들어가기' }));
-    expect(screen.getByText('선생님 공간은 다음 단계에서 열려요')).toBeTruthy();
+    expect(screen.getByText('선생님 워크스페이스')).toBeTruthy();
   });
 
   it('enters student home after join as student', () => {
