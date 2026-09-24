@@ -125,11 +125,13 @@ describe('TeacherHome arena privacy', () => {
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: '아레나' }));
-    fireEvent.click(screen.getByRole('button', { name: '참가자 공개' }));
+    const toggle = screen.getByRole('switch', { name: '참가자 공개' });
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+    fireEvent.click(toggle);
     expect(onToggleShowPlayers).toHaveBeenCalledWith('a1', true);
   });
 
-  it('shows hide button when already public', () => {
+  it('shows switch-on state when already public', () => {
     render(
       <TeacherHome
         {...base}
@@ -138,7 +140,7 @@ describe('TeacherHome arena privacy', () => {
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: '아레나' }));
-    expect(screen.getByRole('button', { name: '참가자 비공개' })).toBeTruthy();
+    expect(screen.getByRole('switch', { name: '참가자 공개' }).getAttribute('aria-checked')).toBe('true');
   });
 });
 
@@ -292,7 +294,7 @@ describe('TeacherHome tts toggle', () => {
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: '아레나' }));
-    fireEvent.click(screen.getByRole('button', { name: '읽어주기 켜기' }));
+    fireEvent.click(screen.getByRole('switch', { name: '읽어주기' }));
     expect(onToggleTts).toHaveBeenCalledWith('a1', true);
   });
 });

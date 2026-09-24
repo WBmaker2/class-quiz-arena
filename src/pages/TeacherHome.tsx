@@ -5,6 +5,7 @@ import InviteQR from '../components/InviteQR';
 import { avgCorrectVsWrong, hardProblems, problemStats, weakStandards, type RoundRecord } from '../lib/analytics';
 import { GRADES, SUBJECTS, coverageOf, findStandard, getStandards } from '../data/curriculum2022';
 import { containsBanned } from '../lib/nickname';
+import Toggle from '../components/Toggle';
 import type { NameReport } from '../hooks/useReports';
 import type { RosterStudent } from '../lib/roster';
 
@@ -204,15 +205,19 @@ export default function TeacherHome({
                 <button type="button" onClick={() => onDeleteArena(a.id)}>
                   아레나 삭제
                 </button>
-                <button type="button" onClick={() => onToggleLock(a.id, !a.locked)}>
-                  {a.locked ? '잠금 해제' : '잠금'}
-                </button>
-                <button type="button" onClick={() => onToggleShowPlayers(a.id, !(a.showPlayers ?? false))}>
-                  {(a.showPlayers ?? false) ? '참가자 비공개' : '참가자 공개'}
-                </button>
-                <button type="button" onClick={() => onToggleTts(a.id, !(a.ttsEnabled ?? false))}>
-                  {(a.ttsEnabled ?? false) ? '읽어주기 끄기' : '읽어주기 켜기'}
-                </button>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2">
+                  <Toggle checked={a.locked} onChange={(next) => onToggleLock(a.id, next)} label="잠금" />
+                  <Toggle
+                    checked={a.showPlayers ?? false}
+                    onChange={(next) => onToggleShowPlayers(a.id, next)}
+                    label="참가자 공개"
+                  />
+                  <Toggle
+                    checked={a.ttsEnabled ?? false}
+                    onChange={(next) => onToggleTts(a.id, next)}
+                    label="읽어주기"
+                  />
+                </div>
               </div>
             ))}
             <p className="font-bold mt-4">다른 반 공개 아레나 가져오기</p>
