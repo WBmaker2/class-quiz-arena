@@ -84,6 +84,26 @@ export function requireAuth(request: { auth?: unknown }): AuthCheck {
   return request.auth ? { ok: true } : { ok: false, error: 'sign-in required' };
 }
 
+/** 교사 1명당 하루 AI 생성 횟수 상한. */
+export const AI_DAILY_LIMIT = 20;
+
+export interface UsageState {
+  date: string; // YYYY-MM-DD (UTC)
+  count: number;
+}
+
+/** 순수 함수: 오늘 날짜와 이전 기록으로 허용 여부 + 다음 기록을 낸다. */
+export function nextUsage(
+  prev: UsageState | null,
+  today: string,
+): { allowed: boolean; next: UsageState } {
+  const used = prev && prev.date === today ? prev.count : 0;
+  if (used >= AI_DAILY_LIMIT) {
+    return { allowed: false, next: { date: today, count: used } };
+  }
+  return { allowed: true, next: { date: today, count: used + 1 } };
+}
+
 export function isValidProblem(p: unknown): p is DraftProblem {
   if (typeof p !== 'object' || p === null) return false;
   const c = p as Record<string, unknown>;

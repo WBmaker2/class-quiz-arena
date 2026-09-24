@@ -1,12 +1,18 @@
+import * as admin from 'firebase-admin';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
 import {
+  nextUsage,
   requireAuth,
   validateGenerateArenaInput,
   validateProblems,
   type DraftProblem,
   type GenerateArenaInput,
+  type UsageState,
 } from './validate';
+
+admin.initializeApp();
+const db = admin.firestore();
 
 const GEMINI_MODEL = 'gemini-2.0-flash';
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
@@ -74,6 +80,9 @@ async function callGemini(prompt: string, apiKey: string): Promise<unknown> {
 }
 
 export const generateArena = onCall(
+  // secrets 선언: 배포 시 Secret Manager 값이 GEMINI_API_KEY 환경변수로 주입된다.
+  // 에뮬레이터에서는 functions/.secret.local 파일로 같은 값을 넣는다.
+  { secrets: ['GEMINI_API_KEY'] },
   async (request): Promise<GenerateArenaResponse> => {
     const authed = requireAuth(request);
     if (!authed.ok) {
@@ -83,6 +92,21 @@ export const generateArena = onCall(
     const parsed = validateGenerateArenaInput(request.data);
     if (!parsed.ok) {
       throw new HttpsError('invalid-argument', parsed.error);
+    }
+
+    // 요금폭탄 방지: 교사 1명 하루 20회. 차감부터 하고 Gemini를 부른다.
+    const today = new Date().toISOString().slice(0, 10);
+    const usageRef = db.collection('aiUsage').doc(request.auth!.uid);
+    const allowed = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(usageRef);
+      const prev = snap.exists ? (snap.data() as UsageState) : null;
+      const { allowed: ok, next } = nextUsage(prev, today);
+      if (!ok) return false;
+      tx.set(usageRef, next);
+      return true;
+    });
+    if (!allowed) {
+      throw new HttpsError('resource-exhausted', '오늘 AI 만들기 20회를 다 썼어요. 내일 다시 해주세요.');
     }
 
     const apiKey = process.env.GEMINI_API_KEY;

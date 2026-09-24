@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   isValidProblem,
+  nextUsage,
   requireAuth,
   validateGenerateArenaInput,
   validateProblems,
@@ -81,5 +82,29 @@ describe('requireAuth', () => {
 
   it('accepts calls with auth', () => {
     expect(requireAuth({ auth: { uid: 'u1' } })).toEqual({ ok: true });
+  });
+});
+
+describe('nextUsage', () => {
+  it('allows first use of the day', () => {
+    expect(nextUsage(null, '2026-09-24')).toEqual({ allowed: true, next: { date: '2026-09-24', count: 1 } });
+  });
+
+  it('resets count on a new day', () => {
+    expect(nextUsage({ date: '2026-09-23', count: 20 }, '2026-09-24')).toEqual({
+      allowed: true,
+      next: { date: '2026-09-24', count: 1 },
+    });
+  });
+
+  it('blocks over the daily limit without incrementing', () => {
+    expect(nextUsage({ date: '2026-09-24', count: 20 }, '2026-09-24')).toEqual({
+      allowed: false,
+      next: { date: '2026-09-24', count: 20 },
+    });
+  });
+
+  it('allows the last remaining use', () => {
+    expect(nextUsage({ date: '2026-09-24', count: 19 }, '2026-09-24').allowed).toBe(true);
   });
 });
