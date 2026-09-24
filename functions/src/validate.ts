@@ -78,6 +78,12 @@ export function validateGenerateArenaInput(data: unknown): InputValidation {
   };
 }
 
+export type AuthCheck = { ok: true } | { ok: false; error: string };
+
+export function requireAuth(request: { auth?: unknown }): AuthCheck {
+  return request.auth ? { ok: true } : { ok: false, error: 'sign-in required' };
+}
+
 export function isValidProblem(p: unknown): p is DraftProblem {
   if (typeof p !== 'object' || p === null) return false;
   const c = p as Record<string, unknown>;

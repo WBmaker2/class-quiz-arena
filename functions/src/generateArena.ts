@@ -2,6 +2,7 @@ import * as admin from 'firebase-admin';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
 import {
+  requireAuth,
   validateGenerateArenaInput,
   validateProblems,
   type DraftProblem,
@@ -79,6 +80,11 @@ async function callGemini(prompt: string, apiKey: string): Promise<unknown> {
 
 export const generateArena = onCall(
   async (request): Promise<GenerateArenaResponse> => {
+    const authed = requireAuth(request);
+    if (!authed.ok) {
+      throw new HttpsError('unauthenticated', authed.error);
+    }
+
     const parsed = validateGenerateArenaInput(request.data);
     if (!parsed.ok) {
       throw new HttpsError('invalid-argument', parsed.error);

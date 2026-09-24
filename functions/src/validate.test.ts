@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   isValidProblem,
+  requireAuth,
   validateGenerateArenaInput,
   validateProblems,
 } from './validate';
@@ -70,5 +71,15 @@ describe('problem validation', () => {
     const out = validateProblems(raw);
     expect(out).toHaveLength(1);
     expect(out[0].text).toBe(good.text);
+  });
+});
+
+describe('requireAuth', () => {
+  it('rejects calls without auth', () => {
+    expect(requireAuth({})).toEqual({ ok: false, error: 'sign-in required' });
+  });
+
+  it('accepts calls with auth', () => {
+    expect(requireAuth({ auth: { uid: 'u1' } })).toEqual({ ok: true });
   });
 });
