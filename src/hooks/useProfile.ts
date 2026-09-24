@@ -9,6 +9,10 @@ export interface Profile {
   streak: number;
   winCount: number;
   correctRate: number;
+  avatar?: string;
+  title?: string;
+  unlockedAvatars?: string[];
+  unlockedTitles?: string[];
 }
 
 export function useProfile(uid: string | null) {

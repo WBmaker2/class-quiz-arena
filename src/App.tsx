@@ -25,7 +25,9 @@ import { avgCorrectVsWrong, hardProblems, problemStats } from './lib/analytics';
 import { buildRosterCsv } from './lib/roster';
 import { useRoom, orderBattleProblems } from './hooks/useRoom';
 import { isCorrectAnswer } from './lib/battle';
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { TITLE_GOODS } from './data/shop';
+import { containsBanned } from './lib/nickname';
+import { collection, doc, getDocs, orderBy, query, setDoc } from 'firebase/firestore';
 import { db } from './lib/firebase';
 import type { Problem } from './lib/arena';
 import { finishAndAward } from './lib/award';
@@ -301,6 +303,10 @@ function StudentShell({
 
   const mine = classroomId ? arenas.filter((a) => (a as unknown as { classroomId?: string }).classroomId === classroomId) : arenas;
 
+  const saveProfile = (patch: Record<string, unknown>) => {
+    void setDoc(doc(db, 'users', uid), patch, { merge: true });
+  };
+
   return (
     <StudentHome
       arenas={mine}
@@ -312,6 +318,29 @@ function StudentShell({
         onEnter(arenaId, { uid, nickname, avatar: animal }, profile?.winCount ?? 0, profile?.streak ?? 0)
       }
       onSignOut={onSignOut}
+      onBuyAvatar={(id, price) => {
+        if ((profile?.xp ?? 0) < price) return;
+        saveProfile({
+          xp: (profile?.xp ?? 0) - price,
+          unlockedAvatars: [...(profile?.unlockedAvatars ?? []), id],
+          avatar: id,
+        });
+      }}
+      onEquipAvatar={(id) => saveProfile({ avatar: id })}
+      onBuyTitle={(id, price) => {
+        if ((profile?.xp ?? 0) < price) return;
+        const label = TITLE_GOODS.find((g) => g.id === id)?.label ?? id;
+        saveProfile({
+          xp: (profile?.xp ?? 0) - price,
+          unlockedTitles: [...(profile?.unlockedTitles ?? []), id],
+          title: label,
+        });
+      }}
+      onEquipTitle={(label) => saveProfile({ title: label })}
+      onRename={(name) => {
+        if (containsBanned(name)) return;
+        saveProfile({ nickname: name });
+      }}
     />
   );
 }

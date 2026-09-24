@@ -10,6 +10,7 @@ export interface RawLeaderDoc {
   winCount?: number;
   correctRate?: number;
   avatar?: string;
+  title?: string;
 }
 
 export interface LeaderboardEntry {
@@ -20,6 +21,7 @@ export interface LeaderboardEntry {
   winCount: number;
   correctRate: number;
   avatar: string;
+  title?: string;
   rank: number;
   isMe: boolean;
 }
@@ -40,6 +42,7 @@ export function mapLeaderboard(
     winCount: d.winCount ?? 0,
     correctRate: d.correctRate ?? 0,
     avatar: d.avatar ?? 'cat',
+    ...(d.title ? { title: d.title } : {}),
     rank: i + 1,
     isMe: myUid != null && d.uid === myUid,
   }));

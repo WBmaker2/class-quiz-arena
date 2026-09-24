@@ -104,3 +104,94 @@ describe('StudentHome', () => {
     expect(screen.queryByText(/BATTLE READY/)).toBeNull();
   });
 });
+
+describe('StudentHome shop and rename', () => {
+  const richProfile = { ...profile, xp: 1000, unlockedAvatars: ['dragon'], unlockedTitles: ['legend'] };
+
+  it('buys a locked avatar with enough XP', () => {
+    const onBuyAvatar = vi.fn();
+    render(
+      <StudentHome
+        arenas={[]}
+        leaders={[]}
+        profile={{ ...profile, xp: 1000 }}
+        onEnter={() => {}}
+        onSignOut={() => {}}
+        onBuyAvatar={onBuyAvatar}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '상점' }));
+    fireEvent.click(screen.getByRole('button', { name: '800 XP에 사기' }));
+    expect(onBuyAvatar).toHaveBeenCalledWith('dragon', 800);
+  });
+
+  it('shows price only when XP is short', () => {
+    render(
+      <StudentHome
+        arenas={[]}
+        leaders={[]}
+        profile={profile}
+        onEnter={() => {}}
+        onSignOut={() => {}}
+        onBuyAvatar={() => {}}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '상점' }));
+    expect(screen.getByText('800 XP 필요')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '800 XP에 사기' })).toBeNull();
+  });
+
+  it('equips an owned avatar', () => {
+    const onEquipAvatar = vi.fn();
+    render(
+      <StudentHome
+        arenas={[]}
+        leaders={[]}
+        profile={richProfile}
+        onEnter={() => {}}
+        onSignOut={() => {}}
+        onEquipAvatar={onEquipAvatar}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '상점' }));
+    fireEvent.click(screen.getAllByRole('button', { name: '사용하기' })[0]);
+    expect(onEquipAvatar).toHaveBeenCalled();
+  });
+
+  it('blocks banned nicknames with a friendly message', () => {
+    const onRename = vi.fn();
+    render(
+      <StudentHome
+        arenas={[]}
+        leaders={[]}
+        profile={profile}
+        onEnter={() => {}}
+        onSignOut={() => {}}
+        onRename={onRename}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '내 기록' }));
+    fireEvent.change(screen.getByLabelText('내 이름 바꾸기'), { target: { value: '시발' } });
+    fireEvent.click(screen.getByRole('button', { name: '이름 저장' }));
+    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(onRename).not.toHaveBeenCalled();
+  });
+
+  it('saves a clean nickname', () => {
+    const onRename = vi.fn();
+    render(
+      <StudentHome
+        arenas={[]}
+        leaders={[]}
+        profile={profile}
+        onEnter={() => {}}
+        onSignOut={() => {}}
+        onRename={onRename}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '내 기록' }));
+    fireEvent.change(screen.getByLabelText('내 이름 바꾸기'), { target: { value: '삼호' } });
+    fireEvent.click(screen.getByRole('button', { name: '이름 저장' }));
+    expect(onRename).toHaveBeenCalledWith('삼호');
+  });
+});
