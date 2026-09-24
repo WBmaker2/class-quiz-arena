@@ -46,7 +46,7 @@ export function useClassroom() {
     }
   };
 
-  const create = async (name: string, uid: string, nickname: string) => {
+  const create = async (name: string, uid: string, nickname: string, avatar: string) => {
     if (!mounted.current) return;
     try {
       const code = generateInviteCode();
@@ -59,7 +59,7 @@ export function useClassroom() {
       if (!mounted.current) return;
       await setDoc(
         doc(db, 'users', uid),
-        { nickname, role: 'teacher', avatar: 'cat', classroomId: code },
+        { nickname, role: 'teacher', avatar, classroomId: code },
         { merge: true },
       );
       if (!mounted.current) return;

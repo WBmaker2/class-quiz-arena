@@ -27,12 +27,14 @@ describe('App', () => {
     expect(screen.getByText('선생님 문제로 친구와 1:1 퀴즈 대결!')).toBeTruthy();
   });
 
-  it('enters teacher workspace after join as teacher', () => {
+  it('creates a classroom as teacher instead of asking for a code', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Google 계정으로 시작하기' }));
     fireEvent.click(screen.getByRole('button', { name: '선생님으로 시작' }));
-    fireEvent.change(screen.getByLabelText('초대 코드'), { target: { value: 'A1B2C3' } });
-    fireEvent.click(screen.getByRole('button', { name: '학급 들어가기' }));
+    expect(screen.getByLabelText('학급 이름')).toBeTruthy();
+    expect(screen.queryByLabelText('초대 코드')).toBeNull();
+    fireEvent.change(screen.getByLabelText('학급 이름'), { target: { value: '4학년 3반' } });
+    fireEvent.click(screen.getByRole('button', { name: '학급 만들기' }));
     expect(screen.getByText('선생님 워크스페이스')).toBeTruthy();
   });
 

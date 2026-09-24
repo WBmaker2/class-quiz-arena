@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import BattleRoom from './pages/BattleRoom';
+import ClassCreate from './pages/ClassCreate';
 import ClassJoin from './pages/ClassJoin';
 import LoginScreen from './pages/LoginScreen';
 import RoleSelect, { type Role } from './pages/RoleSelect';
@@ -39,7 +40,7 @@ export default function App() {
   const [role, setRole] = useState<Role | null>(null);
   const [animal, setAnimal] = useState<Animal>('cat');
   const [pendingArena, setPendingArena] = useState<PendingArena | null>(null);
-  const { classroomId, join } = useClassroom();
+  const { classroomId, join, create } = useClassroom();
   const { user, loading, signInWithGoogle, signOut } = useAuth();
 
   const startLogin = () => {
@@ -80,7 +81,16 @@ export default function App() {
     return (
       <div className="min-h-screen grid place-items-center px-6 py-10">
         <div className="w-full max-w-md">
-          <ClassJoin onJoin={(code) => { void join(code, user?.uid ?? 'local-test', { nickname: user?.displayName ?? '학생', role: role ?? 'student', avatar: animal }); setView(role === 'teacher' ? 'teacher' : 'student'); }} />
+          {role === 'teacher' ? (
+            <ClassCreate
+              onCreate={(name) => {
+                void create(name, user?.uid ?? 'local-test', user?.displayName ?? '선생님', animal);
+                setView('teacher');
+              }}
+            />
+          ) : (
+            <ClassJoin onJoin={(code) => { void join(code, user?.uid ?? 'local-test', { nickname: user?.displayName ?? '학생', role: role ?? 'student', avatar: animal }); setView('student'); }} />
+          )}
         </div>
       </div>
     );

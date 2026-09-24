@@ -137,6 +137,7 @@ export default function TeacherHome({
             <p className="font-bold mb-2">학생 일괄 관리</p>
             <InviteQR code={classroomCode} />
             <p>학급 초대 QR — 탭해서 확대</p>
+            <p>초대 코드: {classroomCode}</p>
             {students.length === 0 ? (
               <EmptyState title="아직 등록된 학생이 없어요" />
             ) : (

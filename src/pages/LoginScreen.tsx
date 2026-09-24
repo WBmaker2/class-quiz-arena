@@ -14,7 +14,6 @@ export default function LoginScreen({ onStart }: { onStart: () => void }) {
             {'선생님 문제로\n친구와 1:1 퀴즈 대결!'}
           </p>
           <PrimaryButton onClick={onStart}>Google 계정으로 시작하기</PrimaryButton>
-          <div className="mt-4 text-[11px]">학교 계정으로 안전하게 시작하세요</div>
         </Card>
       </div>
     </div>
