@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, query, setDoc, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { TEACHER_NOT_ALLOWLISTED } from '../lib/admin';
 import { generateInviteCode, isValidInviteCode, normalizeInviteCode } from '../lib/classroom';
@@ -9,6 +9,45 @@ export interface JoinInfo {
   nickname: string;
   role: 'teacher' | 'student';
   avatar: string;
+}
+
+export interface TeacherClassroom {
+  id: string;
+  name: string;
+  inviteCode: string;
+}
+
+/** 선생님이 개설한 학급 목록 (실시간). 실패하면 빈 목록. */
+export function useTeacherClassrooms(uid: string | null) {
+  const [classrooms, setClassrooms] = useState<TeacherClassroom[]>([]);
+  // uid가 없으면(테스트) 조회 없이 끝난 상태로 시작한다
+  const [loading, setLoading] = useState(uid !== null);
+
+  useEffect(() => {
+    if (!uid) {
+      setClassrooms([]);
+      setLoading(false);
+      return;
+    }
+    return onSnapshot(
+      query(collection(db, 'classrooms'), where('teacherId', '==', uid)),
+      (snap) => {
+        setClassrooms(
+          snap.docs.map((d) => {
+            const data = d.data() as { name?: string; inviteCode?: string };
+            return { id: d.id, name: data.name ?? '(이름 없음)', inviteCode: data.inviteCode ?? d.id };
+          }),
+        );
+        setLoading(false);
+      },
+      () => {
+        setClassrooms([]);
+        setLoading(false);
+      },
+    );
+  }, [uid]);
+
+  return { classrooms, loading };
 }
 
 export function useClassroom() {
@@ -54,12 +93,12 @@ export function useClassroom() {
     }
   };
 
-  const create = async (name: string, uid: string, nickname: string, avatar: string) => {
-    if (!mounted.current) return;
+  const create = async (name: string, uid: string, nickname: string, avatar: string): Promise<string | null> => {
+    if (!mounted.current) return null;
     const nameError = validateNickname(nickname);
     if (nameError) {
       setError(nameError);
-      return;
+      return null;
     }
     try {
       const code = generateInviteCode();
@@ -69,24 +108,30 @@ export function useClassroom() {
         teacherId: uid,
         locked: false,
       });
-      if (!mounted.current) return;
+      if (!mounted.current) return null;
       await setDoc(
         doc(db, 'users', uid),
         { nickname, role: 'teacher', avatar, classroomId: code },
         { merge: true },
       );
-      if (!mounted.current) return;
+      if (!mounted.current) return null;
       setError(null);
       setClassroomId(code);
+      return code;
     } catch (e) {
-      if (!mounted.current) return;
+      if (!mounted.current) return null;
       setError(
         (e as { code?: string })?.code === 'permission-denied'
           ? TEACHER_NOT_ALLOWLISTED
           : '연결에 실패했어요. 다시 시도해주세요',
       );
+      return null;
     }
   };
 
-  return { classroomId, join, create, error };
+  const select = (id: string) => {
+    setClassroomId(id);
+  };
+
+  return { classroomId, join, create, select, error };
 }

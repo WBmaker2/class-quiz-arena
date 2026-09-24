@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import BattleRoom from './pages/BattleRoom';
 import ClassCreate from './pages/ClassCreate';
 import ClassJoin from './pages/ClassJoin';
+import ClassSelect from './pages/ClassSelect';
 import LoginScreen from './pages/LoginScreen';
 import RoleSelect, { type Role } from './pages/RoleSelect';
 import StudentHome from './pages/StudentHome';
@@ -13,7 +14,7 @@ import { useAnalytics } from './hooks/useAnalytics';
 import { useArenaAdmin, type EditableProblem } from './hooks/useArenaAdmin';
 import { useArenas } from './hooks/useArenas';
 import { useAuth } from './hooks/useAuth';
-import { useClassroom } from './hooks/useClassroom';
+import { useClassroom, useTeacherClassrooms } from './hooks/useClassroom';
 import { useLeaderboard } from './hooks/useLeaderboard';
 import { useMatch } from './hooks/useMatch';
 import { useProfile } from './hooks/useProfile';
@@ -49,7 +50,7 @@ export default function App() {
   const [role, setRole] = useState<Role | null>(null);
   const [animal, setAnimal] = useState<Animal>('cat');
   const [pendingArena, setPendingArena] = useState<PendingArena | null>(null);
-  const { classroomId, join, create } = useClassroom();
+  const { classroomId, join, create, select } = useClassroom();
   const { user, loading, signInWithGoogle, signOut } = useAuth();
 
   const startLogin = () => {
@@ -91,9 +92,14 @@ export default function App() {
       <div className="min-h-screen grid place-items-center px-6 py-10">
         <div className="w-full max-w-md">
           {role === 'teacher' ? (
-            <ClassCreate
-              onCreate={(name) => {
-                void create(name, user?.uid ?? 'local-test', user?.displayName ?? '선생님', animal);
+            <TeacherGate
+              uid={user?.uid ?? 'local-test'}
+              displayName={user?.displayName ?? '선생님'}
+              animal={animal}
+              create={create}
+              onDone={(id) => {
+                void setDoc(doc(db, 'users', user?.uid ?? 'local-test'), { classroomId: id }, { merge: true });
+                select(id);
                 setView('teacher');
               }}
             />
@@ -300,6 +306,52 @@ function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: stri
       }}
     />
   );
+}
+
+export function TeacherGate({
+  uid,
+  displayName,
+  animal,
+  create,
+  onDone,
+}: {
+  uid: string;
+  displayName: string;
+  animal: Animal;
+  create: (name: string, uid: string, nickname: string, avatar: string) => Promise<string | null>;
+  onDone: (classroomId: string) => void;
+}) {
+  // 테스트에서는 조회 없이 만들기 화면 (기존 App 테스트 유지)
+  const { classrooms, loading } = useTeacherClassrooms(import.meta.env.MODE === 'test' ? null : uid);
+  const [creating, setCreating] = useState(false);
+  const [entered, setEntered] = useState(false);
+
+  // 학급 1개면 자동으로 입장
+  useEffect(() => {
+    if (!entered && !loading && !creating && classrooms.length === 1) {
+      setEntered(true);
+      onDone(classrooms[0].id);
+    }
+  }, [entered, loading, creating, classrooms, onDone]);
+
+  if (loading) {
+    return <p>학급 목록을 불러오는 중...</p>;
+  }
+  if (creating || classrooms.length === 0) {
+    return (
+      <ClassCreate
+        onCreate={(name) => {
+          void create(name, uid, displayName, animal).then((id) => {
+            if (id) onDone(id);
+          });
+        }}
+      />
+    );
+  }
+  if (classrooms.length === 1) {
+    return <p>학급으로 들어가는 중...</p>;
+  }
+  return <ClassSelect classrooms={classrooms} onSelect={onDone} onCreateNew={() => setCreating(true)} />;
 }
 
 function StudentShell({

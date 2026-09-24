@@ -17,6 +17,9 @@ vi.mock('firebase/firestore', () => ({
     state.setCalls.push(args);
     return Promise.resolve();
   },
+  query: () => ({}),
+  where: () => ({}),
+  onSnapshot: () => () => {},
 }));
 
 vi.mock('../lib/firebase', () => ({ db: {} }));
