@@ -24,6 +24,7 @@ import { useTeacherRooms } from './hooks/useTeacherRooms';
 import { avgCorrectVsWrong, hardProblems, problemStats } from './lib/analytics';
 import { buildRosterCsv } from './lib/roster';
 import { useRoom, orderBattleProblems } from './hooks/useRoom';
+import { isCorrectAnswer } from './lib/battle';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from './lib/firebase';
 import type { Problem } from './lib/arena';
@@ -155,7 +156,7 @@ export default function App() {
 function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: string | null; userEmail: string | null; onSignOut: () => void }) {
   const showAdmin = isMasterEmail(userEmail);
   const { live, abandoned, finished, forceClose } = useTeacherRooms();
-  const { arenas, saveArena, loadProblems, removeArena, setLocked } = useArenaAdmin(classroomId);
+  const { arenas, saveArena, loadProblems, removeArena, setLocked, setShowPlayers } = useArenaAdmin(classroomId);
   const { students, removeStudent } = useStudents(classroomId);
   const { teachers, addTeacher, removeTeacher } = useTeacherAllowlist(showAdmin);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -244,7 +245,7 @@ function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: stri
       live={live.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
       abandoned={abandoned.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
       finished={finished.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
-      arenas={arenas.map((a) => ({ id: a.id, title: a.title, locked: a.locked }))}
+      arenas={arenas.map((a) => ({ id: a.id, title: a.title, locked: a.locked, showPlayers: a.showPlayers ?? false }))}
       classroomCode={classroomId ?? ''}
       students={students}
       onDeleteStudent={(uid) => {
@@ -261,6 +262,9 @@ function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: stri
       }}
       onToggleLock={(id, locked) => {
         void setLocked(id, locked);
+      }}
+      onToggleShowPlayers={(id, showPlayers) => {
+        void setShowPlayers(id, showPlayers);
       }}
       onNewArena={() => setCreating(true)}
       onSignOut={onSignOut}
@@ -360,7 +364,8 @@ function BattleShell({
   useEffect(() => {
     if (!room || room.status !== 'finished' || awarded || ordered.length === 0) return;
     setAwarded(true);
-    const correct = room.players.find((p) => p.uid === me.uid)?.answers.filter((a, i) => a === ordered[i]?.answerIndex).length ?? 0;
+    const mine = room.players.find((p) => p.uid === me.uid)?.answers ?? [];
+    const correct = mine.filter((a, i) => isCorrectAnswer(a, ordered[i] ?? { answerIndex: -1 })).length;
     void finishAndAward({
       roomId: roomId!,
       winnerUid: room.winnerUid,
@@ -399,13 +404,13 @@ function BattleShell({
         <BattleRoom
           room={room}
           meUid={me.uid}
-          problem={problem ? { text: problem.text, options: problem.options } : undefined}
+          problem={problem ? { text: problem.text, options: problem.options, kind: problem.kind ?? 'choice' } : undefined}
           problemsLoaded={ordered.length > 0}
           onReady={() => {
             void ready(me.uid);
           }}
-          onAnswer={(i) => {
-            void answer(me.uid, i);
+          onAnswer={(v) => {
+            void answer(me.uid, v);
           }}
           onClaimWin={() => {
             void claimWin(me.uid);

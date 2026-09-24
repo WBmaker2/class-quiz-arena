@@ -2,6 +2,7 @@ import * as admin from 'firebase-admin';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
 import {
+  kindMix,
   nextUsage,
   requireAuth,
   validateGenerateArenaInput,
@@ -35,14 +36,19 @@ export interface GenerateArenaResponse {
 
 function buildPrompt(input: GenerateArenaInput): string {
   const topicLine = input.topic ? `주제: ${input.topic}\n` : '';
+  const mix = kindMix(input.count);
   return [
-    '초등학생이 읽는 쉬운 말로 4지선다 문제를 만들어줘.',
-    `학년: ${input.grade}, 과목: ${input.subject}`,
-    `성취기준: ${input.standards.join(', ')}`,
+    '초등학생이 읽는 쉬운 말로 문제를 만들어줘.',
+    `학년: ${input.grade} (이 학년 수준의 어휘와 문장 길이를 써줘. 저학년은 짧은 문장, 쉬운 말로.)`,
+    `과목: ${input.subject}`,
+    `성취기준: ${input.standards.join(', ')} (기준 동사의 수준에 맞춰 출제해. '알기'는 예시·상황으로 이해를 확인하고, '적용하기'는 실생활 문장제·사례 판단으로 내줘.)`,
     topicLine,
-    `문제 수: ${input.count}개`,
-    '각 문제는 해설 1줄을 포함하고, 반드시 JSON 배열만 출력해줘.',
-    '형식: [{"text": "...", "options": ["...", "...", "...", "..."], "answerIndex": 0, "explanation": "..."}]',
+    `문제 수: ${input.count}개 — 4지선다 ${mix.choice}개, O/X ${mix.ox}개, 단답형 주관식 ${mix.short}개.`,
+    '너무 쉬운 문제(상식선에서 풀리는 것)와 너무 어려운 문제(상위 학년 개념)는 내지 마.',
+    '4지선다 오답은 학생들이 흔히 하는 실수(오개념)로 만들어. O/X 문제는 단정적 표현 함정을 1개 이상 넣어. 단답형 정답은 30자 이내 짧은 답으로.',
+    '각 문제는 해설 1줄을 포함하고, 해설에는 왜 정답인지 이유를 써줘. 반드시 JSON 배열만 출력해줘.',
+    '형식: [{"kind": "choice"|"ox"|"short", "text": "...", "options": ["...", "...", "...", "..."], "answerIndex": 0, "answerText": "단답형일 때만", "explanation": "..."}]',
+    '(choice면 options 4개, ox면 options ["O","X"]에 answerIndex 0 또는 1, short면 options [] 와 answerText 필수)',
   ].join('\n');
 }
 

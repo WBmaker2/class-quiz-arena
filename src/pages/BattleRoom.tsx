@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import Card from '../components/Card';
 import PrimaryButton from '../components/PrimaryButton';
 import Timer from '../components/Timer';
-import { canClaimWin, roundRemainingMs, type RoomData } from '../lib/battle';
+import type { ProblemKind } from '../lib/arena';
+import { canClaimWin, roundRemainingMs, type AnswerValue, type RoomData } from '../lib/battle';
 
 export default function BattleRoom({
   room,
@@ -13,20 +15,26 @@ export default function BattleRoom({
   onClaimWin,
   onExit,
   problemsLoaded,
+  showPlayers,
 }: {
   room: RoomData;
   meUid: string;
-  problem?: { text: string; options: string[] };
+  problem?: { text: string; options: string[]; kind?: ProblemKind };
   nowMs?: number;
   problemsLoaded?: boolean;
   onReady: () => void;
-  onAnswer?: (idx: number) => void;
+  onAnswer?: (answer: AnswerValue) => void;
   onClaimWin?: () => void;
   onExit: () => void;
+  /** 방 생성 시 복사된 아레나 설정. 없으면 방 값 → 그것도 없으면 비공개. */
+  showPlayers?: boolean;
 }) {
   const now = nowMs ?? Date.now();
   const me = room.players.find((p) => p.uid === meUid);
   const opponent = room.players.find((p) => p.uid !== meUid);
+  const visible = showPlayers ?? room.showPlayers ?? false;
+  // 결과에서는 누구와 붙었는지 항상 공개
+  const opponentName = visible || room.status === 'finished' ? (opponent?.nickname ?? '???') : '???';
 
   if (room.status === 'finished') {
     const won = room.winnerUid === meUid;
@@ -37,6 +45,7 @@ export default function BattleRoom({
         <p>
           내 점수 {me?.score ?? 0} : {opponent?.score ?? 0} 상대 점수
         </p>
+        {opponent && <p>상대 {opponent.nickname}와의 대결이었어요</p>}
         <PrimaryButton onClick={onExit}>아레나로 돌아가기</PrimaryButton>
       </Card>
     );
@@ -44,12 +53,16 @@ export default function BattleRoom({
 
   if (room.status === 'playing' && problem) {
     const timedOut = roundRemainingMs(room, now) <= 0;
+    const isShort = (problem.kind ?? 'choice') === 'short';
     return (
       <Card>
         <Timer endsAt={room.roundEndsAt} nowMs={nowMs} />
+        <p className="text-sm">대전 상대: {opponentName}</p>
         <p className="text-lg font-bold">{problem.text}</p>
         {timedOut ? (
           <p>시간이 지난 문제예요. 다음 라운드로 넘어가요.</p>
+        ) : isShort ? (
+          <ShortAnswerForm onSubmit={(v) => onAnswer?.(v)} />
         ) : (
           problem.options.map((opt, i) => (
             <button key={opt} type="button" className="btn-primary w-full" onClick={() => onAnswer?.(i)}>
@@ -72,7 +85,7 @@ export default function BattleRoom({
   return (
     <Card>
       <p className="text-sm">문제 라운드 {room.currentRound + 1}</p>
-      <p className="text-lg font-bold">???</p>
+      <p className="text-lg font-bold">{opponentName}</p>
       {!me?.ready ? (
         problemsLoaded === false ? (
           <p>문제를 불러오는 중...</p>
@@ -88,5 +101,24 @@ export default function BattleRoom({
         나가기
       </button>
     </Card>
+  );
+}
+
+function ShortAnswerForm({ onSubmit }: { onSubmit: (value: string) => void }) {
+  const [value, setValue] = useState('');
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(value);
+      }}
+    >
+      <p>단답형 문제예요. 정답을 쓰고 제출을 눌러주세요.</p>
+      <label htmlFor="short-answer">내 답</label>
+      <input id="short-answer" value={value} onChange={(e) => setValue(e.target.value)} placeholder="예: 세종대왕" />
+      <button type="submit" className="btn-primary w-full">
+        제출
+      </button>
+    </form>
   );
 }

@@ -30,6 +30,7 @@ export const ARENAS = [
     questionCount: 20,
     cardTheme: { bg: '#E3F2FD', emoji: '➗' },
     locked: false,
+    showPlayers: false,
     status: 'published',
     createdBy: OWNER_ID,
     problems: [
@@ -67,6 +68,7 @@ export const ARENAS = [
     questionCount: 20,
     cardTheme: { bg: '#FCE4EC', emoji: '📖' },
     locked: false,
+    showPlayers: false,
     status: 'published',
     createdBy: OWNER_ID,
     problems: [
@@ -104,6 +106,7 @@ export const ARENAS = [
     questionCount: 20,
     cardTheme: { bg: '#FFF8E1', emoji: '🍕' },
     locked: false,
+    showPlayers: false,
     status: 'published',
     createdBy: OWNER_ID,
     problems: [
@@ -141,6 +144,7 @@ export const ARENAS = [
     questionCount: 20,
     cardTheme: { bg: '#E1F5FE', emoji: '💧' },
     locked: false,
+    showPlayers: false,
     status: 'published',
     createdBy: OWNER_ID,
     problems: [
@@ -178,6 +182,7 @@ export const ARENAS = [
     questionCount: 20,
     cardTheme: { bg: '#E8F5E9', emoji: '🗺️' },
     locked: false,
+    showPlayers: false,
     status: 'published',
     createdBy: OWNER_ID,
     problems: [
@@ -215,6 +220,7 @@ export const ARENAS = [
     questionCount: 20,
     cardTheme: { bg: '#FFF3E0', emoji: '🔤' },
     locked: false,
+    showPlayers: false,
     status: 'published',
     createdBy: OWNER_ID,
     problems: [
@@ -257,6 +263,7 @@ export function validateArenas(arenas = ARENAS) {
     }
     if (arena.classroomId !== CLASSROOM_ID) errors.push(`${where}: classroomId must be ${CLASSROOM_ID}`);
     if (arena.locked !== false) errors.push(`${where}: locked must be false`);
+    if (arena.showPlayers !== false) errors.push(`${where}: showPlayers must default to false`);
     if (arena.status !== 'published') errors.push(`${where}: status must be published`);
     if (arena.createdBy !== OWNER_ID) errors.push(`${where}: createdBy must be ${OWNER_ID}`);
     if (!arena.title) errors.push(`${where}: title is empty`);

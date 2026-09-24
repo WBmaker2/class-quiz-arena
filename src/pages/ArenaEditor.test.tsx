@@ -102,3 +102,47 @@ describe('ArenaEditor', () => {
     expect(screen.getByText(/비었어요/)).toBeTruthy();
   });
 });
+
+describe('ArenaEditor question kinds', () => {
+  it('switches to short answer and requires answer text', () => {
+    render(<ArenaEditor initial={baseInitial} problems={makeProblems(10)} onSave={() => {}} onCancel={() => {}} />);
+    const selects = screen.getAllByLabelText(/문제 1 유형/);
+    fireEvent.change(selects[0], { target: { value: 'short' } });
+    // 정답 입력 전에는 공개 불가 + 안내 문구
+    expect(publishButton().disabled).toBe(true);
+    expect(screen.getByText(/단답형 정답이 비었어요/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('문제 1 단답형 정답'), { target: { value: '세종대왕' } });
+    expect(publishButton().disabled).toBe(false);
+  });
+
+  it('fixes ox options to O and X', () => {
+    render(<ArenaEditor initial={baseInitial} problems={makeProblems(1)} onSave={() => {}} onCancel={() => {}} />);
+    fireEvent.change(screen.getByLabelText(/문제 1 유형/), { target: { value: 'ox' } });
+    expect(screen.getByLabelText('문제 1 정답: O')).toBeTruthy();
+    expect(screen.getByLabelText('문제 1 정답: X')).toBeTruthy();
+  });
+
+  it('normalizes AI drafts with kinds', async () => {
+    const { httpsCallable } = await import('firebase/functions');
+    vi.mocked(httpsCallable).mockReturnValue(
+      (() =>
+        Promise.resolve({
+          data: {
+            problems: [
+              { kind: 'ox', text: 'Q', options: ['o', 'x'], answerIndex: 1 },
+              { kind: 'short', text: 'Q2', options: [], answerText: '세종대왕' },
+              { text: 'Q3', options: ['1', '2', '3', '4'], answerIndex: 0 },
+            ],
+          },
+        })) as never,
+    );
+    render(<ArenaEditor initial={baseInitial} problems={[]} onSave={() => {}} onCancel={() => {}} />);
+    fireEvent.click(screen.getByRole('checkbox', { name: /3수01-01/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'AI로 초안 만들기' }));
+    expect(await screen.findByDisplayValue('Q')).toBeTruthy();
+    expect(screen.getByDisplayValue('Q2')).toBeTruthy();
+    // ox는 O/X 고정, 단답형 정답은 그대로 (채점에서 공백·대소문자 무시)
+    expect(screen.getByLabelText('문제 1 정답: X')).toBeTruthy();
+    expect(screen.getByDisplayValue('세종대왕')).toBeTruthy();
+  });
+});

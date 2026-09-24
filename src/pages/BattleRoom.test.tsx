@@ -85,3 +85,61 @@ describe('BattleRoom playing', () => {
     expect(onClaimWin).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('BattleRoom mixed types and privacy', () => {
+  function playingRoom(showPlayers?: boolean) {
+    let room = joinRoomData(createRoomData('a1', host, 1000), guest, 2000)!;
+    room = { ...room, status: 'playing', currentRound: 0, roundEndsAt: Date.now() + 30000, showPlayers };
+    return room;
+  }
+
+  it('submits a short answer as text', () => {
+    const onAnswer = vi.fn();
+    render(
+      <BattleRoom
+        room={playingRoom()}
+        meUid="u1"
+        problem={{ text: '한글을 만든 왕은?', options: [], kind: 'short' }}
+        onReady={() => {}}
+        onAnswer={onAnswer}
+        onExit={() => {}}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText('내 답'), { target: { value: '세종대왕' } });
+    fireEvent.click(screen.getByRole('button', { name: '제출' }));
+    expect(onAnswer).toHaveBeenCalledWith('세종대왕');
+  });
+
+  it('hides opponent name when private', () => {
+    render(
+      <BattleRoom
+        room={playingRoom(false)}
+        meUid="u1"
+        problem={{ text: 'Q', options: ['O', 'X'] }}
+        onReady={() => {}}
+        onExit={() => {}}
+      />,
+    );
+    expect(screen.getByText('대전 상대: ???')).toBeTruthy();
+  });
+
+  it('shows opponent name when public', () => {
+    render(
+      <BattleRoom
+        room={playingRoom(true)}
+        meUid="u1"
+        problem={{ text: 'Q', options: ['O', 'X'] }}
+        onReady={() => {}}
+        onExit={() => {}}
+      />,
+    );
+    expect(screen.getByText('대전 상대: 이호')).toBeTruthy();
+  });
+
+  it('reveals opponent at result even when private', () => {
+    let room = joinRoomData(createRoomData('a1', host, 1000), guest, 2000)!;
+    room = { ...room, status: 'finished', winnerUid: 'u1', showPlayers: false };
+    render(<BattleRoom room={room} meUid="u1" onReady={() => {}} onExit={() => {}} />);
+    expect(screen.getByText('상대 이호와의 대결이었어요')).toBeTruthy();
+  });
+});

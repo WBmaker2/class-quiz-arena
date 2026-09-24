@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import Card from '../components/Card';
 import { getStandards } from '../data/curriculum2022';
+import type { ProblemKind } from '../lib/arena';
 import type { ArenaInput, EditableProblem } from '../hooks/useArenaAdmin';
 
 const GRADES = [1, 2, 3, 4, 5, 6];
@@ -21,40 +22,73 @@ interface GenerateArenaRequest {
 }
 
 interface GenerateArenaResponse {
-  problems: { text: string; options: string[]; answerIndex: number; explanation?: string; standardCode?: string }[];
+  problems: {
+    text: string;
+    kind?: ProblemKind;
+    options: string[];
+    answerIndex: number;
+    answerText?: string;
+    explanation?: string;
+    standardCode?: string;
+  }[];
 }
+
+export const MAX_SHORT_ANSWER_LENGTH = 30;
+
+const KIND_LABEL: Record<ProblemKind, string> = { choice: '4지선다', ox: 'O/X', short: '단답형' };
 
 function clampCount(n: number): number {
   if (!Number.isFinite(n)) return DEFAULT_COUNT;
   return Math.min(MAX_COUNT, Math.max(MIN_COUNT, Math.trunc(n)));
 }
 
-function blankProblem(): EditableProblem {
-  return { text: '', options: ['', '', '', ''], answerIndex: 0, explanation: '' };
+function blankProblem(kind: ProblemKind = 'choice'): EditableProblem {
+  return {
+    text: '',
+    kind,
+    options: kind === 'ox' ? ['O', 'X', '', ''] : ['', '', '', ''],
+    answerIndex: 0,
+    answerText: '',
+    explanation: '',
+  };
 }
 
 /** 공개 전 내용 검사. 문제 있으면 사람이 읽는 한 줄 설명, 없으면 null. */
 export function findProblemError(items: EditableProblem[]): string | null {
   for (const [i, p] of items.entries()) {
+    const kind = p.kind ?? 'choice';
     if (!p.text.trim()) return `${i + 1}번 문제 내용이 비었어요`;
-    if (p.options.some((o) => !o.trim())) return `${i + 1}번 빈 선택지가 있어요`;
-    if (new Set(p.options.map((o) => o.trim())).size !== p.options.length) return `${i + 1}번 선택지가 겹쳐요`;
+    if (kind === 'short') {
+      const want = (p.answerText ?? '').trim();
+      if (!want) return `${i + 1}번 단답형 정답이 비었어요`;
+      if (want.length > MAX_SHORT_ANSWER_LENGTH) return `${i + 1}번 단답형 정답이 너무 길어요`;
+      continue;
+    }
+    const opts = kind === 'ox' ? p.options.slice(0, 2) : p.options;
+    if (opts.some((o) => !o.trim())) return `${i + 1}번 빈 선택지가 있어요`;
+    if (new Set(opts.map((o) => o.trim())).size !== opts.length) return `${i + 1}번 선택지가 겹쳐요`;
   }
   return null;
 }
 
 function normalizeDraft(p: GenerateArenaResponse['problems'][number]): EditableProblem {
-  const options = [p.options?.[0] ?? '', p.options?.[1] ?? '', p.options?.[2] ?? '', p.options?.[3] ?? ''] as [
-    string,
-    string,
-    string,
-    string,
-  ];
+  const kind: ProblemKind = p.kind === 'ox' || p.kind === 'short' ? p.kind : 'choice';
+  const options =
+    kind === 'ox'
+      ? (['O', 'X', '', ''] as [string, string, string, string])
+      : ([
+          p.options?.[0] ?? '',
+          p.options?.[1] ?? '',
+          p.options?.[2] ?? '',
+          p.options?.[3] ?? '',
+        ] as [string, string, string, string]);
   const answerIndex = Number.isInteger(p.answerIndex) ? Math.min(3, Math.max(0, p.answerIndex)) : 0;
   return {
     text: p.text ?? '',
+    kind,
     options,
     answerIndex,
+    answerText: kind === 'short' ? (p.answerText ?? '') : '',
     explanation: p.explanation ?? '',
     ...(typeof p.standardCode === 'string' && p.standardCode ? { standardCode: p.standardCode } : {}),
   };
@@ -220,28 +254,76 @@ export default function ArenaEditor({
         <div key={`problem-${i}`}>
           {p.standardCode ? <p>{p.standardCode}</p> : null}
           <label>
+            문제 {i + 1} 유형
+            <select
+              aria-label={`문제 ${i + 1} 유형`}
+              value={p.kind ?? 'choice'}
+              onChange={(e) => {
+                const kind = e.target.value as ProblemKind;
+                updateItem(i, {
+                  kind,
+                  options: kind === 'ox' ? ['O', 'X', '', ''] : p.options,
+                  answerIndex: kind === 'ox' ? Math.min(1, p.answerIndex) : p.answerIndex,
+                });
+              }}
+            >
+              {(Object.keys(KIND_LABEL) as ProblemKind[]).map((k) => (
+                <option key={k} value={k}>
+                  {KIND_LABEL[k]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
             문제 {i + 1} 내용
             <input value={p.text} onChange={(e) => updateItem(i, { text: e.target.value })} />
           </label>
-          {p.options.map((opt, k) => (
-            <div key={k}>
+          {(p.kind ?? 'choice') === 'short' ? (
+            <label>
+              문제 {i + 1} 단답형 정답
               <input
-                aria-label={`문제 ${i + 1} 선택지 ${k + 1}`}
-                value={opt}
-                onChange={(e) => updateOption(i, k, e.target.value)}
+                value={p.answerText ?? ''}
+                maxLength={MAX_SHORT_ANSWER_LENGTH}
+                onChange={(e) => updateItem(i, { answerText: e.target.value })}
               />
-              <label>
-                <input
-                  type="radio"
-                  name={`answer-${i}`}
-                  aria-label={`문제 ${i + 1} 정답: ${k + 1}번`}
-                  checked={p.answerIndex === k}
-                  onChange={() => updateItem(i, { answerIndex: k })}
-                />
-                정답
-              </label>
+            </label>
+          ) : (p.kind ?? 'choice') === 'ox' ? (
+            <div>
+              <p>O / X 중 정답을 고르세요</p>
+              {[0, 1].map((k) => (
+                <label key={k}>
+                  <input
+                    type="radio"
+                    name={`answer-${i}`}
+                    aria-label={`문제 ${i + 1} 정답: ${k === 0 ? 'O' : 'X'}`}
+                    checked={p.answerIndex === k}
+                    onChange={() => updateItem(i, { answerIndex: k })}
+                  />
+                  {k === 0 ? 'O' : 'X'}
+                </label>
+              ))}
             </div>
-          ))}
+          ) : (
+            p.options.map((opt, k) => (
+              <div key={k}>
+                <input
+                  aria-label={`문제 ${i + 1} 선택지 ${k + 1}`}
+                  value={opt}
+                  onChange={(e) => updateOption(i, k, e.target.value)}
+                />
+                <label>
+                  <input
+                    type="radio"
+                    name={`answer-${i}`}
+                    aria-label={`문제 ${i + 1} 정답: ${k + 1}번`}
+                    checked={p.answerIndex === k}
+                    onChange={() => updateItem(i, { answerIndex: k })}
+                  />
+                  정답
+                </label>
+              </div>
+            ))
+          )}
           <label>
             문제 {i + 1} 해설
             <input value={p.explanation ?? ''} onChange={(e) => updateItem(i, { explanation: e.target.value })} />

@@ -1,12 +1,15 @@
 export type RoomStatus = 'waiting' | 'ready' | 'playing' | 'finished' | 'abandoned';
 
+/** 대결 답안: choice/ox는 선택지 번호, short는 직접 쓴 답. */
+export type AnswerValue = number | string;
+
 export interface PlayerState {
   uid: string;
   nickname: string;
   avatar: string;
   score: number;
   ready: boolean;
-  answers: (number | null)[];
+  answers: (AnswerValue | null)[];
 }
 
 export interface RoomData {
@@ -18,6 +21,8 @@ export interface RoomData {
   winnerUid: string | null;
   updatedAt: number;
   problemIds: string[];
+  /** 방 생성 시 아레나 showPlayers 복사값. 없으면 비공개로 간주. */
+  showPlayers?: boolean;
 }
 
 export const XP_PER_CORRECT = 10;
@@ -88,13 +93,13 @@ export function roundRemainingMs(room: RoomData, nowMs: number): number {
   return Math.max(0, room.roundEndsAt - nowMs);
 }
 
-export function submitAnswerData(room: RoomData, uid: string, answerIdx: number, nowMs: number): RoomData {
+export function submitAnswerData(room: RoomData, uid: string, answer: AnswerValue, nowMs: number): RoomData {
   return {
     ...room,
     players: room.players.map((p) => {
       if (p.uid !== uid) return p;
       const answers = [...p.answers];
-      answers[room.currentRound] = answerIdx;
+      answers[room.currentRound] = answer;
       return { ...p, answers };
     }),
     updatedAt: nowMs,
@@ -108,16 +113,38 @@ export function bothAnswered(room: RoomData): boolean {
   );
 }
 
+export interface GradableProblem {
+  kind?: 'choice' | 'ox' | 'short';
+  answerIndex: number;
+  answerText?: string;
+}
+
+/** 단답형 비교용 정규화: 공백 제거 + 영문 소문자. */
+export function normalizeAnswerText(v: string): string {
+  return v.trim().replace(/\s+/g, '').toLowerCase();
+}
+
+export function isCorrectAnswer(given: AnswerValue | null | undefined, problem: GradableProblem): boolean {
+  if (given === null || given === undefined) return false;
+  if ((problem.kind ?? 'choice') === 'short') {
+    if (typeof given !== 'string') return false;
+    const want = (problem.answerText ?? '').trim();
+    if (!want) return false;
+    return normalizeAnswerText(given) === normalizeAnswerText(want);
+  }
+  return given === problem.answerIndex;
+}
+
 export function advanceData(
   room: RoomData,
-  correctIdx: number,
+  problem: GradableProblem,
   nowMs: number,
   roundSec: number,
   totalRounds: number,
 ): RoomData {
   const players = room.players.map((p) => ({
     ...p,
-    score: p.score + (p.answers[room.currentRound] === correctIdx ? 1 : 0),
+    score: p.score + (isCorrectAnswer(p.answers[room.currentRound], problem) ? 1 : 0),
   }));
   const last = room.currentRound >= totalRounds - 1;
   return {
@@ -152,6 +179,12 @@ export function canClaimWin(room: RoomData, uid: string, nowMs: number): boolean
   if (room.status !== 'playing') return false;
   if (!room.players.some((p) => p.uid === uid)) return false;
   return nowMs - room.updatedAt >= AUTO_WIN_AFTER_MS;
+}
+
+/** 대기 방 중 무작위 1개. Math.random 기반이라 테스트에서는 값을 고정한다. */
+export function pickRandom<T>(items: T[]): T | null {
+  if (items.length === 0) return null;
+  return items[Math.floor(Math.random() * items.length)];
 }
 
 export function pickBattleProblems(allIds: string[], seed: string, n = 10): string[] {

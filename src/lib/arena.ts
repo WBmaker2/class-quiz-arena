@@ -1,3 +1,5 @@
+export type ProblemKind = 'choice' | 'ox' | 'short';
+
 export interface Arena {
   id: string;
   title: string;
@@ -9,13 +11,20 @@ export interface Arena {
   standards?: string[];
   cardTheme?: { bg: string; emoji: string };
   status?: 'draft' | 'published';
+  /** true면 학생에게 상대 이름·아바타 공개. 없으면 비공개로 간주. */
+  showPlayers?: boolean;
 }
 
 export interface Problem {
   id: string;
+  /** 옛 자료처럼 kind가 없으면 'choice'로 본다. */
+  kind?: ProblemKind;
   text: string;
+  /** choice 4개, ox는 ["O","X"], short는 비어 있음. */
   options: string[];
   answerIndex: number;
+  /** short 정답 (30자 이내). */
+  answerText?: string;
   roundTimeSec: number;
 }
 

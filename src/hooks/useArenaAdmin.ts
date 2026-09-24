@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { collection, deleteDoc, doc, getDocs, onSnapshot, orderBy, query, setDoc, where } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import type { Arena, Problem } from '../lib/arena';
+import type { Arena, Problem, ProblemKind } from '../lib/arena';
 
 export interface ArenaInput {
   title: string;
@@ -16,18 +16,25 @@ export interface ArenaInput {
 
 export interface EditableProblem {
   text: string;
+  kind?: ProblemKind;
   options: [string, string, string, string];
   answerIndex: number;
+  answerText?: string;
   explanation?: string;
   standardCode?: string;
 }
 
+const VALID_KINDS: ProblemKind[] = ['choice', 'ox', 'short'];
+
 function toEditable(data: Record<string, unknown>): EditableProblem {
   const options = (data.options as string[] | undefined) ?? [];
+  const kind = (data.kind as ProblemKind) ?? 'choice';
   return {
     text: (data.text as string) ?? '',
+    kind: VALID_KINDS.includes(kind) ? kind : 'choice',
     options: [options[0] ?? '', options[1] ?? '', options[2] ?? '', options[3] ?? ''],
     answerIndex: (data.answerIndex as number) ?? 0,
+    answerText: (data.answerText as string) ?? '',
     explanation: (data.explanation as string) ?? '',
     standardCode: (data.standardCode as string) ?? '',
   };
@@ -86,7 +93,7 @@ export function useArenaAdmin(classroomId: string | null) {
     return snap.docs
       .map((d) => ({ id: d.id, ...toEditable(d.data()) }))
       .sort((a, b) => parseInt(a.id.slice(1), 10) - parseInt(b.id.slice(1), 10))
-      .map(({ text, options, answerIndex, explanation, standardCode }) => ({ text, options, answerIndex, explanation, standardCode }));
+      .map(({ text, kind, options, answerIndex, answerText, explanation, standardCode }) => ({ text, kind, options, answerIndex, answerText, explanation, standardCode }));
   };
 
   const removeArena = async (id: string) => {
@@ -101,5 +108,9 @@ export function useArenaAdmin(classroomId: string | null) {
     await setDoc(doc(db, 'arenas', id), { locked }, { merge: true });
   };
 
-  return { arenas, saveArena, loadProblems, removeArena, setLocked };
+  const setShowPlayers = async (id: string, showPlayers: boolean) => {
+    await setDoc(doc(db, 'arenas', id), { showPlayers }, { merge: true });
+  };
+
+  return { arenas, saveArena, loadProblems, removeArena, setLocked, setShowPlayers };
 }

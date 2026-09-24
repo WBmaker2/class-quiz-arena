@@ -11,10 +11,14 @@ export interface GenerateArenaInput {
   topic?: string;
 }
 
+export type DraftKind = 'choice' | 'ox' | 'short';
+
 export interface DraftProblem {
+  kind?: DraftKind;
   text: string;
   options: string[];
   answerIndex: number;
+  answerText?: string;
   explanation?: string;
 }
 
@@ -107,16 +111,27 @@ export function nextUsage(
 export function isValidProblem(p: unknown): p is DraftProblem {
   if (typeof p !== 'object' || p === null) return false;
   const c = p as Record<string, unknown>;
+  const kind: DraftKind = c.kind === 'ox' || c.kind === 'short' ? c.kind : 'choice';
   if (!isNonEmptyString(c.text)) return false;
-  if (!Array.isArray(c.options) || c.options.length !== OPTION_COUNT) {
+  if (kind === 'short') {
+    return (
+      isNonEmptyString(c.answerText) &&
+      (c.answerText as string).trim().length <= 30 &&
+      (c.explanation === undefined || typeof c.explanation === 'string')
+    );
+  }
+  if (!Array.isArray(c.options)) return false;
+  if (kind === 'ox') {
+    const norm = (c.options as unknown[]).map(normalizeOxOption);
+    if (norm.length !== 2 || norm[0] !== 'O' || norm[1] !== 'X') return false;
+  } else if (c.options.length !== OPTION_COUNT || !c.options.every(isNonEmptyString)) {
     return false;
   }
-  if (!c.options.every(isNonEmptyString)) return false;
   if (
     typeof c.answerIndex !== 'number' ||
     !Number.isInteger(c.answerIndex) ||
     (c.answerIndex as number) < 0 ||
-    (c.answerIndex as number) >= OPTION_COUNT
+    (c.answerIndex as number) >= (kind === 'ox' ? 2 : OPTION_COUNT)
   ) {
     return false;
   }
@@ -126,20 +141,47 @@ export function isValidProblem(p: unknown): p is DraftProblem {
   return true;
 }
 
+/** AI가 낸 O/X 변형(o, x, ○, × 등)을 O/X로 통일. 모르면 null. */
+export function normalizeOxOption(v: unknown): string | null {
+  if (typeof v !== 'string') return null;
+  const t = v.trim();
+  if (['O', 'o', '○', '오', '참', '맞다', '예'].includes(t)) return 'O';
+  if (['X', 'x', '×', '✕', '엑스', '거짓', '아니다', '아니오'].includes(t)) return 'X';
+  return null;
+}
+
 /** Keep only valid problems; empties/invalid entries are dropped. */
 export function validateProblems(raw: unknown): DraftProblem[] {
   if (!Array.isArray(raw)) return [];
   const out: DraftProblem[] = [];
   for (const item of raw) {
     if (!isValidProblem(item)) continue;
+    const c = item as unknown as Record<string, unknown>;
+    const kind: DraftKind = c.kind === 'ox' || c.kind === 'short' ? c.kind : 'choice';
     out.push({
+      kind,
       text: (item.text as string).trim(),
-      options: (item.options as string[]).map((o) => o.trim()),
+      options:
+        kind === 'short'
+          ? []
+          : kind === 'ox'
+            ? ['O', 'X']
+            : (item.options as string[]).map((o) => o.trim()),
       answerIndex: item.answerIndex as number,
+      ...(kind === 'short' && typeof item.answerText === 'string'
+        ? { answerText: (item.answerText as string).trim() }
+        : {}),
       ...(typeof item.explanation === 'string' && item.explanation.trim()
         ? { explanation: (item.explanation as string).trim() }
         : {}),
     });
   }
   return out;
+}
+
+/** 문항수 N에 대한 유형 분배: OX·단답형 각 max(2, 15%), 나머지 4지선다. */
+export function kindMix(count: number): { choice: number; ox: number; short: number } {
+  const ox = Math.max(2, Math.round(count * 0.15));
+  const short = Math.max(2, Math.round(count * 0.15));
+  return { choice: Math.max(1, count - ox - short), ox, short };
 }

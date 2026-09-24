@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   isValidProblem,
+  kindMix,
   nextUsage,
+  normalizeOxOption,
   requireAuth,
   validateGenerateArenaInput,
   validateProblems,
@@ -106,5 +108,46 @@ describe('nextUsage', () => {
 
   it('allows the last remaining use', () => {
     expect(nextUsage({ date: '2026-09-24', count: 19 }, '2026-09-24').allowed).toBe(true);
+  });
+});
+
+describe('mixed question kinds', () => {
+  it('accepts ox with O/X options and index 0-1', () => {
+    expect(
+      isValidProblem({ kind: 'ox', text: 'Q', options: ['O', 'X'], answerIndex: 1 }),
+    ).toBe(true);
+    expect(
+      isValidProblem({ kind: 'ox', text: 'Q', options: ['O', 'X'], answerIndex: 2 }),
+    ).toBe(false);
+  });
+
+  it('accepts ox option variants and normalizes them', () => {
+    expect(normalizeOxOption('o')).toBe('O');
+    expect(normalizeOxOption('×')).toBe('X');
+    expect(normalizeOxOption('maybe')).toBeNull();
+    const out = validateProblems([{ kind: 'ox', text: 'Q', options: ['o', 'x'], answerIndex: 0 }]);
+    expect(out).toHaveLength(1);
+    expect(out[0].options).toEqual(['O', 'X']);
+  });
+
+  it('accepts short answers with answerText and empty options', () => {
+    expect(
+      isValidProblem({ kind: 'short', text: 'Q', options: [], answerText: '세종대왕' }),
+    ).toBe(true);
+    expect(isValidProblem({ kind: 'short', text: 'Q', options: [], answerText: '' })).toBe(false);
+    expect(
+      isValidProblem({ kind: 'short', text: 'Q', options: [], answerText: 'x'.repeat(31) }),
+    ).toBe(false);
+  });
+
+  it('treats missing kind as choice', () => {
+    const out = validateProblems([{ text: 'Q', options: ['1', '2', '3', '4'], answerIndex: 0 }]);
+    expect(out).toHaveLength(1);
+    expect(out[0].kind).toBe('choice');
+  });
+
+  it('distributes kinds by count', () => {
+    expect(kindMix(20)).toEqual({ choice: 14, ox: 3, short: 3 });
+    expect(kindMix(10)).toEqual({ choice: 6, ox: 2, short: 2 });
   });
 });
