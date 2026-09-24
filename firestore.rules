@@ -13,7 +13,11 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{uid} {
       allow read: if isSignedIn();
-      allow write: if isOwner(uid);
+      // role은 생성 시에만 정해지고 이후 본인이 바꿀 수 없음 (교사 사칭 방지)
+      allow write: if isOwner(uid)
+        && (!('role' in request.resource.data)
+          || resource == null
+          || request.resource.data.role == resource.data.role);
       allow delete: if isTeacher();
     }
     match /classrooms/{id} {
@@ -45,7 +49,9 @@ service cloud.firestore {
             && (request.resource.data.winnerUid == null
               || request.resource.data.winnerUid == request.resource.data.players[0].uid
               || request.resource.data.winnerUid == request.resource.data.players[1].uid))
-        );
+        )
+        // 강제 종료(abandoned)는 선생님만 가능. 그 외 상태 전이는 앱이 지킴
+        && (request.resource.data.status != 'abandoned' || isTeacher());
       allow delete: if false;
     }
     match /battles/{battleId} {
