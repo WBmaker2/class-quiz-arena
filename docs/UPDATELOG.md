@@ -5,3 +5,4 @@
 - 기본 설계서를 `docs/superpowers/specs/2026-09-23-battle-study-ground-design.md`에 저장했어요.
 - 구현을 3단계로 나눴어요. 1단계 계획서(기반 화면·로그인·학급 입장)를 `docs/superpowers/plans/2026-09-23-foundation-plan.md`에 저장했어요.
 - 1단계 기반을 다 만들었어요. 앱 껍데기, 새로 그린 화면 스타일, 구글 로그인, 선생님/학생 선택, 학급 입장까지 돼요. 테스트 12개가 모두 통과했어요.
+- 2단계 계획서(학생 대결: 아레나 고르기, 자동 매칭, 문제 라운드, 결과와 경험치)를 `docs/superpowers/plans/2026-09-24-battle-plan.md`에 저장했어요.
