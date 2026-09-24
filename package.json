@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:emu": "vitest run --config vitest.emu.config.ts",
+    "emulators": "npx -y firebase-tools emulators:start --project demo-quiz-arena",
+    "seed": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8080 node scripts/seed.mjs"
   },
   "dependencies": {
     "firebase": "^12.0.0",
