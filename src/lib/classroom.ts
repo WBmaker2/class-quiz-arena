@@ -3,5 +3,5 @@ export function normalizeInviteCode(code: string): string {
 }
 
 export function isValidInviteCode(code: string): boolean {
-  return normalizeInviteCode(code).length === 6;
+  return /^[A-Z0-9]{6}$/.test(normalizeInviteCode(code));
 }

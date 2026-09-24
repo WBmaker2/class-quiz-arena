@@ -40,4 +40,12 @@ describe('useAuth', () => {
     });
     expect(signInMock).toHaveBeenCalledTimes(1);
   });
+
+  it('delegates sign-out to firebase', async () => {
+    const { result } = renderHook(() => useAuth());
+    await act(async () => {
+      await result.current.signOut();
+    });
+    expect(signOutMock).toHaveBeenCalledTimes(1);
+  });
 });

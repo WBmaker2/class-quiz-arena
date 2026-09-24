@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeInviteCode } from './classroom';
+import { normalizeInviteCode, isValidInviteCode } from './classroom';
 
 describe('normalizeInviteCode', () => {
   it('trims and uppercases', () => {
@@ -8,5 +8,9 @@ describe('normalizeInviteCode', () => {
 
   it('removes inner spaces and dashes', () => {
     expect(normalizeInviteCode('AB-12 CD')).toBe('AB12CD');
+  });
+
+  it('rejects non-alphanumeric code', () => {
+    expect(isValidInviteCode('AB!@#%')).toBe(false);
   });
 });

@@ -10,7 +10,7 @@ export default function LoginScreen({ onStart }: { onStart: () => void }) {
             🛡️
           </p>
           <p className="text-4xl font-extrabold mb-5 tracking-tight">퀴즈 아레나</p>
-          <p className="text-[15px] mb-7 whitespace-pre-line">
+          <p className="text-[15px] mb-7 whitespace-pre-line font-bold">
             {'선생님 문제로\n친구와 1:1 퀴즈 대결!'}
           </p>
           <PrimaryButton onClick={onStart}>Google 계정으로 시작하기</PrimaryButton>

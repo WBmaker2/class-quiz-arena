@@ -17,4 +17,19 @@ describe('join flow', () => {
     fireEvent.click(screen.getByRole('button', { name: '학급 들어가기' }));
     expect(screen.getByText('초대 코드 6자리를 확인해주세요')).toBeTruthy();
   });
+
+  it('calls onJoin with normalized code', () => {
+    const onJoin = vi.fn();
+    render(<ClassJoin onJoin={onJoin} />);
+    fireEvent.change(screen.getByLabelText('초대 코드'), { target: { value: 'a1b2c3' } });
+    fireEvent.click(screen.getByRole('button', { name: '학급 들어가기' }));
+    expect(onJoin).toHaveBeenCalledWith('A1B2C3');
+  });
+
+  it('selects student role', () => {
+    const onSelect = vi.fn();
+    render(<RoleSelect onSelect={onSelect} />);
+    fireEvent.click(screen.getByRole('button', { name: '학생으로 시작' }));
+    expect(onSelect).toHaveBeenCalledWith('student');
+  });
 });
