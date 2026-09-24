@@ -33,6 +33,10 @@ export default function TeacherHome({
   onToggleLock,
   onNewArena,
   onSignOut,
+  showAdmin,
+  teachers,
+  onAddTeacher,
+  onRemoveTeacher,
 }: {
   live: LiveRoom[];
   abandoned: LiveRoom[];
@@ -49,9 +53,14 @@ export default function TeacherHome({
   onToggleLock: (id: string, locked: boolean) => void;
   onNewArena: () => void;
   onSignOut: () => void;
+  showAdmin?: boolean;
+  teachers?: string[];
+  onAddTeacher?: (email: string) => void;
+  onRemoveTeacher?: (email: string) => void;
 }) {
-  const [tab, setTab] = useState<'live' | 'arenas' | 'students' | 'analysis'>('live');
+  const [tab, setTab] = useState<'live' | 'arenas' | 'students' | 'analysis' | 'admin'>('live');
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [teacherEmail, setTeacherEmail] = useState('');
 
   const stats = problemStats(rounds);
   const hard = hardProblems(stats, 3);
@@ -74,6 +83,11 @@ export default function TeacherHome({
           <button type="button" onClick={() => setTab('analysis')}>
             분석
           </button>
+          {showAdmin && (
+            <button type="button" onClick={() => setTab('admin')}>
+              선생님 관리
+            </button>
+          )}
           <button type="button" onClick={onSignOut}>
             로그아웃
           </button>
@@ -172,6 +186,36 @@ export default function TeacherHome({
                 </p>
               </div>
             )}
+          </Card>
+        )}
+        {tab === 'admin' && showAdmin && (
+          <Card>
+            <p className="font-bold mb-2">선생님 관리</p>
+            <p>등록된 선생님 계정만 학급을 만들 수 있어요</p>
+            {(teachers ?? []).map((email) => (
+              <div key={email}>
+                <p>{email}</p>
+                <button type="button" onClick={() => onRemoveTeacher?.(email)}>
+                  삭제
+                </button>
+              </div>
+            ))}
+            <label htmlFor="teacher-email">선생님 이메일</label>
+            <input
+              id="teacher-email"
+              value={teacherEmail}
+              onChange={(e) => setTeacherEmail(e.target.value)}
+              placeholder="예: teacher@school.kr"
+            />
+            <button
+              type="button"
+              onClick={() => {
+                onAddTeacher?.(teacherEmail);
+                setTeacherEmail('');
+              }}
+            >
+              추가
+            </button>
           </Card>
         )}
       </div>

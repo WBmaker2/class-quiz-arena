@@ -17,6 +17,8 @@ import { useClassroom } from './hooks/useClassroom';
 import { useMatch } from './hooks/useMatch';
 import { useProfile } from './hooks/useProfile';
 import { useStudents } from './hooks/useStudents';
+import { useTeacherAllowlist } from './hooks/useTeacherAllowlist';
+import { isMasterEmail } from './lib/admin';
 import { useTeacherRooms } from './hooks/useTeacherRooms';
 import { avgCorrectVsWrong, hardProblems, problemStats } from './lib/analytics';
 import { buildRosterCsv } from './lib/roster';
@@ -119,6 +121,7 @@ export default function App() {
     return (
       <TeacherShell
         classroomId={classroomId}
+        userEmail={user?.email ?? null}
         onSignOut={() => {
           void signOut();
           setView('login');
@@ -148,10 +151,12 @@ export default function App() {
   );
 }
 
-function TeacherShell({ classroomId, onSignOut }: { classroomId: string | null; onSignOut: () => void }) {
+function TeacherShell({ classroomId, userEmail, onSignOut }: { classroomId: string | null; userEmail: string | null; onSignOut: () => void }) {
+  const showAdmin = isMasterEmail(userEmail);
   const { live, abandoned, finished, forceClose } = useTeacherRooms();
   const { arenas, saveArena, loadProblems, removeArena, setLocked } = useArenaAdmin(classroomId);
   const { students, removeStudent } = useStudents(classroomId);
+  const { teachers, addTeacher, removeTeacher } = useTeacherAllowlist(showAdmin);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [editingProblems, setEditingProblems] = useState<EditableProblem[] | null>(null);
@@ -250,6 +255,14 @@ function TeacherShell({ classroomId, onSignOut }: { classroomId: string | null; 
       }}
       onNewArena={() => setCreating(true)}
       onSignOut={onSignOut}
+      showAdmin={showAdmin}
+      teachers={teachers}
+      onAddTeacher={(email) => {
+        void addTeacher(email);
+      }}
+      onRemoveTeacher={(email) => {
+        void removeTeacher(email);
+      }}
     />
   );
 }

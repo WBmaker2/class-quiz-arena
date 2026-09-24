@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import { TEACHER_NOT_ALLOWLISTED } from '../lib/admin';
 import { generateInviteCode, isValidInviteCode, normalizeInviteCode } from '../lib/classroom';
 
 export interface JoinInfo {
@@ -35,7 +36,8 @@ export function useClassroom() {
       setError(null);
       await setDoc(
         doc(db, 'users', uid),
-        { nickname: info.nickname, role: info.role, avatar: info.avatar, classroomId: normalized },
+        // 초대로 들어오면 무조건 학생 (선생님 사칭 방지, 규칙도 강제)
+        { nickname: info.nickname, role: 'student', avatar: info.avatar, classroomId: normalized },
         { merge: true },
       );
       if (!mounted.current) return;
@@ -65,9 +67,13 @@ export function useClassroom() {
       if (!mounted.current) return;
       setError(null);
       setClassroomId(code);
-    } catch {
+    } catch (e) {
       if (!mounted.current) return;
-      setError('연결에 실패했어요. 다시 시도해주세요');
+      setError(
+        (e as { code?: string })?.code === 'permission-denied'
+          ? TEACHER_NOT_ALLOWLISTED
+          : '연결에 실패했어요. 다시 시도해주세요',
+      );
     }
   };
 

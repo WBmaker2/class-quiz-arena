@@ -64,4 +64,10 @@ await db.doc('users/student-demo-2').set({
   correctRate: 55,
 });
 
+await db.doc('teacherAllowlist/ketarou85@dc.es.kr').set({
+  email: 'ketarou85@dc.es.kr',
+  addedBy: 'ketarou85@gmail.com',
+  addedAt: admin.firestore.FieldValue.serverTimestamp(),
+});
+
 console.log('seeded: classroom A1B2C3, arena-basics, 3 problems');

@@ -5,36 +5,65 @@ service cloud.firestore {
   }
   // (default) 리터럴 경로 사용: $(database) 변수는 에뮬레이터에서 null로 평가되어
   // get()/exists()가 실패한다. 단일 (default) DB만 쓰므로 리터럴이 안전하다.
-  function isTeacher() {
+  function masterEmail() {
+    return 'ketarou85@gmail.com';
+  }
+  function isMaster() {
+    return isSignedIn() && request.auth.token.email == masterEmail();
+  }
+  // 선생님 명단에 든 학교 계정인지 (이메일 키, 읽기 권한 없이 존재 확인용)
+  function isAllowlisted() {
     return isSignedIn()
-      && get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'teacher';
+      && request.auth.token.email != null
+      && exists(/databases/(default)/documents/teacherAllowlist/$(request.auth.token.email));
+  }
+  function teacherOf(classroomId) {
+    return isSignedIn()
+      && get(/databases/(default)/documents/classrooms/$(classroomId)).data.teacherId == request.auth.uid;
+  }
+  function teacherOfArena(arenaId) {
+    return teacherOf(get(/databases/(default)/documents/arenas/$(arenaId)).data.classroomId);
   }
   function isOwner(uid) {
     return isSignedIn() && request.auth.uid == uid;
   }
   match /databases/{database}/documents {
+    // 선생님 명단: 본인 문서 단건 확인 + 마스터 전체 관리
+    match /teacherAllowlist/{email} {
+      allow get: if isMaster() || (isSignedIn() && request.auth.token.email == email);
+      allow list: if isMaster();
+      allow write: if isMaster();
+    }
     match /users/{uid} {
       allow read: if isSignedIn();
-      // role은 생성 시에만 정해지고 이후 본인이 바꿀 수 없음 (교사 사칭 방지)
+      // role은 생성 시에만 정해지고 이후 본인이 바꿀 수 없음 (교사 사칭 방지).
+      // 생성 시 teacher role은 명단·마스터만 가능 (join 사칭 방지).
       allow write: if isOwner(uid)
         && (!('role' in request.resource.data)
           || resource == null
-          || request.resource.data.role == resource.data.role);
-      allow delete: if isTeacher();
+          || request.resource.data.role == resource.data.role)
+        && (resource != null
+          || !('role' in request.resource.data)
+          || request.resource.data.role != 'teacher'
+          || isAllowlisted()
+          || isMaster());
+      allow delete: if teacherOf(resource.data.classroomId);
     }
     match /classrooms/{id} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn();
+      // 학급 개설은 명단 선생님·마스터만 (무단 개설 방지)
+      allow create: if isSignedIn() && (isAllowlisted() || isMaster());
       allow update: if isSignedIn() && resource.data.teacherId == request.auth.uid;
       allow delete: if false;
     }
     match /arenas/{id} {
       allow read: if isSignedIn();
-      allow write: if isTeacher();
+      // 자기 학급의 선생님만 (타 학급 쓰기 방지)
+      allow write: if teacherOf(request.resource.data.classroomId);
     }
     match /arenas/{arenaId}/problems/{pid} {
       allow read: if isSignedIn();
-      allow write: if isTeacher();
+      allow write: if teacherOfArena(arenaId);
     }
     match /rooms/{roomId} {
       allow read: if isSignedIn();
@@ -52,8 +81,8 @@ service cloud.firestore {
               || request.resource.data.winnerUid == request.resource.data.players[0].uid
               || request.resource.data.winnerUid == request.resource.data.players[1].uid))
         )
-        // 강제 종료(abandoned)는 선생님만 가능. 그 외 상태 전이는 앱이 지킴
-        && (request.resource.data.status != 'abandoned' || isTeacher());
+        // 강제 종료(abandoned)는 해당 학급 선생님만. 그 외 상태 전이는 앱이 지킴
+        && (request.resource.data.status != 'abandoned' || teacherOf(get(/databases/(default)/documents/arenas/$(resource.data.arenaId)).data.classroomId));
       allow delete: if false;
     }
     match /battles/{battleId} {
