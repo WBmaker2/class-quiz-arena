@@ -150,3 +150,15 @@ export function canClaimWin(room: RoomData, uid: string, nowMs: number): boolean
   if (!room.players.some((p) => p.uid === uid)) return false;
   return nowMs - room.updatedAt >= AUTO_WIN_AFTER_MS;
 }
+
+export function pickBattleProblems(allIds: string[], seed: string, n = 10): string[] {
+  let h = 0;
+  for (const c of seed) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const arr = [...allIds];
+  for (let i = arr.length - 1; i > 0; i--) {
+    h = (h * 1103515245 + 12345) >>> 0;
+    const j = h % (i + 1);
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr.slice(0, Math.min(n, arr.length));
+}

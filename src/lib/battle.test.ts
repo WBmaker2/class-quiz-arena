@@ -17,6 +17,7 @@ import {
   startPlayingData,
   submitAnswerData,
   advanceData,
+  pickBattleProblems,
   xpAward,
 } from './battle';
 
@@ -119,5 +120,14 @@ describe('xp and level', () => {
     const r = readyRoom();
     expect(canClaimWin(r, 'u1', 5000 + 30001)).toBe(true);
     expect(canClaimWin(r, 'u1', 5000 + 10000)).toBe(false);
+  });
+
+  it('picks 10 unique ids fixed per room', () => {
+    const all = Array.from({ length: 20 }, (_, i) => `p${i + 1}`);
+    const a = pickBattleProblems(all, 'roomA', 10);
+    const b = pickBattleProblems(all, 'roomA', 10);
+    expect(a).toHaveLength(10);
+    expect(new Set(a).size).toBe(10);
+    expect(a).toEqual(b);
   });
 });
