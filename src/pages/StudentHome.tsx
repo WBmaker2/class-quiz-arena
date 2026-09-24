@@ -97,23 +97,23 @@ export default function StudentHome({
   return (
     <div className="min-h-screen px-6 py-10">
       <div className="w-full max-w-md mx-auto">
-        <div className="flex gap-2 mb-4">
-          <button type="button" onClick={() => setTab('browse')}>
+        <nav aria-label="학생 메뉴" className="flex flex-wrap gap-2 mb-4">
+          <button type="button" onClick={() => setTab('browse')} aria-current={tab === 'browse' ? 'page' : undefined} className={tab === 'browse' ? 'tab-active' : undefined}>
             둘러보기
           </button>
-          <button type="button" onClick={() => setTab('leaderboard')}>
+          <button type="button" onClick={() => setTab('leaderboard')} aria-current={tab === 'leaderboard' ? 'page' : undefined} className={tab === 'leaderboard' ? 'tab-active' : undefined}>
             순위표
           </button>
-          <button type="button" onClick={() => setTab('record')}>
+          <button type="button" onClick={() => setTab('record')} aria-current={tab === 'record' ? 'page' : undefined} className={tab === 'record' ? 'tab-active' : undefined}>
             내 기록
           </button>
-          <button type="button" onClick={() => setTab('shop')}>
+          <button type="button" onClick={() => setTab('shop')} aria-current={tab === 'shop' ? 'page' : undefined} className={tab === 'shop' ? 'tab-active' : undefined}>
             상점
           </button>
           <button type="button" onClick={onSignOut}>
             로그아웃
           </button>
-        </div>
+        </nav>
         {tab === 'browse' && (
           <Card>
             <p className="font-bold mb-2">오늘 도전할 아레나는?</p>
@@ -187,7 +187,8 @@ export default function StudentHome({
                         {highlighted && <span className="ml-1 text-xs">나</span>}
                       </p>
                       <p className="text-xs">
-                        Lv{l.level ?? 1} · {l.winCount ?? 0}승 · 정답률 {l.correctRate ?? 0}% · {l.xp} XP
+                        Lv{l.level ?? 1} · {l.winCount ?? 0}승 · 정답률 {l.correctRate ?? 0}% ·{' '}
+                        <span className="tnum">{l.xp} XP</span>
                       </p>
                     </div>
                   </div>

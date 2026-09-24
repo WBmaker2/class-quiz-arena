@@ -11,6 +11,7 @@ describe('TeacherHome', () => {
     );
     expect(screen.getByText('진행 중인 대결')).toBeTruthy();
     expect(screen.getByText('지금은 진행 중인 대결이 없어요')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '현재 대결' })).toHaveClass('tab-active');
   });
 
   it('confirms force close', () => {

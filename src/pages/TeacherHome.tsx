@@ -113,41 +113,43 @@ export default function TeacherHome({
   return (
     <div className="min-h-screen px-6 py-10">
       <div className="w-full max-w-md mx-auto">
-        <p className="font-bold mb-2">선생님 워크스페이스</p>
-        <button
-          type="button"
-          onClick={() => window.open(`${window.location.origin}${window.location.pathname}?preview=${classroomCode}`, '_blank')}
-        >
-          학생 화면 미리보기
-        </button>
-        <div className="flex gap-2 mb-4">
-          <button type="button" onClick={() => setTab('live')}>
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <p className="font-bold mb-0 text-xl">선생님 워크스페이스</p>
+          <button
+            type="button"
+            onClick={() => window.open(`${window.location.origin}${window.location.pathname}?preview=${classroomCode}`, '_blank')}
+          >
+            학생 화면 미리보기
+          </button>
+        </div>
+        <nav aria-label="선생님 메뉴" className="flex flex-wrap gap-2 mb-5">
+          <button type="button" onClick={() => setTab('live')} aria-current={tab === 'live' ? 'page' : undefined} className={tab === 'live' ? 'tab-active' : undefined}>
             현재 대결
           </button>
-          <button type="button" onClick={() => setTab('arenas')}>
+          <button type="button" onClick={() => setTab('arenas')} aria-current={tab === 'arenas' ? 'page' : undefined} className={tab === 'arenas' ? 'tab-active' : undefined}>
             아레나
           </button>
-          <button type="button" onClick={() => setTab('students')}>
+          <button type="button" onClick={() => setTab('students')} aria-current={tab === 'students' ? 'page' : undefined} className={tab === 'students' ? 'tab-active' : undefined}>
             학생
           </button>
-          <button type="button" onClick={() => setTab('analysis')}>
+          <button type="button" onClick={() => setTab('analysis')} aria-current={tab === 'analysis' ? 'page' : undefined} className={tab === 'analysis' ? 'tab-active' : undefined}>
             분석
           </button>
-          <button type="button" onClick={() => setTab('reports')}>
+          <button type="button" onClick={() => setTab('reports')} aria-current={tab === 'reports' ? 'page' : undefined} className={tab === 'reports' ? 'tab-active' : undefined}>
             신고
           </button>
-          <button type="button" onClick={() => setTab('classroom')}>
+          <button type="button" onClick={() => setTab('classroom')} aria-current={tab === 'classroom' ? 'page' : undefined} className={tab === 'classroom' ? 'tab-active' : undefined}>
             학급
           </button>
           {showAdmin && (
-            <button type="button" onClick={() => setTab('admin')}>
+            <button type="button" onClick={() => setTab('admin')} aria-current={tab === 'admin' ? 'page' : undefined} className={tab === 'admin' ? 'tab-active' : undefined}>
               선생님 관리
             </button>
           )}
           <button type="button" onClick={onSignOut}>
             로그아웃
           </button>
-        </div>
+        </nav>
         {tab === 'live' && (
           <Card>
             <p className="font-bold mb-2">진행 중인 대결</p>
@@ -338,20 +340,24 @@ export default function TeacherHome({
         )}
         {tab === 'classroom' && (
           <Card>
-            <p className="font-bold mb-2">학급 관리</p>
-            <label htmlFor="classroom-name">학급 이름</label>
-            <input
-              id="classroom-name"
-              value={className}
-              maxLength={30}
-              onChange={(e) => setClassName(e.target.value)}
-            />
-            <button type="button" onClick={() => onRenameClassroom?.(className)}>
-              이름 저장
-            </button>
-            <button type="button" onClick={() => onNewClassroom?.()}>
-              새 학급 만들기
-            </button>
+            <p className="font-bold mb-3 text-lg">학급 관리</p>
+            <div className="flex flex-col gap-2 mb-3">
+              <label htmlFor="classroom-name">학급 이름</label>
+              <input
+                id="classroom-name"
+                value={className}
+                maxLength={30}
+                onChange={(e) => setClassName(e.target.value)}
+              />
+              <div className="flex flex-wrap gap-2 mt-1">
+                <button type="button" onClick={() => onRenameClassroom?.(className)}>
+                  이름 저장
+                </button>
+                <button type="button" onClick={() => onNewClassroom?.()}>
+                  새 학급 만들기
+                </button>
+              </div>
+            </div>
             <p className="text-sm mt-2">초대 코드: {classroomCode}</p>
           </Card>
         )}
