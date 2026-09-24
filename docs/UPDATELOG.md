@@ -4,3 +4,4 @@
 - 전체 기능 따라 만들기 + Firebase 사용 + 그림·문구는 새로 만들기로 정했어요.
 - 기본 설계서를 `docs/superpowers/specs/2026-09-23-battle-study-ground-design.md`에 저장했어요.
 - 구현을 3단계로 나눴어요. 1단계 계획서(기반 화면·로그인·학급 입장)를 `docs/superpowers/plans/2026-09-23-foundation-plan.md`에 저장했어요.
+- 1단계 기반을 다 만들었어요. 앱 껍데기, 새로 그린 화면 스타일, 구글 로그인, 선생님/학생 선택, 학급 입장까지 돼요. 테스트 12개가 모두 통과했어요.
