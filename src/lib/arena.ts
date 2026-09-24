@@ -4,6 +4,11 @@ export interface Arena {
   desc: string;
   subject: string;
   locked: boolean;
+  grade?: number;
+  topic?: string;
+  standards?: string[];
+  cardTheme?: { bg: string; emoji: string };
+  status?: 'draft' | 'published';
 }
 
 export interface Problem {
