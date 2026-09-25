@@ -44,19 +44,32 @@ describe('ArenaEditor', () => {
     expect(onSave.mock.calls[0][1]).toHaveLength(10);
   });
 
-  it('shows standards checklist for grade+subject', () => {
+  it('adds standards from the dropdown and removes them with X', () => {
     render(<ArenaEditor initial={baseInitial} problems={[]} onSave={() => {}} onCancel={() => {}} />);
-    // 기본 3학년 수학 기준이 보인다
-    expect(screen.getByText(/4수01-03/)).toBeTruthy();
-    // 과목을 바꾸면 체크리스트가 바뀐다
+    // 드롭다운에서 고르면 아래에 칩으로 표시
+    fireEvent.change(screen.getByLabelText('성취기준 (1개 이상 고르기)'), { target: { value: '[4수01-03]' } });
+    expect(screen.getByRole('button', { name: '[4수01-03] 삭제' })).toBeTruthy();
+    // 같은 기준 중복 추가 안 됨
+    fireEvent.change(screen.getByLabelText('성취기준 (1개 이상 고르기)'), { target: { value: '[4수01-03]' } });
+    expect(screen.getAllByRole('button', { name: '[4수01-03] 삭제' })).toHaveLength(1);
+    // X로 삭제하면 안내 문구 복귀
+    fireEvent.click(screen.getByRole('button', { name: '[4수01-03] 삭제' }));
+    expect(screen.getByText('성취기준을 1개 이상 골라주세요')).toBeTruthy();
+  });
+
+  it('switches the dropdown options with subject', () => {
+    render(<ArenaEditor initial={baseInitial} problems={[]} onSave={() => {}} onCancel={() => {}} />);
+    // 기본 3학년 수학 기준이 드롭다운에 있다
+    expect(screen.getByRole('option', { name: /4수01-03/ })).toBeTruthy();
+    // 과목을 바꾸면 목록이 바뀐다
     fireEvent.change(screen.getByLabelText('과목'), { target: { value: '국어' } });
-    expect(screen.queryByText(/4수01-03/)).toBeNull();
+    expect(screen.queryByRole('option', { name: /4수01-03/ })).toBeNull();
   });
 
   it('shows error and keeps manual items when AI draft fails', async () => {    const failingCall = vi.fn().mockRejectedValue(new Error('GEMINI_API_KEY is not configured'));
     vi.mocked(httpsCallable).mockReturnValue(failingCall as never);
     render(<ArenaEditor initial={baseInitial} problems={makeProblems(1)} onSave={() => {}} onCancel={() => {}} />);
-    fireEvent.click(screen.getByRole('checkbox', { name: /4수01-03/ }));
+    fireEvent.change(screen.getByLabelText('성취기준 (1개 이상 고르기)'), { target: { value: '[4수01-03]' } });
     fireEvent.click(screen.getByRole('button', { name: 'AI로 초안 만들기' }));
     expect(await screen.findByText(/실패/)).toBeTruthy();
     // 직접 쓴 문제는 그대로 남는다
@@ -137,7 +150,7 @@ describe('ArenaEditor question kinds', () => {
         })) as never,
     );
     render(<ArenaEditor initial={baseInitial} problems={[]} onSave={() => {}} onCancel={() => {}} />);
-    fireEvent.click(screen.getByRole('checkbox', { name: /4수01-03/ }));
+    fireEvent.change(screen.getByLabelText('성취기준 (1개 이상 고르기)'), { target: { value: '[4수01-03]' } });
     fireEvent.click(screen.getByRole('button', { name: 'AI로 초안 만들기' }));
     expect(await screen.findByDisplayValue('Q')).toBeTruthy();
     expect(screen.getByDisplayValue('Q2')).toBeTruthy();

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import BattleRoom from './pages/BattleRoom';
 import ClassCreate from './pages/ClassCreate';
 import ClassJoin from './pages/ClassJoin';
@@ -9,6 +9,7 @@ import StudentHome from './pages/StudentHome';
 import TeacherHome from './pages/TeacherHome';
 import ArenaEditor from './pages/ArenaEditor';
 import EmptyState from './components/EmptyState';
+import Modal from './components/Modal';
 import type { Animal } from './components/Avatar';
 import { useAnalytics } from './hooks/useAnalytics';
 import { useArenaAdmin, type EditableProblem } from './hooks/useArenaAdmin';
@@ -280,49 +281,53 @@ function TeacherShell({ classroomId, userEmail, uid, displayName, animal, onSign
     );
   }
 
-  if (creating || editingId) {    if (editingId && editingProblems === null) {
-      return (
-        <div className="min-h-screen grid place-items-center px-6">
-          <p>문제를 불러오는 중...</p>
-        </div>
-      );
-    }
+  let editorModal: ReactNode = null;
+  if (creating || editingId) {
+    const closeEditor = () => {
+      setCreating(false);
+      setEditingId(null);
+    };
     const arena = arenas.find((a) => a.id === editingId);
-    return (
-      <ArenaEditor
-        initial={
-          arena
-            ? {
-                title: arena.title,
-                desc: arena.desc,
-                subject: arena.subject,
-                questionCount: (arena as unknown as { questionCount?: number }).questionCount ?? 0,
-                grade: arena.grade ?? 3,
-                gradeBand: arena.gradeBand,
-                topic: arena.topic ?? '',
-                standards: arena.standards ?? [],
-                cardStyle: arena.cardStyle ?? 'color',
-                illustId: arena.illustId,
-              }
-            : { title: '', desc: '', subject: '수학', questionCount: 0, grade: 3, topic: '', standards: [], cardStyle: 'color' as const }
-        }
-        problems={editingProblems ?? []}
-        onSave={(input, problems) => {
-          void saveArena(editingId, input, problems.map((p) => ({ ...p, roundTimeSec: 30 }))).then(() => {
-            setCreating(false);
-            setEditingId(null);
-          });
-        }}
-        onCancel={() => {
-          setCreating(false);
-          setEditingId(null);
-        }}
-      />
+    editorModal = (
+      <Modal title={editingId ? '아레나 수정' : '새 아레나 만들기'} onClose={closeEditor}>
+        {editingId && editingProblems === null ? (
+          <p>문제를 불러오는 중...</p>
+        ) : (
+          <ArenaEditor
+          initial={
+            arena
+              ? {
+                  title: arena.title,
+                  desc: arena.desc,
+                  subject: arena.subject,
+                  questionCount: (arena as unknown as { questionCount?: number }).questionCount ?? 0,
+                  grade: arena.grade ?? 3,
+                  gradeBand: arena.gradeBand,
+                  topic: arena.topic ?? '',
+                  standards: arena.standards ?? [],
+                  cardStyle: arena.cardStyle ?? 'color',
+                  illustId: arena.illustId,
+                }
+              : { title: '', desc: '', subject: '수학', questionCount: 0, grade: 3, topic: '', standards: [], cardStyle: 'color' as const }
+          }
+          problems={editingProblems ?? []}
+          onSave={(input, problems) => {
+            void saveArena(editingId, input, problems.map((p) => ({ ...p, roundTimeSec: 30 }))).then(() => {
+              setCreating(false);
+              setEditingId(null);
+            });
+          }}
+          onCancel={closeEditor}
+        />
+        )}
+      </Modal>
     );
   }
 
   return (
-    <TeacherHome
+    <>
+      {editorModal}
+      <TeacherHome
       live={live.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
       abandoned={abandoned.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
       finished={finished.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
@@ -377,6 +382,7 @@ function TeacherShell({ classroomId, userEmail, uid, displayName, animal, onSign
         void removeTeacher(email);
       }}
     />
+    </>
   );
 }
 

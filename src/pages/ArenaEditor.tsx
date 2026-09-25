@@ -155,8 +155,8 @@ export default function ArenaEditor({
     setIllustId((prev) => (gal.some((g) => g.id === prev) ? prev : (gal[0]?.id ?? 'math-plus')));
   };
 
-  const toggleStandard = (code: string) => {
-    setSelected((prev) => (prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]));
+  const removeStandard = (code: string) => {
+    setSelected((prev) => prev.filter((c) => c !== code));
   };
 
   const updateItem = (index: number, patch: Partial<EditableProblem>) => {
@@ -234,17 +234,37 @@ export default function ArenaEditor({
         ))}
       </select>
 
-      <fieldset>
-        <legend>성취기준 (1개 이상 고르기)</legend>
-        {standards.length === 0 && <p>이 학년·과목에는 등록된 기준이 없어요</p>}
+      <label htmlFor="arena-standard">성취기준 (1개 이상 고르기)</label>
+      <select
+        id="arena-standard"
+        value=""
+        onChange={(e) => {
+          const code = e.target.value;
+          if (code && !selected.includes(code)) setSelected([...selected, code]);
+        }}
+      >
+        <option value="">기준을 골라 추가하세요</option>
         {standards.map((s) => (
-          <label key={s.code}>
-            <input type="checkbox" checked={selected.includes(s.code)} onChange={() => toggleStandard(s.code)} />
+          <option key={s.code} value={s.code} disabled={selected.includes(s.code)}>
             {s.code} {s.summary}
-          </label>
+          </option>
         ))}
-      </fieldset>
-      {selected.length === 0 && <p>성취기준을 1개 이상 골라주세요</p>}
+      </select>
+      {standards.length === 0 && <p>이 학년·과목에는 등록된 기준이 없어요</p>}
+      {selected.length === 0 ? (
+        <p>성취기준을 1개 이상 골라주세요</p>
+      ) : (
+        <ul className="mt-2">
+          {selected.map((code) => (
+            <li key={code} className="standard-chip">
+              <span className="flex-1">{standards.find((s) => s.code === code)?.summary ?? code}</span>
+              <button type="button" aria-label={`${code} 삭제`} onClick={() => removeStandard(code)}>
+                ✕
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <label htmlFor="arena-count">문제 수</label>
       <input

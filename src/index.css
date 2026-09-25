@@ -187,7 +187,34 @@ button.toggle:hover {
   background: none;
 }
 
-/* 일러스트 고르기: 네모 카드 버튼 */
+/* 모달 X 버튼: 작은 동그라미 */
+button.modal-x {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 999px;
+  line-height: 1;
+}
+
+/* 선택된 성취기준 칩 */
+.standard-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 2px solid #26211a;
+  border-radius: 12px;
+  padding: 8px 8px 8px 12px;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+
+.standard-chip button {
+  flex: none;
+}
 button.illust-pick {
   background: #fffdf6;
   border: 2px solid #26211a;
