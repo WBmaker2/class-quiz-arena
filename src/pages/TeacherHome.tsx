@@ -7,6 +7,7 @@ import { GRADES, coverageOf, findStandard, getStandards, subjectsOfGrade } from 
 import { containsBanned } from '../lib/nickname';
 import Toggle from '../components/Toggle';
 import Modal from '../components/Modal';
+import UpdateLog from '../components/UpdateLog';
 import ArenaCard from '../components/ArenaCard';
 import type { CardStyle } from '../lib/arena';
 import { gradeLabel } from '../lib/arena';
@@ -118,6 +119,7 @@ export default function TeacherHome({
   const effectiveCoverageSubject = coverageSubjects.includes(coverageSubject) ? coverageSubject : (coverageSubjects[0] ?? '국어');
   const [className, setClassName] = useState(classroomName ?? '');
   const [confirmingLogout, setConfirmingLogout] = useState(false);
+  const [showUpdates, setShowUpdates] = useState(false);
 
   useEffect(() => {
     setClassName(classroomName ?? '');
@@ -136,12 +138,17 @@ export default function TeacherHome({
       <div className="w-full max-w-2xl mx-auto">
         <div className="flex items-center justify-between gap-2 mb-3">
           <p className="font-bold mb-0 text-xl">선생님 워크스페이스</p>
-          <button
-            type="button"
-            onClick={() => window.open(`${window.location.origin}${window.location.pathname}?preview=${classroomCode}`, '_blank')}
-          >
-            학생 화면 미리보기
-          </button>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setShowUpdates(true)}>
+              업데이트 내역
+            </button>
+            <button
+              type="button"
+              onClick={() => window.open(`${window.location.origin}${window.location.pathname}?preview=${classroomCode}`, '_blank')}
+            >
+              학생 화면 미리보기
+            </button>
+          </div>
         </div>
         <nav aria-label="선생님 메뉴" className="flex flex-wrap gap-2 mb-5">
           <button type="button" onClick={() => setTab('live')} aria-current={tab === 'live' ? 'page' : undefined} className={tab === 'live' ? 'tab-active' : undefined}>
@@ -472,6 +479,12 @@ export default function TeacherHome({
               추가
             </button>
           </Card>
+        )}
+        {showUpdates && (
+          <Modal title="업데이트 내역" onClose={() => setShowUpdates(false)}>
+            <p className="font-bold mb-3 text-lg">업데이트 내역</p>
+            <UpdateLog />
+          </Modal>
         )}
         {confirmingLogout && (
           <Modal title="로그아웃 확인" onClose={() => setConfirmingLogout(false)}>

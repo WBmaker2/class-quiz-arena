@@ -299,6 +299,40 @@ describe('TeacherHome tts toggle', () => {
   });
 });
 
+describe('TeacherHome update log', () => {
+  const base = {
+    live: [],
+    abandoned: [],
+    finished: [],
+    classroomCode: 'AAAAAA',
+    classroomName: '4학년 3반',
+    students: [],
+    onDeleteStudent: noop,
+    onExportCsv: noop,
+    rounds: [],
+    onForceClose: noop,
+    onEditArena: noop,
+    onDeleteArena: noop,
+    onToggleLock: noop,
+    onToggleShowPlayers: noop,
+    onToggleTts: noop,
+    onNewArena: noop,
+    onSignOut: noop,
+  };
+
+  it('opens the update log next to the student preview', () => {
+    render(<TeacherHome {...base} arenas={[]} />);
+    const updateButton = screen.getByRole('button', { name: '업데이트 내역' });
+    const previewButton = screen.getByRole('button', { name: '학생 화면 미리보기' });
+    expect(updateButton.compareDocumentPosition(previewButton) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(updateButton);
+    expect(screen.getByRole('dialog', { name: '업데이트 내역' })).toBeTruthy();
+    expect(screen.getByText('2026-09-25')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '닫기' }));
+    expect(screen.queryByRole('dialog', { name: '업데이트 내역' })).toBeNull();
+  });
+});
+
 describe('TeacherHome classroom management', () => {
   const base = {
     live: [],

@@ -8,7 +8,7 @@ import type { ArenaInput, EditableProblem } from '../hooks/useArenaAdmin';
 
 const GRADES = [1, 2, 3, 4, 5, 6];
 
-/** 과목 그림이 없으면(도덕·체육 등) 전체 30종에서 고른다. */
+/** 과목 그림이 없으면 전체 104종에서 고른다. (전 과목 8종씩 등록됨) */
 function galleryOf(subject: string) {
   const mine = illustsOf(subject);
   return mine.length > 0 ? mine : ILLUSTS;
