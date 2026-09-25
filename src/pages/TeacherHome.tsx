@@ -6,6 +6,7 @@ import { avgCorrectVsWrong, hardProblems, problemStats, weakStandards, type Roun
 import { GRADES, coverageOf, findStandard, getStandards, subjectsOfGrade } from '../data/curriculum2022';
 import { containsBanned } from '../lib/nickname';
 import Toggle from '../components/Toggle';
+import Modal from '../components/Modal';
 import ArenaCard from '../components/ArenaCard';
 import type { CardStyle } from '../lib/arena';
 import { gradeLabel } from '../lib/arena';
@@ -116,6 +117,7 @@ export default function TeacherHome({
   const coverageSubjects = subjectsOfGrade(coverageGrade);
   const effectiveCoverageSubject = coverageSubjects.includes(coverageSubject) ? coverageSubject : (coverageSubjects[0] ?? '국어');
   const [className, setClassName] = useState(classroomName ?? '');
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
 
   useEffect(() => {
     setClassName(classroomName ?? '');
@@ -165,7 +167,7 @@ export default function TeacherHome({
               선생님 관리
             </button>
           )}
-          <button type="button" onClick={onSignOut}>
+          <button type="button" onClick={() => setConfirmingLogout(true)}>
             로그아웃
           </button>
         </nav>
@@ -246,14 +248,16 @@ export default function TeacherHome({
                 }
                 footer={
                   <>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
-                      <Toggle checked={a.locked} onChange={(next) => onToggleLock(a.id, next)} label="잠금" />
+                    <div className="flex items-center gap-2 mt-1">
+                      <Toggle small checked={a.locked} onChange={(next) => onToggleLock(a.id, next)} label="잠금" />
                       <Toggle
+                        small
                         checked={a.showPlayers ?? false}
                         onChange={(next) => onToggleShowPlayers(a.id, next)}
-                        label="참가자 공개"
+                        label="공개"
                       />
                       <Toggle
+                        small
                         checked={a.ttsEnabled ?? false}
                         onChange={(next) => onToggleTts(a.id, next)}
                         label="읽어주기"
@@ -468,6 +472,19 @@ export default function TeacherHome({
               추가
             </button>
           </Card>
+        )}
+        {confirmingLogout && (
+          <Modal title="로그아웃 확인" onClose={() => setConfirmingLogout(false)}>
+            <p className="font-bold mb-3">정말 로그아웃 하시겠습니까?</p>
+            <div className="flex gap-2">
+              <button type="button" className="btn-primary flex-1" onClick={onSignOut}>
+                확인
+              </button>
+              <button type="button" className="flex-1" onClick={() => setConfirmingLogout(false)}>
+                취소
+              </button>
+            </div>
+          </Modal>
         )}
       </div>
     </div>

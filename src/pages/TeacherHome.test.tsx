@@ -125,7 +125,7 @@ describe('TeacherHome arena privacy', () => {
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: '아레나' }));
-    const toggle = screen.getByRole('switch', { name: '참가자 공개' });
+    const toggle = screen.getByRole('switch', { name: '공개' });
     expect(toggle.getAttribute('aria-checked')).toBe('false');
     fireEvent.click(toggle);
     expect(onToggleShowPlayers).toHaveBeenCalledWith('a1', true);
@@ -140,7 +140,7 @@ describe('TeacherHome arena privacy', () => {
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: '아레나' }));
-    expect(screen.getByRole('switch', { name: '참가자 공개' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('switch', { name: '공개' }).getAttribute('aria-checked')).toBe('true');
   });
 });
 
@@ -429,5 +429,36 @@ describe('TeacherHome two-column grid', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: '아레나' }));
     expect(container.querySelector('.grid-cols-2')).toBeTruthy();
+  });
+});
+
+describe('TeacherHome logout confirm', () => {
+  it('asks once more before signing out', () => {
+    const onSignOut = vi.fn();
+    render(
+      <TeacherHome
+        live={[]}
+        abandoned={[]}
+        finished={[]}
+        arenas={[]}
+        classroomCode=""
+        students={[]}
+        onDeleteStudent={noop}
+        onExportCsv={noop}
+        rounds={[]}
+        onForceClose={noop}
+        onEditArena={noop}
+        onDeleteArena={noop}
+        onToggleLock={noop}
+        onToggleShowPlayers={noop}
+        onToggleTts={noop}
+        onNewArena={noop}
+        onSignOut={onSignOut}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '로그아웃' }));
+    expect(screen.getByText('정말 로그아웃 하시겠습니까?')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '확인' }));
+    expect(onSignOut).toHaveBeenCalledTimes(1);
   });
 });

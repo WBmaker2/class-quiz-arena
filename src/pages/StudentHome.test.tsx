@@ -234,3 +234,28 @@ describe('StudentHome two-column grid', () => {
     expect(grid?.querySelectorAll('svg, span[aria-hidden="true"]').length).toBeGreaterThan(0);
   });
 });
+
+describe('StudentHome logout confirm', () => {
+  it('asks once more before signing out', () => {
+    const onSignOut = vi.fn();
+    render(
+      <StudentHome arenas={[]} leaders={[]} profile={profile} onEnter={() => {}} onSignOut={onSignOut} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '로그아웃' }));
+    expect(screen.getByText('정말 로그아웃 하시겠습니까?')).toBeTruthy();
+    expect(onSignOut).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: '확인' }));
+    expect(onSignOut).toHaveBeenCalledTimes(1);
+  });
+
+  it('cancels logout', () => {
+    const onSignOut = vi.fn();
+    render(
+      <StudentHome arenas={[]} leaders={[]} profile={profile} onEnter={() => {}} onSignOut={onSignOut} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '로그아웃' }));
+    fireEvent.click(screen.getByRole('button', { name: '취소' }));
+    expect(onSignOut).not.toHaveBeenCalled();
+    expect(screen.queryByText('정말 로그아웃 하시겠습니까?')).toBeNull();
+  });
+});

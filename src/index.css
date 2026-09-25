@@ -187,6 +187,26 @@ button.toggle:hover {
   background: none;
 }
 
+/* 카드 한 행에 3개가 들어가는 작은 토글 */
+button.toggle-sm {
+  gap: 6px;
+  font-size: 13px;
+}
+
+button.toggle-sm .toggle-knob {
+  width: 40px;
+  height: 25px;
+}
+
+button.toggle-sm .toggle-knob::after {
+  width: 17px;
+  height: 17px;
+}
+
+button.toggle-sm.toggle-on .toggle-knob::after {
+  transform: translateX(15px);
+}
+
 /* 모달 X 버튼: 작은 동그라미 */
 button.modal-x {
   position: absolute;

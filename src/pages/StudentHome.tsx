@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
+import Modal from '../components/Modal';
 import PrimaryButton from '../components/PrimaryButton';
 import Avatar, { type Animal } from '../components/Avatar';
 import ArenaCard from '../components/ArenaCard';
@@ -84,6 +85,7 @@ export default function StudentHome({
   const [tab, setTab] = useState<'browse' | 'leaderboard' | 'record' | 'shop'>('browse');
   const [newName, setNewName] = useState('');
   const [nameError, setNameError] = useState<string | null>(null);
+  const [confirmingLogout, setConfirmingLogout] = useState(false);
 
   const saveName = () => {
     const err = validateNickname(newName);
@@ -112,7 +114,7 @@ export default function StudentHome({
           <button type="button" onClick={() => setTab('shop')} aria-current={tab === 'shop' ? 'page' : undefined} className={tab === 'shop' ? 'tab-active' : undefined}>
             상점
           </button>
-          <button type="button" onClick={onSignOut}>
+          <button type="button" onClick={() => setConfirmingLogout(true)}>
             로그아웃
           </button>
         </nav>
@@ -286,6 +288,19 @@ export default function StudentHome({
               );
             })}
           </Card>
+        )}
+        {confirmingLogout && (
+          <Modal title="로그아웃 확인" onClose={() => setConfirmingLogout(false)}>
+            <p className="font-bold mb-3">정말 로그아웃 하시겠습니까?</p>
+            <div className="flex gap-2">
+              <button type="button" className="btn-primary flex-1" onClick={onSignOut}>
+                확인
+              </button>
+              <button type="button" className="flex-1" onClick={() => setConfirmingLogout(false)}>
+                취소
+              </button>
+            </div>
+          </Modal>
         )}
       </div>
     </div>
