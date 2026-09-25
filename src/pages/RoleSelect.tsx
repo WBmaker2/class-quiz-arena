@@ -22,9 +22,9 @@ export default function RoleSelect({ onSelect }: { onSelect: (role: Role, animal
           </button>
         ))}
       </div>
-      <PrimaryButton onClick={() => onSelect('teacher', animal)}>선생님으로 시작</PrimaryButton>
+      <PrimaryButton pulse onClick={() => onSelect('teacher', animal)}>선생님으로 시작</PrimaryButton>
       <div style={{ height: 12 }} />
-      <PrimaryButton onClick={() => onSelect('student', animal)}>학생으로 시작</PrimaryButton>
+      <PrimaryButton pulse onClick={() => onSelect('student', animal)}>학생으로 시작</PrimaryButton>
     </Card>
   );
 }

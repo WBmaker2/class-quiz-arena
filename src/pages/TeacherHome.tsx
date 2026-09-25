@@ -207,7 +207,7 @@ export default function TeacherHome({
           <>
             <Card>
               <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={onNewArena}>
+                <button type="button" className="btn-pulse" onClick={onNewArena}>
                   새 아레나 만들기
                 </button>
                 {arenas.length === 0 && (

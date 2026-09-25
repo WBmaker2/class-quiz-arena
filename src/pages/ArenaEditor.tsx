@@ -121,7 +121,6 @@ export default function ArenaEditor({
   const [selected, setSelected] = useState<string[]>(initial.standards ?? []);
   const [count, setCount] = useState(initial.questionCount >= MIN_COUNT && initial.questionCount <= MAX_COUNT ? initial.questionCount : DEFAULT_COUNT);
   const [topic, setTopic] = useState(initial.topic ?? '');
-  const [cardStyle, setCardStyle] = useState<CardStyle>(initial.cardStyle ?? 'color');
   const [illustId, setIllustId] = useState(
     initial.illustId ?? galleryOf(subjectsOfGrade(initial.grade ?? 3).includes(initial.subject) ? initial.subject : subjectsOfGrade(initial.grade ?? 3)[0])[0]?.id ?? 'math-plus',
   );
@@ -205,7 +204,7 @@ export default function ArenaEditor({
   const publish = () => {
     if (!canPublish) return;
     onSave(
-      { title, desc, subject, questionCount: clampCount(count), grade, gradeBand: bandOfGrade(grade), topic, standards: selected, status: 'published', cardStyle, illustId },
+      { title, desc, subject, questionCount: clampCount(count), grade, gradeBand: bandOfGrade(grade), topic, standards: selected, status: 'published', cardStyle: 'illust' as CardStyle, illustId },
       items,
     );
   };
@@ -285,47 +284,24 @@ export default function ArenaEditor({
       />
 
       <fieldset>
-        <legend>카드 그림 (2가지 중 고르기)</legend>
-        <label>
-          <input
-            type="radio"
-            name="card-style"
-            checked={cardStyle === 'color'}
-            onChange={() => setCardStyle('color')}
-          />
-          색상 카드
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="card-style"
-            checked={cardStyle === 'illust'}
-            onChange={() => setCardStyle('illust')}
-          />
-          일러스트 카드
-        </label>
+        <legend>{subject} 일러스트 카드 고르기</legend>
+        <div className="flex flex-wrap gap-2">
+          {gallery.map((g) => (
+            <button
+              key={g.id}
+              type="button"
+              className="illust-pick"
+              aria-label={`${g.label} 그림 고르기`}
+              aria-pressed={illustId === g.id}
+              onClick={() => setIllustId(g.id)}
+            >
+              <Illust id={g.id} size={56} />
+            </button>
+          ))}
+        </div>
       </fieldset>
-      {cardStyle === 'illust' && (
-        <fieldset>
-          <legend>{subject} 그림 고르기</legend>
-          <div className="flex flex-wrap gap-2">
-            {gallery.map((g) => (
-              <button
-                key={g.id}
-                type="button"
-                className="illust-pick"
-                aria-label={`${g.label} 그림 고르기`}
-                aria-pressed={illustId === g.id}
-                onClick={() => setIllustId(g.id)}
-              >
-                <Illust id={g.id} size={56} />
-              </button>
-            ))}
-          </div>
-        </fieldset>
-      )}
 
-      <button type="button" onClick={() => void makeDraft()} disabled={aiBusy || selected.length === 0}>
+      <button type="button" className={!aiBusy && selected.length > 0 ? 'btn-pulse' : undefined} onClick={() => void makeDraft()} disabled={aiBusy || selected.length === 0}>
         {aiBusy ? 'AI가 문제를 만드는 중...' : 'AI로 초안 만들기'}
       </button>
       {aiError && <p>{aiError}</p>}
@@ -420,7 +396,7 @@ export default function ArenaEditor({
         추가
       </button>
 
-      <button type="button" onClick={publish} disabled={!canPublish}>
+      <button type="button" className={canPublish ? 'btn-pulse' : undefined} onClick={publish} disabled={!canPublish}>
         공개하기
       </button>
       {!canPublish && <p>{items.length < MIN_PROBLEMS ? '문제를 10개 이상 넣어주세요' : contentError}</p>}

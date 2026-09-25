@@ -28,7 +28,7 @@ export default function ClassCreate({ onCreate, onCancel }: { onCreate: (name: s
           maxLength={30}
         />
         {error && <p role="alert">{error}</p>}
-        <button type="submit" className="btn-primary w-full">
+        <button type="submit" className="btn-primary w-full btn-pulse">
           학급 만들기
         </button>
         {onCancel && (

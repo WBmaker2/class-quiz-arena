@@ -161,24 +161,24 @@ describe('ArenaEditor question kinds', () => {
 });
 
 describe('ArenaEditor card style', () => {
-  it('saves illust style with picked illustration', () => {
+  it('shows one gallery legend and saves picked illustration', () => {
     const onSave = vi.fn();
     render(
       <ArenaEditor initial={baseInitial} problems={makeProblems(10)} onSave={onSave} onCancel={() => {}} />,
     );
-    fireEvent.click(screen.getByLabelText('일러스트 카드'));
+    expect(screen.getByText('수학 일러스트 카드 고르기')).toBeTruthy();
+    expect(screen.queryByText(/2가지 중 고르기/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: '피자 분수 그림 고르기' }));
     fireEvent.click(screen.getByRole('button', { name: '공개하기' }));
     expect(onSave).toHaveBeenCalledTimes(1);
     expect(onSave.mock.calls[0][0]).toMatchObject({ cardStyle: 'illust', illustId: 'math-pizza', gradeBand: '3-4' });
   });
 
-  it('defaults to color style', () => {
-    const onSave = vi.fn();
+  it('pulses the AI draft button', () => {
     render(
-      <ArenaEditor initial={baseInitial} problems={makeProblems(10)} onSave={onSave} onCancel={() => {}} />,
+      <ArenaEditor initial={baseInitial} problems={[]} onSave={() => {}} onCancel={() => {}} />,
     );
-    fireEvent.click(screen.getByRole('button', { name: '공개하기' }));
-    expect(onSave.mock.calls[0][0]).toMatchObject({ cardStyle: 'color' });
+    fireEvent.change(screen.getByLabelText('성취기준 (1개 이상 고르기)'), { target: { value: '[4수01-03]' } });
+    expect(screen.getByRole('button', { name: 'AI로 초안 만들기' }).classList.contains('btn-pulse')).toBe(true);
   });
 });

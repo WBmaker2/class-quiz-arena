@@ -67,7 +67,7 @@ export default function BattleRoom({
           </button>
         ) : null}
         {reported && <p>신고가 접수됐어요. 선생님이 확인할 거예요.</p>}
-        <PrimaryButton onClick={onExit}>아레나로 돌아가기</PrimaryButton>
+        <PrimaryButton pulse onClick={onExit}>아레나로 돌아가기</PrimaryButton>
       </Card>
     );
   }
@@ -95,7 +95,7 @@ export default function BattleRoom({
           <ShortAnswerForm onSubmit={(v) => onAnswer?.(v)} />
         ) : (
           problem.options.map((opt, i) => (
-            <button key={opt} type="button" className="btn-primary w-full" onClick={() => onAnswer?.(i)}>
+            <button key={opt} type="button" className="btn-primary w-full btn-pulse" onClick={() => onAnswer?.(i)}>
               {opt}
             </button>
           ))
@@ -120,7 +120,7 @@ export default function BattleRoom({
         problemsLoaded === false ? (
           <p>문제를 불러오는 중...</p>
         ) : (
-          <PrimaryButton onClick={onReady}>네! 준비됐어요!</PrimaryButton>
+          <PrimaryButton pulse onClick={onReady}>네! 준비됐어요!</PrimaryButton>
         )
       ) : opponent && !opponent.ready ? (
         <p>상대 준비 기다리는 중...</p>
@@ -146,7 +146,7 @@ function ShortAnswerForm({ onSubmit }: { onSubmit: (value: string) => void }) {
       <p>단답형 문제예요. 정답을 쓰고 제출을 눌러주세요.</p>
       <label htmlFor="short-answer">내 답</label>
       <input id="short-answer" value={value} onChange={(e) => setValue(e.target.value)} placeholder="예: 세종대왕" />
-      <button type="submit" className="btn-primary w-full">
+      <button type="submit" className="btn-primary w-full btn-pulse">
         제출
       </button>
     </form>

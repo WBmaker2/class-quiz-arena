@@ -153,7 +153,7 @@ export default function StudentHome({
                       </p>
                     </>
                   }
-                  footer={<PrimaryButton onClick={() => onEnter(a.id)}>지금 바로 대결!</PrimaryButton>}
+                  footer={<PrimaryButton pulse onClick={() => onEnter(a.id)}>지금 바로 대결!</PrimaryButton>}
                 />
                 ))}
               </div>

@@ -50,7 +50,7 @@ export default function ClassJoin({
           maxLength={8}
         />
         {error && <p role="alert">{error}</p>}
-        <button type="submit" className="btn-primary w-full">
+        <button type="submit" className="btn-primary w-full btn-pulse">
           학급 들어가기
         </button>
       </form>
