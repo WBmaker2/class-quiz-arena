@@ -37,12 +37,12 @@ describe('analytics', () => {
 describe('weakStandards', () => {
   it('ranks standards by lowest correct rate', () => {
     const rounds: RoundRecord[] = [
-      { roomId: 'r1', arenaId: 'a', problemIndex: 0, standardCode: '3수01-01', answers: [{ uid: 'u1', correct: true }, { uid: 'u2', correct: false }] },
-      { roomId: 'r1', arenaId: 'a', problemIndex: 1, standardCode: '3수01-02', answers: [{ uid: 'u1', correct: false }, { uid: 'u2', correct: false }] },
+      { roomId: 'r1', arenaId: 'a', problemIndex: 0, standardCode: '[4수01-03]', answers: [{ uid: 'u1', correct: true }, { uid: 'u2', correct: false }] },
+      { roomId: 'r1', arenaId: 'a', problemIndex: 1, standardCode: '[4수01-09]', answers: [{ uid: 'u1', correct: false }, { uid: 'u2', correct: false }] },
       { roomId: 'r1', arenaId: 'a', problemIndex: 2, answers: [{ uid: 'u1', correct: false }] },
     ];
     const weak = weakStandards(rounds, 3);
-    expect(weak.map((w) => w.code)).toEqual(['3수01-02', '3수01-01']);
+    expect(weak.map((w) => w.code)).toEqual(['[4수01-09]', '[4수01-03]']);
     expect(weak[0]).toMatchObject({ asked: 2, correct: 0, rate: 0 });
     expect(weak[1].rate).toBe(0.5);
   });

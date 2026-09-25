@@ -47,16 +47,16 @@ describe('ArenaEditor', () => {
   it('shows standards checklist for grade+subject', () => {
     render(<ArenaEditor initial={baseInitial} problems={[]} onSave={() => {}} onCancel={() => {}} />);
     // 기본 3학년 수학 기준이 보인다
-    expect(screen.getByText(/3수01-01/)).toBeTruthy();
+    expect(screen.getByText(/4수01-03/)).toBeTruthy();
     // 과목을 바꾸면 체크리스트가 바뀐다
     fireEvent.change(screen.getByLabelText('과목'), { target: { value: '국어' } });
-    expect(screen.queryByText(/3수01-01/)).toBeNull();
+    expect(screen.queryByText(/4수01-03/)).toBeNull();
   });
 
   it('shows error and keeps manual items when AI draft fails', async () => {    const failingCall = vi.fn().mockRejectedValue(new Error('GEMINI_API_KEY is not configured'));
     vi.mocked(httpsCallable).mockReturnValue(failingCall as never);
     render(<ArenaEditor initial={baseInitial} problems={makeProblems(1)} onSave={() => {}} onCancel={() => {}} />);
-    fireEvent.click(screen.getByRole('checkbox', { name: /3수01-01/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /4수01-03/ }));
     fireEvent.click(screen.getByRole('button', { name: 'AI로 초안 만들기' }));
     expect(await screen.findByText(/실패/)).toBeTruthy();
     // 직접 쓴 문제는 그대로 남는다
@@ -66,12 +66,12 @@ describe('ArenaEditor', () => {
   it('keeps and shows standardCode of loaded problems', () => {    render(
       <ArenaEditor
         initial={baseInitial}
-        problems={[{ text: 'Q', options: ['1', '2', '3', '4'], answerIndex: 0, standardCode: '3수01-01' }]}
+        problems={[{ text: 'Q', options: ['1', '2', '3', '4'], answerIndex: 0, standardCode: '[4수01-03]' }]}
         onSave={() => {}}
         onCancel={() => {}}
       />,
     );
-    expect(screen.getByText('3수01-01')).toBeTruthy();
+    expect(screen.getByText('[4수01-03]')).toBeTruthy();
   });
 
   it('blocks publish with blank or duplicate options', () => {
@@ -137,7 +137,7 @@ describe('ArenaEditor question kinds', () => {
         })) as never,
     );
     render(<ArenaEditor initial={baseInitial} problems={[]} onSave={() => {}} onCancel={() => {}} />);
-    fireEvent.click(screen.getByRole('checkbox', { name: /3수01-01/ }));
+    fireEvent.click(screen.getByRole('checkbox', { name: /4수01-03/ }));
     fireEvent.click(screen.getByRole('button', { name: 'AI로 초안 만들기' }));
     expect(await screen.findByDisplayValue('Q')).toBeTruthy();
     expect(screen.getByDisplayValue('Q2')).toBeTruthy();
