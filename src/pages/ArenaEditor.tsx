@@ -59,6 +59,22 @@ function blankProblem(kind: ProblemKind = 'choice'): EditableProblem {
   };
 }
 
+/** 서버 에러 코드에 맞는 한 줄 안내. 원인은 콘솔에도 남겨 다음 진단에 쓴다. */
+export function friendlyAiError(err: unknown): string {
+  const code = typeof err === 'object' && err !== null ? String((err as { code?: unknown }).code ?? '') : '';
+  const message = err instanceof Error ? err.message : '';
+  if (code === 'resource-exhausted' || /20회/.test(message)) {
+    return '오늘 AI 만들기 20회를 다 썼어요. 내일 다시 해주세요.';
+  }
+  if (code === 'unauthenticated') {
+    return '로그인이 풀렸어요. 다시 로그인한 뒤 눌러주세요.';
+  }
+  if (code === 'invalid-argument') {
+    return '학년·과목·성취기준을 다시 확인하고 눌러주세요.';
+  }
+  return 'AI 초안 만들기에 실패했어요. 직접 문제를 넣어주세요.';
+}
+
 /** 공개 전 내용 검사. 문제 있으면 사람이 읽는 한 줄 설명, 없으면 null. */
 export function findProblemError(items: EditableProblem[]): string | null {
   for (const [i, p] of items.entries()) {
@@ -193,9 +209,10 @@ export default function ArenaEditor({
       if (drafts.length < finalCount) {
         setAiInfo(`AI가 ${drafts.length}개 문제를 가져왔어요. 나머지는 직접 넣어주세요.`);
       }
-    } catch {
+    } catch (err) {
       // 실패해도 직접 쓴 문제는 그대로 두고 이어서 편집한다
-      setAiError('AI 초안 만들기에 실패했어요. 직접 문제를 넣어주세요.');
+      console.error('AI 초안 만들기 실패:', err);
+      setAiError(friendlyAiError(err));
     } finally {
       setAiBusy(false);
     }

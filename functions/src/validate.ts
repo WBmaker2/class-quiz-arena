@@ -91,6 +91,11 @@ export function requireAuth(request: { auth?: unknown }): AuthCheck {
 /** 교사 1명당 하루 AI 생성 횟수 상한. */
 export const AI_DAILY_LIMIT = 20;
 
+/** 한국 날짜(YYYY-MM-DD). '오늘 20회' 기준을 선생님 체감 날짜와 맞춘다. */
+export function kstToday(now = Date.now()): string {
+  return new Date(now + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
 export interface UsageState {
   date: string; // YYYY-MM-DD (UTC)
   count: number;

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import ArenaEditor, { findProblemError } from './ArenaEditor';
+import ArenaEditor, { findProblemError, friendlyAiError } from './ArenaEditor';
 import type { EditableProblem } from '../hooks/useArenaAdmin';
 
 vi.mock('firebase/functions', () => ({
@@ -74,6 +74,22 @@ describe('ArenaEditor', () => {
     expect(await screen.findByText(/실패/)).toBeTruthy();
     // 직접 쓴 문제는 그대로 남는다
     expect(screen.getByDisplayValue('문제 1')).toBeTruthy();
+  });
+
+  it('maps AI error codes to friendly messages', () => {
+    expect(friendlyAiError({ code: 'resource-exhausted' })).toContain('20회');
+    expect(friendlyAiError({ code: 'unauthenticated' })).toContain('로그인');
+    expect(friendlyAiError({ code: 'invalid-argument' })).toContain('성취기준');
+    expect(friendlyAiError(new Error('boom'))).toContain('실패');
+  });
+
+  it('tells quota exhaustion instead of the generic failure', async () => {
+    const err = Object.assign(new Error('오늘 AI 만들기 20회를 다 썼어요'), { code: 'resource-exhausted' });
+    vi.mocked(httpsCallable).mockReturnValue(vi.fn().mockRejectedValue(err) as never);
+    render(<ArenaEditor initial={baseInitial} problems={[]} onSave={() => {}} onCancel={() => {}} />);
+    fireEvent.change(screen.getByLabelText('성취기준 (1개 이상 고르기)'), { target: { value: '[4수01-03]' } });
+    fireEvent.click(screen.getByRole('button', { name: 'AI로 초안 만들기' }));
+    expect(await screen.findByText(/20회를 다 썼어요/)).toBeTruthy();
   });
 
   it('keeps and shows standardCode of loaded problems', () => {    render(

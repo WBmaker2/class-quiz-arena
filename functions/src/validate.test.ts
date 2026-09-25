@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   isValidProblem,
   kindMix,
+  kstToday,
   nextUsage,
   normalizeOxOption,
   requireAuth,
@@ -149,5 +150,14 @@ describe('mixed question kinds', () => {
   it('distributes kinds by count', () => {
     expect(kindMix(20)).toEqual({ choice: 14, ox: 3, short: 3 });
     expect(kindMix(10)).toEqual({ choice: 6, ox: 2, short: 2 });
+  });
+});
+
+describe('kstToday', () => {
+  it('uses the Korean date (UTC+9)', () => {
+    // 23:00 KST → 같은 날
+    expect(kstToday(new Date('2026-09-25T14:00:00Z').getTime())).toBe('2026-09-25');
+    // 01:00 KST → 다음 날
+    expect(kstToday(new Date('2026-09-25T16:00:00Z').getTime())).toBe('2026-09-26');
   });
 });

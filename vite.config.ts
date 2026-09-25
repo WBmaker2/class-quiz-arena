@@ -7,6 +7,6 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test-setup.ts'],
-    exclude: ['**/node_modules/**', '**/dist/**', '**/.worktrees/**', '**/worktrees/**', '**/*.emu.test.ts'],
+    exclude: ['**/node_modules/**', '**/dist/**', '**/.worktrees/**', '**/worktrees/**', '**/functions/lib/**', '**/*.emu.test.ts'],
   },
 });

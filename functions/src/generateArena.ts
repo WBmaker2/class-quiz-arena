@@ -2,7 +2,9 @@ import * as admin from 'firebase-admin';
 import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
 import {
+  AI_DAILY_LIMIT,
   kindMix,
+  kstToday,
   nextUsage,
   requireAuth,
   validateGenerateArenaInput,
@@ -15,7 +17,8 @@ import {
 admin.initializeApp();
 const db = admin.firestore();
 
-const GEMINI_MODEL = 'gemini-2.0-flash';
+// gemini-2.0-flash는 2026-06-01에 종료됨. 공식 대체 모델을 쓴다.
+const GEMINI_MODEL = 'gemini-3.5-flash';
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 // NOTE: deploy-time wiring — set GEMINI_API_KEY via Secret Manager / env config.
 
@@ -92,31 +95,30 @@ export const generateArena = onCall(
   async (request): Promise<GenerateArenaResponse> => {
     const authed = requireAuth(request);
     if (!authed.ok) {
+      console.error('generateArena failed', { stage: 'auth', error: authed.error });
       throw new HttpsError('unauthenticated', authed.error);
     }
 
     const parsed = validateGenerateArenaInput(request.data);
     if (!parsed.ok) {
+      console.error('generateArena failed', { stage: 'input', error: parsed.error });
       throw new HttpsError('invalid-argument', parsed.error);
     }
 
-    // 요금폭탄 방지: 교사 1명 하루 20회. 차감부터 하고 Gemini를 부른다.
-    const today = new Date().toISOString().slice(0, 10);
+    // 요금폭탄 방지: 교사 1명 하루 20회(KST 기준).
+    // 실패한 호출은 횟수를 깎지 않는다: Gemini 성공 뒤에만 차감한다.
+    const today = kstToday();
     const usageRef = db.collection('aiUsage').doc(request.auth!.uid);
-    const allowed = await db.runTransaction(async (tx) => {
-      const snap = await tx.get(usageRef);
-      const prev = snap.exists ? (snap.data() as UsageState) : null;
-      const { allowed: ok, next } = nextUsage(prev, today);
-      if (!ok) return false;
-      tx.set(usageRef, next);
-      return true;
-    });
-    if (!allowed) {
+    const preSnap = await usageRef.get();
+    const pre = preSnap.exists ? (preSnap.data() as UsageState) : null;
+    if (!nextUsage(pre, today).allowed) {
+      console.error('generateArena failed', { stage: 'quota', used: pre?.count ?? 0, limit: AI_DAILY_LIMIT });
       throw new HttpsError('resource-exhausted', '오늘 AI 만들기 20회를 다 썼어요. 내일 다시 해주세요.');
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
+      console.error('generateArena failed', { stage: 'config', error: 'GEMINI_API_KEY is not configured' });
       throw new HttpsError(
         'failed-precondition',
         'GEMINI_API_KEY is not configured',
@@ -127,16 +129,27 @@ export const generateArena = onCall(
     try {
       raw = await callGemini(buildPrompt(parsed.value), apiKey);
     } catch (err) {
-      throw new HttpsError(
-        'internal',
-        err instanceof Error ? err.message : 'Gemini call failed',
-      );
+      const message = err instanceof Error ? err.message : 'Gemini call failed';
+      console.error('generateArena failed', { stage: 'gemini', model: GEMINI_MODEL, error: message });
+      throw new HttpsError('internal', message);
     }
 
     const problems = validateProblems(raw).slice(0, parsed.value.count);
     if (problems.length === 0) {
+      console.error('generateArena failed', { stage: 'validate', error: 'No valid problems generated' });
       throw new HttpsError('internal', 'No valid problems generated');
     }
+
+    // 성공한 뒤에만 하루 횟수를 1 올린다 (동시 호출 경합은 트랜잭션으로 막는다).
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(usageRef);
+      const cur = snap.exists ? (snap.data() as UsageState) : null;
+      const { allowed, next } = nextUsage(cur, today);
+      if (!allowed) {
+        throw new HttpsError('resource-exhausted', '오늘 AI 만들기 20회를 다 썼어요. 내일 다시 해주세요.');
+      }
+      tx.set(usageRef, next);
+    });
 
     return { problems };
   },
