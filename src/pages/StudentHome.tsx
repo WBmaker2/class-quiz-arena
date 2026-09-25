@@ -98,7 +98,7 @@ export default function StudentHome({
 
   return (
     <div className="min-h-screen px-6 py-10">
-      <div className="w-full max-w-md mx-auto">
+      <div className="w-full max-w-2xl mx-auto">
         <nav aria-label="학생 메뉴" className="flex flex-wrap gap-2 mb-4">
           <button type="button" onClick={() => setTab('browse')} aria-current={tab === 'browse' ? 'page' : undefined} className={tab === 'browse' ? 'tab-active' : undefined}>
             둘러보기
@@ -117,12 +117,15 @@ export default function StudentHome({
           </button>
         </nav>
         {tab === 'browse' && (
-          <Card>
-            <p className="font-bold mb-2">오늘 도전할 아레나는?</p>
+          <>
+            <p className="font-display text-2xl mb-3">오늘 도전할 아레나는?</p>
             {arenas.length === 0 ? (
-              <EmptyState title="아직 참여 중인 아레나가 없어요" />
+              <Card>
+                <EmptyState title="아직 참여 중인 아레나가 없어요" />
+              </Card>
             ) : (
-              arenas.map((a) => (
+              <div className="grid grid-cols-2 gap-3">
+                {arenas.map((a) => (
                 <ArenaCard
                   key={a.id}
                   bg={a.cardTheme?.bg}
@@ -150,9 +153,10 @@ export default function StudentHome({
                   }
                   footer={<PrimaryButton onClick={() => onEnter(a.id)}>지금 바로 대결!</PrimaryButton>}
                 />
-              ))
+                ))}
+              </div>
             )}
-          </Card>
+          </>
         )}
         {tab === 'leaderboard' && (
           <Card>

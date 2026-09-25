@@ -403,3 +403,31 @@ describe('TeacherHome default seeding', () => {
     expect(screen.queryByRole('button', { name: '기본 아레나 6개 가져오기' })).toBeNull();
   });
 });
+
+describe('TeacherHome two-column grid', () => {
+  it('lays arena cards out in 2 columns', () => {
+    const { container } = render(
+      <TeacherHome
+        live={[]}
+        abandoned={[]}
+        finished={[]}
+        arenas={[{ id: 'a1', title: '덧셈', locked: false }]}
+        classroomCode=""
+        students={[]}
+        onDeleteStudent={noop}
+        onExportCsv={noop}
+        rounds={[]}
+        onForceClose={noop}
+        onEditArena={noop}
+        onDeleteArena={noop}
+        onToggleLock={noop}
+        onToggleShowPlayers={noop}
+        onToggleTts={noop}
+        onNewArena={noop}
+        onSignOut={noop}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '아레나' }));
+    expect(container.querySelector('.grid-cols-2')).toBeTruthy();
+  });
+});

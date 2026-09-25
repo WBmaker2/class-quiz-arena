@@ -214,3 +214,23 @@ describe('StudentHome graphic cards', () => {
     expect(screen.getByText('분수 첫걸음')).toBeTruthy();
   });
 });
+
+describe('StudentHome two-column grid', () => {
+  it('lays arena cards out in 2 columns', () => {
+    const { container } = render(
+      <StudentHome
+        arenas={[
+          { id: 'a1', title: '하나', desc: '', subject: '수학', locked: false },
+          { id: 'a2', title: '둘', desc: '', subject: '국어', locked: false },
+        ]}
+        leaders={[]}
+        profile={profile}
+        onEnter={() => {}}
+        onSignOut={() => {}}
+      />,
+    );
+    const grid = container.querySelector('.grid-cols-2');
+    expect(grid).toBeTruthy();
+    expect(grid?.querySelectorAll('svg, span[aria-hidden="true"]').length).toBeGreaterThan(0);
+  });
+});

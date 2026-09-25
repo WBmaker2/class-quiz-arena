@@ -131,7 +131,7 @@ export default function TeacherHome({
 
   return (
     <div className="min-h-screen px-6 py-10">
-      <div className="w-full max-w-md mx-auto">
+      <div className="w-full max-w-2xl mx-auto">
         <div className="flex items-center justify-between gap-2 mb-3">
           <p className="font-bold mb-0 text-xl">선생님 워크스페이스</p>
           <button
@@ -202,17 +202,22 @@ export default function TeacherHome({
           </Card>
         )}
         {tab === 'arenas' && (
-          <Card>
-            <button type="button" onClick={onNewArena}>
-              새 아레나 만들기
-            </button>
-            {arenas.length === 0 && (
-              <button type="button" onClick={() => onSeedDefaults?.()}>
-                기본 아레나 6개 가져오기
-              </button>
-            )}
-            {arenas.length === 0 && <p>아직 만든 아레나가 없어요</p>}
-            {arenas.map((a) => (
+          <>
+            <Card>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={onNewArena}>
+                  새 아레나 만들기
+                </button>
+                {arenas.length === 0 && (
+                  <button type="button" onClick={() => onSeedDefaults?.()}>
+                    기본 아레나 6개 가져오기
+                  </button>
+                )}
+              </div>
+              {arenas.length === 0 && <p className="mt-2">아직 만든 아레나가 없어요</p>}
+            </Card>
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              {arenas.map((a) => (
               <ArenaCard
                 key={a.id}
                 bg={a.cardTheme?.bg}
@@ -266,11 +271,13 @@ export default function TeacherHome({
                 }
               />
             ))}
-            <p className="font-bold mt-4">다른 반 공개 아레나 가져오기</p>
+            </div>
+            <p className="font-display text-xl mt-5 mb-2">다른 반 공개 아레나 가져오기</p>
             {(bank ?? []).length === 0 ? (
               <p>가져올 수 있는 아레나가 없어요</p>
             ) : (
-              (bank ?? []).map((b) => (
+              <div className="grid grid-cols-2 gap-3">
+                {(bank ?? []).map((b) => (
                 <ArenaCard
                   key={b.id}
                   bg={b.cardTheme?.bg}
@@ -292,9 +299,10 @@ export default function TeacherHome({
                     </button>
                   }
                 />
-              ))
+                ))}
+              </div>
             )}
-          </Card>
+          </>
         )}
         {tab === 'students' && (
           <Card>
