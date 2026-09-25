@@ -100,7 +100,7 @@ describe('StudentHome', () => {
     // "20문제 중 10문제 대결" 문구 확인
     expect(screen.getByText('20문제 중 10문제 대결')).toBeTruthy();
     expect(screen.getByText('수학')).toBeTruthy();
-    expect(screen.getByText('3학년')).toBeTruthy();
+    expect(screen.getByText('3-4학년')).toBeTruthy();
     expect(screen.getByText('대결 준비됨')).toBeTruthy();
     expect(screen.queryByText(/BATTLE READY/)).toBeNull();
   });

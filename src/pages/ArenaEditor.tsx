@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import Card from '../components/Card';
-import { getStandards, subjectsOfGrade } from '../data/curriculum2022';
+import { bandOfGrade, getStandards, subjectsOfGrade } from '../data/curriculum2022';
 import { ILLUSTS, Illust, illustsOf } from '../components/illustrations';
 import type { CardStyle, ProblemKind } from '../lib/arena';
 import type { ArenaInput, EditableProblem } from '../hooks/useArenaAdmin';
@@ -205,7 +205,7 @@ export default function ArenaEditor({
   const publish = () => {
     if (!canPublish) return;
     onSave(
-      { title, desc, subject, questionCount: clampCount(count), grade, topic, standards: selected, status: 'published', cardStyle, illustId },
+      { title, desc, subject, questionCount: clampCount(count), grade, gradeBand: bandOfGrade(grade), topic, standards: selected, status: 'published', cardStyle, illustId },
       items,
     );
   };

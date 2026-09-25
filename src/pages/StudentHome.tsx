@@ -5,6 +5,7 @@ import PrimaryButton from '../components/PrimaryButton';
 import Avatar, { type Animal } from '../components/Avatar';
 import ArenaCard from '../components/ArenaCard';
 import type { Arena } from '../lib/arena';
+import { gradeLabel } from '../lib/arena';
 import { validateNickname } from '../lib/nickname';
 import {
   AVATAR_GOODS,
@@ -131,8 +132,8 @@ export default function StudentHome({
                   badges={
                     <>
                       <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{a.subject}</span>
-                      {a.grade != null && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{a.grade}학년</span>
+                      {(a.grade != null || a.gradeBand) && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{gradeLabel(a)}</span>
                       )}
                     </>
                   }

@@ -298,6 +298,7 @@ function TeacherShell({ classroomId, userEmail, uid, displayName, animal, onSign
                 subject: arena.subject,
                 questionCount: (arena as unknown as { questionCount?: number }).questionCount ?? 0,
                 grade: arena.grade ?? 3,
+                gradeBand: arena.gradeBand,
                 topic: arena.topic ?? '',
                 standards: arena.standards ?? [],
                 cardStyle: arena.cardStyle ?? 'color',
@@ -325,7 +326,7 @@ function TeacherShell({ classroomId, userEmail, uid, displayName, animal, onSign
       live={live.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
       abandoned={abandoned.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
       finished={finished.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
-      arenas={arenas.map((a) => ({ id: a.id, title: a.title, desc: a.desc, subject: a.subject, grade: a.grade, locked: a.locked, showPlayers: a.showPlayers ?? false, ttsEnabled: a.ttsEnabled ?? false, standards: a.standards ?? [], cardTheme: a.cardTheme, cardStyle: a.cardStyle ?? 'color', illustId: a.illustId }))}
+      arenas={arenas.map((a) => ({ id: a.id, title: a.title, desc: a.desc, subject: a.subject, grade: a.grade, gradeBand: a.gradeBand, locked: a.locked, showPlayers: a.showPlayers ?? false, ttsEnabled: a.ttsEnabled ?? false, standards: a.standards ?? [], cardTheme: a.cardTheme, cardStyle: a.cardStyle ?? 'color', illustId: a.illustId }))}
       bank={bank}
       classroomCode={classroomId ?? ''}
       classroomName={classroomName}

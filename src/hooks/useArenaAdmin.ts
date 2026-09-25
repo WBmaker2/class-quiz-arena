@@ -11,6 +11,7 @@ export interface ArenaInput {
   subject: string;
   questionCount: number;
   grade?: number;
+  gradeBand?: string;
   topic?: string;
   standards?: string[];
   status?: 'draft' | 'published';
@@ -50,6 +51,7 @@ export interface BankArena {
   desc: string;
   subject: string;
   grade?: number;
+  gradeBand?: string;
   cardTheme?: { bg: string; emoji: string };
   cardStyle?: CardStyle;
   illustId?: string;
@@ -57,7 +59,7 @@ export interface BankArena {
 
 /** 은행 복제용 순수 조립. 테스트에서 가져오기 결과를 검증한다. */
 export function buildArenaCopy(
-  source: BankArena & { topic?: string; standards?: string[]; questionCount?: number; cardStyle?: CardStyle; illustId?: string },
+  source: BankArena & { topic?: string; standards?: string[]; questionCount?: number; cardStyle?: CardStyle; illustId?: string; gradeBand?: string },
   problems: EditableProblem[],
 ): { input: ArenaInput; problems: EditableProblem[] } {
   return {
@@ -67,6 +69,7 @@ export function buildArenaCopy(
       subject: source.subject,
       questionCount: problems.length,
       grade: source.grade,
+      gradeBand: source.gradeBand,
       topic: source.topic,
       standards: source.standards,
       status: 'published',
@@ -101,7 +104,7 @@ export function useArenaAdmin(classroomId: string | null) {
           snap.docs
             .map((d) => ({ id: d.id, ...(d.data() as Omit<BankArena, 'id'> & { classroomId?: string; status?: string }) }))
             .filter((a) => a.classroomId !== classroomId && a.status !== 'draft')
-            .map(({ id, title, desc, subject, grade, cardTheme, cardStyle, illustId }) => ({ id, title, desc, subject, grade, cardTheme, cardStyle, illustId })),
+            .map(({ id, title, desc, subject, grade, gradeBand, cardTheme, cardStyle, illustId }) => ({ id, title, desc, subject, grade, gradeBand, cardTheme, cardStyle, illustId })),
         );
       },
       () => {},
@@ -127,6 +130,7 @@ export function useArenaAdmin(classroomId: string | null) {
         // 새로 만들 때만 draft 기본값, 수정 시 기존 상태 유지
         ...(input.status ? { status: input.status } : id ? {} : { status: 'draft' }),
         ...(input.grade !== undefined ? { grade: input.grade } : {}),
+        ...(input.gradeBand !== undefined ? { gradeBand: input.gradeBand } : {}),
         ...(input.topic !== undefined ? { topic: input.topic } : {}),
         ...(input.standards !== undefined ? { standards: input.standards } : {}),
         ...(input.cardStyle !== undefined ? { cardStyle: input.cardStyle } : {}),

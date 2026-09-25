@@ -157,7 +157,7 @@ describe('ArenaEditor card style', () => {
     fireEvent.click(screen.getByRole('button', { name: '피자 분수 그림 고르기' }));
     fireEvent.click(screen.getByRole('button', { name: '공개하기' }));
     expect(onSave).toHaveBeenCalledTimes(1);
-    expect(onSave.mock.calls[0][0]).toMatchObject({ cardStyle: 'illust', illustId: 'math-pizza' });
+    expect(onSave.mock.calls[0][0]).toMatchObject({ cardStyle: 'illust', illustId: 'math-pizza', gradeBand: '3-4' });
   });
 
   it('defaults to color style', () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isVisibleArena, subjectTheme } from './arena';
+import { gradeLabel, isVisibleArena, subjectTheme } from './arena';
 
 describe('isVisibleArena', () => {
   it('hides locked arenas', () => {
@@ -34,5 +34,21 @@ describe('subjectTheme', () => {
 
   it('falls back for unknown subjects', () => {
     expect(subjectTheme('체육')).toEqual({ bg: '#E8ECF3', emoji: '🎲' });
+  });
+});
+
+describe('gradeLabel', () => {
+  it('prefers the stored band', () => {
+    expect(gradeLabel({ grade: 3, gradeBand: '3-4' })).toBe('3-4학년');
+  });
+
+  it('derives the band from a numeric grade', () => {
+    expect(gradeLabel({ grade: 3 })).toBe('3-4학년');
+    expect(gradeLabel({ grade: 1 })).toBe('1-2학년');
+    expect(gradeLabel({ grade: 6 })).toBe('5-6학년');
+  });
+
+  it('returns empty without grade info', () => {
+    expect(gradeLabel({})).toBe('');
   });
 });

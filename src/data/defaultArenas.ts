@@ -18,6 +18,7 @@ export interface DefaultArena {
   topic: string;
   desc: string;
   grade: number;
+  gradeBand: string;
   subject: string;
   standards: string[];
   questionCount: number;
@@ -43,6 +44,7 @@ export function buildDefaultArenaDocs(classroomId: string, ownerUid: string): {
       topic: a.topic,
       desc: a.desc,
       grade: a.grade,
+      gradeBand: a.gradeBand,
       subject: a.subject,
       standards: a.standards,
       questionCount: a.problems.length,

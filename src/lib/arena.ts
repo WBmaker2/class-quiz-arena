@@ -27,6 +27,8 @@ export interface Arena {
   subject: string;
   locked: boolean;
   grade?: number;
+  /** 학년군 표시용 ('1-2' | '3-4' | '5-6'). 없으면 grade에서 계산. */
+  gradeBand?: string;
   topic?: string;
   standards?: string[];
   cardTheme?: { bg: string; emoji: string };
@@ -52,6 +54,20 @@ export interface Problem {
   /** short 정답 (30자 이내). */
   answerText?: string;
   roundTimeSec: number;
+}
+
+/** 학년 → 학년군. curriculum2022와 같은 규칙 (번들 분리용 로컬 복사). */
+function bandOfGrade(grade: number): string {
+  if (grade <= 2) return '1-2';
+  if (grade <= 4) return '3-4';
+  return '5-6';
+}
+
+/** 카드 뱃지용 학년 표시. 밴드가 있으면 '3-4학년', 없으면 기존 숫자로 계산. */
+export function gradeLabel(a: { grade?: number; gradeBand?: string }): string {
+  const band = a.gradeBand ?? (a.grade != null ? bandOfGrade(a.grade) : null);
+  if (band) return `${band}학년`;
+  return '';
 }
 
 /** 학생에게 보여줄 아레나인지. locked가 공개 여부의 기준이고,

@@ -8,12 +8,12 @@ export const OWNER_ID = 'teacher-demo';
 export const PROJECT_ID = 'demo-quiz-arena';
 
 export const EXPECTED_ARENAS = [
-  { id: 'arena-add-sub-3', grade: 3, subject: '수학' },
-  { id: 'arena-idiom-6', grade: 6, subject: '국어' },
-  { id: 'arena-fraction-4', grade: 4, subject: '수학' },
-  { id: 'arena-water-5', grade: 4, subject: '과학' },
-  { id: 'arena-map-4', grade: 4, subject: '사회' },
-  { id: 'arena-english-5', grade: 5, subject: '영어' },
+  { id: 'arena-add-sub-3', grade: 3, band: '3-4', subject: '수학' },
+  { id: 'arena-idiom-6', grade: 6, band: '5-6', subject: '국어' },
+  { id: 'arena-fraction-4', grade: 4, band: '3-4', subject: '수학' },
+  { id: 'arena-water-5', grade: 4, band: '3-4', subject: '과학' },
+  { id: 'arena-map-4', grade: 4, band: '3-4', subject: '사회' },
+  { id: 'arena-english-5', grade: 5, band: '5-6', subject: '영어' },
 ];
 
 // 기본 120문항 단일 원천: scripts/defaultArenas.json (앱 TS 모듈과 공유).
@@ -32,6 +32,9 @@ export function validateArenas(arenas = ARENAS) {
     const exp = EXPECTED_ARENAS.find((e) => e.id === arena.id);
     if (exp && (arena.grade !== exp.grade || arena.subject !== exp.subject)) {
       errors.push(`${where}: expected ${exp.grade}/${exp.subject}, got ${arena.grade}/${arena.subject}`);
+    }
+    if (exp && arena.gradeBand !== exp.band) {
+      errors.push(`${where}: expected band ${exp.band}, got ${arena.gradeBand}`);
     }
     if (arena.classroomId !== CLASSROOM_ID) errors.push(`${where}: classroomId must be ${CLASSROOM_ID}`);
     if (arena.locked !== false) errors.push(`${where}: locked must be false`);

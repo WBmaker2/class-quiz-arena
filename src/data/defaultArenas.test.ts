@@ -44,3 +44,24 @@ describe('default arena card art', () => {
     }
   });
 });
+
+describe('default arena curriculum match', () => {
+  it('resolves every standardCode in the official file with matching band and subject', async () => {
+    const { findStandard } = await import('./curriculum2022');
+    for (const d of buildDefaultArenaDocs('A1B2C3', 'teacher-1')) {
+      const band = (d.meta as { gradeBand: string }).gradeBand;
+      const subject = (d.meta as { subject: string }).subject;
+      const allowed = (d.meta as { standards: string[] }).standards;
+      expect(band).toMatch(/^(1-2|3-4|5-6)$/);
+      for (const code of allowed) {
+        const found = findStandard(code);
+        expect(found, `${d.id} ${code}`).not.toBeNull();
+        expect(found!.band).toBe(band);
+        expect(found!.subject).toBe(subject);
+      }
+      for (const p of d.problems) {
+        expect(allowed).toContain(p.standardCode);
+      }
+    }
+  });
+});

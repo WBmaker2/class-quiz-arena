@@ -8,6 +8,7 @@ import { containsBanned } from '../lib/nickname';
 import Toggle from '../components/Toggle';
 import ArenaCard from '../components/ArenaCard';
 import type { CardStyle } from '../lib/arena';
+import { gradeLabel } from '../lib/arena';
 import type { NameReport } from '../hooks/useReports';
 import type { RosterStudent } from '../lib/roster';
 
@@ -23,6 +24,7 @@ export interface ArenaRow {
   desc?: string;
   subject?: string;
   grade?: number;
+  gradeBand?: string;
   locked: boolean;
   /** true면 학생에게 상대 공개. 없으면 비공개로 간주. */
   showPlayers?: boolean;
@@ -39,6 +41,7 @@ export interface BankArena {
   title: string;
   subject: string;
   grade?: number;
+  gradeBand?: string;
   cardTheme?: { bg: string; emoji: string };
   cardStyle?: CardStyle;
   illustId?: string;
@@ -219,8 +222,8 @@ export default function TeacherHome({
                 badges={
                   <>
                     {a.subject && <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{a.subject}</span>}
-                    {a.grade != null && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{a.grade}학년</span>
+                    {(a.grade != null || a.gradeBand) && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{gradeLabel(a)}</span>
                     )}
                     <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">
                       {a.locked ? '비공개' : '공개 중'}
@@ -277,8 +280,8 @@ export default function TeacherHome({
                   badges={
                     <>
                       <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{b.subject}</span>
-                      {b.grade != null && (
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{b.grade}학년</span>
+                      {(b.grade != null || b.gradeBand) && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-white/70">{gradeLabel(b)}</span>
                       )}
                     </>
                   }
