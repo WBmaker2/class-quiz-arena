@@ -3,7 +3,7 @@ import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import InviteQR from '../components/InviteQR';
 import { avgCorrectVsWrong, hardProblems, problemStats, weakStandards, type RoundRecord } from '../lib/analytics';
-import { GRADES, SUBJECTS, coverageOf, findStandard, getStandards } from '../data/curriculum2022';
+import { GRADES, coverageOf, findStandard, getStandards, subjectsOfGrade } from '../data/curriculum2022';
 import { containsBanned } from '../lib/nickname';
 import Toggle from '../components/Toggle';
 import ArenaCard from '../components/ArenaCard';
@@ -110,6 +110,8 @@ export default function TeacherHome({
   const [teacherEmail, setTeacherEmail] = useState('');
   const [coverageGrade, setCoverageGrade] = useState(3);
   const [coverageSubject, setCoverageSubject] = useState('수학');
+  const coverageSubjects = subjectsOfGrade(coverageGrade);
+  const effectiveCoverageSubject = coverageSubjects.includes(coverageSubject) ? coverageSubject : (coverageSubjects[0] ?? '국어');
   const [className, setClassName] = useState(classroomName ?? '');
 
   useEffect(() => {
@@ -120,7 +122,7 @@ export default function TeacherHome({
   const hard = hardProblems(stats, 3);
   const avg = avgCorrectVsWrong(rounds);
   const weak = weakStandards(rounds, 3);
-  const coverageStandards = getStandards(coverageGrade, coverageSubject);
+  const coverageStandards = getStandards(coverageGrade, effectiveCoverageSubject);
   const coverage = coverageOf(coverageStandards, arenas);
   const coveredCount = coverage.filter((c) => c.covered).length;
 
@@ -362,8 +364,8 @@ export default function TeacherHome({
                 ))}
               </select>
               <label htmlFor="coverage-subject">과목</label>
-              <select id="coverage-subject" value={coverageSubject} onChange={(e) => setCoverageSubject(e.target.value)}>
-                {SUBJECTS.map((s) => (
+              <select id="coverage-subject" value={effectiveCoverageSubject} onChange={(e) => setCoverageSubject(e.target.value)}>
+                {coverageSubjects.map((s) => (
                   <option key={s} value={s}>
                     {s}
                   </option>

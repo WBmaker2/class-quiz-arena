@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import Card from '../components/Card';
-import { getStandards } from '../data/curriculum2022';
-import { Illust, illustsOf } from '../components/illustrations';
+import { getStandards, subjectsOfGrade } from '../data/curriculum2022';
+import { ILLUSTS, Illust, illustsOf } from '../components/illustrations';
 import type { CardStyle, ProblemKind } from '../lib/arena';
 import type { ArenaInput, EditableProblem } from '../hooks/useArenaAdmin';
 
 const GRADES = [1, 2, 3, 4, 5, 6];
-const SUBJECTS = ['수학', '국어', '과학', '사회', '영어'];
+
+/** 과목 그림이 없으면(도덕·체육 등) 전체 30종에서 고른다. */
+function galleryOf(subject: string) {
+  const mine = illustsOf(subject);
+  return mine.length > 0 ? mine : ILLUSTS;
+}
 const MIN_PROBLEMS = 10;
 const MIN_COUNT = 10;
 const MAX_COUNT = 20;
@@ -109,33 +114,45 @@ export default function ArenaEditor({
   const [title, setTitle] = useState(initial.title);
   const [desc, setDesc] = useState(initial.desc);
   const [grade, setGrade] = useState(initial.grade ?? 3);
-  const [subject, setSubject] = useState(SUBJECTS.includes(initial.subject) ? initial.subject : '수학');
+  const [subject, setSubject] = useState(() => {
+    const options = subjectsOfGrade(initial.grade ?? 3);
+    return options.includes(initial.subject) ? initial.subject : (options[0] ?? '국어');
+  });
   const [selected, setSelected] = useState<string[]>(initial.standards ?? []);
   const [count, setCount] = useState(initial.questionCount >= MIN_COUNT && initial.questionCount <= MAX_COUNT ? initial.questionCount : DEFAULT_COUNT);
   const [topic, setTopic] = useState(initial.topic ?? '');
   const [cardStyle, setCardStyle] = useState<CardStyle>(initial.cardStyle ?? 'color');
-  const [illustId, setIllustId] = useState(initial.illustId ?? illustsOf(SUBJECTS.includes(initial.subject) ? initial.subject : '수학')[0]?.id ?? 'math-plus');
+  const [illustId, setIllustId] = useState(
+    initial.illustId ?? galleryOf(subjectsOfGrade(initial.grade ?? 3).includes(initial.subject) ? initial.subject : subjectsOfGrade(initial.grade ?? 3)[0])[0]?.id ?? 'math-plus',
+  );
   const [items, setItems] = useState<EditableProblem[]>(problems);
   const [aiBusy, setAiBusy] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiInfo, setAiInfo] = useState<string | null>(null);
 
   const standards = getStandards(grade, subject);
+  const subjectOptions = subjectsOfGrade(grade);
+  const gallery = galleryOf(subject);
   const contentError = findProblemError(items);
   const canPublish = items.length >= MIN_PROBLEMS && contentError === null;
 
   const changeGrade = (next: number) => {
     setGrade(next);
-    const codes = new Set(getStandards(next, subject).map((s) => s.code));
+    const options = subjectsOfGrade(next);
+    const nextSubject = options.includes(subject) ? subject : (options[0] ?? subject);
+    setSubject(nextSubject);
+    const codes = new Set(getStandards(next, nextSubject).map((s) => s.code));
     setSelected((prev) => prev.filter((c) => codes.has(c)));
+    const gal = galleryOf(nextSubject);
+    setIllustId((prev) => (gal.some((g) => g.id === prev) ? prev : (gal[0]?.id ?? 'math-plus')));
   };
 
   const changeSubject = (next: string) => {
     setSubject(next);
     const codes = new Set(getStandards(grade, next).map((s) => s.code));
     setSelected((prev) => prev.filter((c) => codes.has(c)));
-    const gallery = illustsOf(next);
-    setIllustId((prev) => (gallery.some((g) => g.id === prev) ? prev : (gallery[0]?.id ?? 'math-plus')));
+    const gal = galleryOf(next);
+    setIllustId((prev) => (gal.some((g) => g.id === prev) ? prev : (gal[0]?.id ?? 'math-plus')));
   };
 
   const toggleStandard = (code: string) => {
@@ -210,7 +227,7 @@ export default function ArenaEditor({
       </select>
       <label htmlFor="arena-subject">과목</label>
       <select id="arena-subject" value={subject} onChange={(e) => changeSubject(e.target.value)}>
-        {SUBJECTS.map((s) => (
+        {subjectOptions.map((s) => (
           <option key={s} value={s}>
             {s}
           </option>
@@ -272,7 +289,7 @@ export default function ArenaEditor({
         <fieldset>
           <legend>{subject} 그림 고르기</legend>
           <div className="flex flex-wrap gap-2">
-            {illustsOf(subject).map((g) => (
+            {gallery.map((g) => (
               <button
                 key={g.id}
                 type="button"

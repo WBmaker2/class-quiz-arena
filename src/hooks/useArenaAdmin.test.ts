@@ -11,16 +11,16 @@ describe('buildArenaCopy', () => {
         subject: '수학',
         grade: 3,
         topic: '받아올림',
-        standards: ['3수01-01'],
+        standards: ['[4수01-03]'],
       },
       [
-        { text: 'Q1', kind: 'ox', options: ['O', 'X', '', ''], answerIndex: 0, answerText: '', standardCode: '3수01-01' },
+        { text: 'Q1', kind: 'ox', options: ['O', 'X', '', ''], answerIndex: 0, answerText: '', standardCode: '[4수01-03]' },
         { text: 'Q2', kind: 'short', options: ['', '', '', ''], answerIndex: 0, answerText: '답', standardCode: '' },
       ],
     );
     expect(input.title).toBe('덧셈 (복사)');
     expect(input.grade).toBe(3);
-    expect(input.standards).toEqual(['3수01-01']);
+    expect(input.standards).toEqual(['[4수01-03]']);
     expect(input.status).toBe('published');
     expect(input.questionCount).toBe(2);
     expect(problems).toHaveLength(2);

@@ -8,8 +8,7 @@
     "grade": 3,
     "subject": "수학",
     "standards": [
-      "3수01-01",
-      "3수01-02"
+      "4수01-03"
     ],
     "questionCount": 20,
     "cardTheme": {
@@ -31,7 +30,7 @@
         ],
         "answerIndex": 0,
         "explanation": "백의 자리부터 차례로 더하면 355예요.",
-        "standardCode": "3수01-01",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -44,7 +43,7 @@
         ],
         "answerIndex": 1,
         "explanation": "백의 자리부터 차례로 빼면 263이에요.",
-        "standardCode": "3수01-01",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -57,7 +56,7 @@
         ],
         "answerIndex": 3,
         "explanation": "받아올림을 두 번 하면 634예요.",
-        "standardCode": "3수01-02",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -70,7 +69,7 @@
         ],
         "answerIndex": 2,
         "explanation": "받아내림을 하면 555예요.",
-        "standardCode": "3수01-01",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -83,7 +82,7 @@
         ],
         "answerIndex": 2,
         "explanation": "245에 178을 더하면 423개예요.",
-        "standardCode": "3수01-02",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -96,7 +95,7 @@
         ],
         "answerIndex": 0,
         "explanation": "받아내림을 하면 325예요.",
-        "standardCode": "3수01-02",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -109,7 +108,7 @@
         ],
         "answerIndex": 3,
         "explanation": "받아올림을 하면 645예요.",
-        "standardCode": "3수01-01",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -122,7 +121,7 @@
         ],
         "answerIndex": 1,
         "explanation": "받아내림을 하면 432예요.",
-        "standardCode": "3수01-01",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -135,7 +134,7 @@
         ],
         "answerIndex": 3,
         "explanation": "512에서 239를 빼면 273개예요.",
-        "standardCode": "3수01-02",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -148,7 +147,7 @@
         ],
         "answerIndex": 0,
         "explanation": "받아올림을 하면 697이에요.",
-        "standardCode": "3수01-01",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -161,7 +160,7 @@
         ],
         "answerIndex": 2,
         "explanation": "1000에서 476을 빼면 524예요.",
-        "standardCode": "3수01-01",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -174,7 +173,7 @@
         ],
         "answerIndex": 0,
         "explanation": "받아올림을 하면 652예요.",
-        "standardCode": "3수01-02",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -187,7 +186,7 @@
         ],
         "answerIndex": 3,
         "explanation": "받아내림을 하면 364예요.",
-        "standardCode": "3수01-02",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -200,7 +199,7 @@
         ],
         "answerIndex": 1,
         "explanation": "136에 248을 더하면 384개예요.",
-        "standardCode": "3수01-02",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -213,7 +212,7 @@
         ],
         "answerIndex": 2,
         "explanation": "받아내림을 하면 318이에요.",
-        "standardCode": "3수01-01",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -226,7 +225,7 @@
         ],
         "answerIndex": 3,
         "explanation": "받아올림을 하면 딱 800이에요.",
-        "standardCode": "3수01-01",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -239,7 +238,7 @@
         ],
         "answerIndex": 0,
         "explanation": "받아내림을 하면 359예요.",
-        "standardCode": "3수01-02",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -252,7 +251,7 @@
         ],
         "answerIndex": 3,
         "explanation": "725에서 348을 빼면 377쪽이에요.",
-        "standardCode": "3수01-02",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -265,7 +264,7 @@
         ],
         "answerIndex": 2,
         "explanation": "받아올림을 하면 705예요.",
-        "standardCode": "3수01-01",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       },
       {
@@ -278,7 +277,7 @@
         ],
         "answerIndex": 0,
         "explanation": "받아내림을 하면 355예요.",
-        "standardCode": "3수01-02",
+        "standardCode": "4수01-03",
         "roundTimeSec": 30
       }
     ],
@@ -294,7 +293,7 @@
     "grade": 6,
     "subject": "국어",
     "standards": [
-      "6국02-01"
+      "6국04-03"
     ],
     "questionCount": 20,
     "cardTheme": {
@@ -316,7 +315,7 @@
         ],
         "answerIndex": 0,
         "explanation": "발이 넓다는 친구가 많다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -329,7 +328,7 @@
         ],
         "answerIndex": 1,
         "explanation": "입이 무겁다는 비밀을 잘 지킨다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -342,7 +341,7 @@
         ],
         "answerIndex": 2,
         "explanation": "귀가 얇다는 남의 말에 쉽게 흔들린다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -355,7 +354,7 @@
         ],
         "answerIndex": 3,
         "explanation": "눈이 높다는 기준이 높다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -368,7 +367,7 @@
         ],
         "answerIndex": 1,
         "explanation": "손이 크다는 씀씀이가 후하다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -381,7 +380,7 @@
         ],
         "answerIndex": 2,
         "explanation": "입에 침이 마르다는 계속 칭찬한다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -394,7 +393,7 @@
         ],
         "answerIndex": 0,
         "explanation": "발 벗고 나서다는 어려운 일을 나서서 돕는다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -407,7 +406,7 @@
         ],
         "answerIndex": 1,
         "explanation": "눈에 불을 켠다는 집중한다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -420,7 +419,7 @@
         ],
         "answerIndex": 3,
         "explanation": "귀를 기울인다는 열심히 듣는다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -433,7 +432,7 @@
         ],
         "answerIndex": 2,
         "explanation": "입을 모은다는 모두 같은 말을 한다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -446,7 +445,7 @@
         ],
         "answerIndex": 0,
         "explanation": "눈을 떼지 못한다는 계속 본다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -459,7 +458,7 @@
         ],
         "answerIndex": 1,
         "explanation": "손을 잡는다는 함께 일한다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -472,7 +471,7 @@
         ],
         "answerIndex": 2,
         "explanation": "어깨가 으쓱하다는 자랑스럽다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -485,7 +484,7 @@
         ],
         "answerIndex": 0,
         "explanation": "가슴이 뛴다는 설렌다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -498,7 +497,7 @@
         ],
         "answerIndex": 1,
         "explanation": "입이 근질근질하다는 말하고 싶어 참기 어렵다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -511,7 +510,7 @@
         ],
         "answerIndex": 1,
         "explanation": "눈에 넣어도 아프지 않다는 몹시 사랑스럽다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -524,7 +523,7 @@
         ],
         "answerIndex": 2,
         "explanation": "발이 묶인다는 움직이지 못한다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -537,7 +536,7 @@
         ],
         "answerIndex": 0,
         "explanation": "귀가 솔깃하다는 마음이 끌린다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -550,7 +549,7 @@
         ],
         "answerIndex": 0,
         "explanation": "손발이 맞는다는 호흡이 잘 맞는다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       },
       {
@@ -563,7 +562,7 @@
         ],
         "answerIndex": 0,
         "explanation": "눈코 뜰 새 없다는 매우 바쁘다는 뜻이에요.",
-        "standardCode": "6국02-01",
+        "standardCode": "6국04-03",
         "roundTimeSec": 30
       }
     ],
@@ -579,7 +578,9 @@
     "grade": 4,
     "subject": "수학",
     "standards": [
-      "4수02-01"
+      "4수01-09",
+      "4수01-10",
+      "4수01-11"
     ],
     "questionCount": 20,
     "cardTheme": {
@@ -601,7 +602,7 @@
         ],
         "answerIndex": 0,
         "explanation": "전체를 4로 나누고 1을 먹었으니 4분의 1이에요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-09",
         "roundTimeSec": 30
       },
       {
@@ -614,7 +615,7 @@
         ],
         "answerIndex": 1,
         "explanation": "분모부터 읽어 삼분의 이라고 읽어요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-09",
         "roundTimeSec": 30
       },
       {
@@ -627,7 +628,7 @@
         ],
         "answerIndex": 2,
         "explanation": "전체가 8이고 딸기가 3이니 8분의 3이에요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-09",
         "roundTimeSec": 30
       },
       {
@@ -640,7 +641,7 @@
         ],
         "answerIndex": 1,
         "explanation": "똑같은 케이크면 반 조각이 더 크니 2분의 1이에요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-11",
         "roundTimeSec": 30
       },
       {
@@ -653,7 +654,7 @@
         ],
         "answerIndex": 0,
         "explanation": "분모가 같으면 분자가 큰 5분의 4가 커요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-11",
         "roundTimeSec": 30
       },
       {
@@ -666,7 +667,7 @@
         ],
         "answerIndex": 3,
         "explanation": "전체가 6이고 먹은 게 2이니 6분의 2예요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-09",
         "roundTimeSec": 30
       },
       {
@@ -679,7 +680,7 @@
         ],
         "answerIndex": 2,
         "explanation": "분자가 분모보다 크면 1보다 커요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-10",
         "roundTimeSec": 30
       },
       {
@@ -692,7 +693,7 @@
         ],
         "answerIndex": 0,
         "explanation": "5칸 중 2칸만큼 갔으니 5분의 2예요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-09",
         "roundTimeSec": 30
       },
       {
@@ -705,7 +706,7 @@
         ],
         "answerIndex": 2,
         "explanation": "진분수는 분자가 분모보다 작아야 해요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-10",
         "roundTimeSec": 30
       },
       {
@@ -718,7 +719,7 @@
         ],
         "answerIndex": 1,
         "explanation": "가분수는 분자가 분모보다 크거나 같아요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-10",
         "roundTimeSec": 30
       },
       {
@@ -731,7 +732,7 @@
         ],
         "answerIndex": 3,
         "explanation": "분자와 분모가 같으면 1이에요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-10",
         "roundTimeSec": 30
       },
       {
@@ -744,7 +745,7 @@
         ],
         "answerIndex": 2,
         "explanation": "전체가 10이고 준 게 7이니 10분의 7이에요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-09",
         "roundTimeSec": 30
       },
       {
@@ -757,7 +758,7 @@
         ],
         "answerIndex": 0,
         "explanation": "아래가 분모 6, 위가 분자 5예요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-09",
         "roundTimeSec": 30
       },
       {
@@ -770,7 +771,7 @@
         ],
         "answerIndex": 2,
         "explanation": "6분의 2를 약분하면 3분의 1로 같아요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-11",
         "roundTimeSec": 30
       },
       {
@@ -783,7 +784,7 @@
         ],
         "answerIndex": 3,
         "explanation": "반으로 나누면 한 부분은 2분의 1이에요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-09",
         "roundTimeSec": 30
       },
       {
@@ -796,7 +797,7 @@
         ],
         "answerIndex": 1,
         "explanation": "분모가 같으면 분자가 작은 6분의 2가 작아요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-11",
         "roundTimeSec": 30
       },
       {
@@ -809,7 +810,7 @@
         ],
         "answerIndex": 1,
         "explanation": "전체를 다 먹었으니 8분의 8, 즉 1이에요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-09",
         "roundTimeSec": 30
       },
       {
@@ -822,7 +823,7 @@
         ],
         "answerIndex": 3,
         "explanation": "분자가 3이니 4칸 중 3칸을 색칠해요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-09",
         "roundTimeSec": 30
       },
       {
@@ -835,7 +836,7 @@
         ],
         "answerIndex": 0,
         "explanation": "분모는 아래에 있는 9예요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-09",
         "roundTimeSec": 30
       },
       {
@@ -848,7 +849,7 @@
         ],
         "answerIndex": 2,
         "explanation": "분모가 같으면 분자가 큰 7분의 5가 커요.",
-        "standardCode": "4수02-01",
+        "standardCode": "4수01-11",
         "roundTimeSec": 30
       }
     ],
@@ -861,10 +862,11 @@
     "title": "물의 여행",
     "topic": "물의 순환과 상태 변화",
     "desc": "물의 순환과 상태 변화를 순서대로 익혀요.",
-    "grade": 5,
+    "grade": 4,
     "subject": "과학",
     "standards": [
-      "5과03-01"
+      "4과10-01",
+      "4과10-02"
     ],
     "questionCount": 20,
     "cardTheme": {
@@ -886,7 +888,7 @@
         ],
         "answerIndex": 0,
         "explanation": "고체가 액체가 되는 변화는 융해예요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-02",
         "roundTimeSec": 30
       },
       {
@@ -899,7 +901,7 @@
         ],
         "answerIndex": 1,
         "explanation": "액체가 기체가 되는 변화는 증발이에요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-02",
         "roundTimeSec": 30
       },
       {
@@ -912,7 +914,7 @@
         ],
         "answerIndex": 3,
         "explanation": "기체가 액체가 되는 변화는 응결이에요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-02",
         "roundTimeSec": 30
       },
       {
@@ -925,7 +927,7 @@
         ],
         "answerIndex": 2,
         "explanation": "액체가 고체가 되는 변화는 응고예요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-02",
         "roundTimeSec": 30
       },
       {
@@ -938,7 +940,7 @@
         ],
         "answerIndex": 2,
         "explanation": "바닷물이 수증기가 되어 올라가는 게 증발이에요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-01",
         "roundTimeSec": 30
       },
       {
@@ -951,7 +953,7 @@
         ],
         "answerIndex": 0,
         "explanation": "수증기가 물방울이 되어 구름이 돼요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-01",
         "roundTimeSec": 30
       },
       {
@@ -964,7 +966,7 @@
         ],
         "answerIndex": 2,
         "explanation": "하늘에서 물이 내리는 것은 강수예요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-01",
         "roundTimeSec": 30
       },
       {
@@ -977,7 +979,7 @@
         ],
         "answerIndex": 0,
         "explanation": "물이 바다로 모이는 단계는 모음이에요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-01",
         "roundTimeSec": 30
       },
       {
@@ -990,7 +992,7 @@
         ],
         "answerIndex": 1,
         "explanation": "빨래의 물이 수증기가 되니 증발이에요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-01",
         "roundTimeSec": 30
       },
       {
@@ -1003,7 +1005,7 @@
         ],
         "answerIndex": 2,
         "explanation": "공기 중 수증기가 식어 물방울이 돼요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-01",
         "roundTimeSec": 30
       },
       {
@@ -1016,7 +1018,7 @@
         ],
         "answerIndex": 0,
         "explanation": "물이 얼음이 되니 응고예요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-02",
         "roundTimeSec": 30
       },
       {
@@ -1029,7 +1031,7 @@
         ],
         "answerIndex": 3,
         "explanation": "고체인 눈이 물이 되니 융해예요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-02",
         "roundTimeSec": 30
       },
       {
@@ -1042,7 +1044,7 @@
         ],
         "answerIndex": 1,
         "explanation": "증발로 올라가 구름이 되고 비가 내려 바다로 모여요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-01",
         "roundTimeSec": 30
       },
       {
@@ -1055,7 +1057,7 @@
         ],
         "answerIndex": 1,
         "explanation": "구름과 비와 눈은 모두 물의 모습이에요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-01",
         "roundTimeSec": 30
       },
       {
@@ -1068,7 +1070,7 @@
         ],
         "answerIndex": 3,
         "explanation": "밤에 식은 수증기가 물방울이 돼요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-01",
         "roundTimeSec": 30
       },
       {
@@ -1081,7 +1083,7 @@
         ],
         "answerIndex": 1,
         "explanation": "수증기가 차가운 뚜껑에 닿아 물방울이 돼요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-01",
         "roundTimeSec": 30
       },
       {
@@ -1094,7 +1096,7 @@
         ],
         "answerIndex": 0,
         "explanation": "증발한 만큼 비가 되어 돌아오는 순환 때문이에요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-01",
         "roundTimeSec": 30
       },
       {
@@ -1107,7 +1109,7 @@
         ],
         "answerIndex": 3,
         "explanation": "얼음·물·수증기가 물의 세 가지 상태예요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-01",
         "roundTimeSec": 30
       },
       {
@@ -1120,7 +1122,7 @@
         ],
         "answerIndex": 0,
         "explanation": "모양은 달라도 모두 같은 물이에요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-01",
         "roundTimeSec": 30
       },
       {
@@ -1133,7 +1135,7 @@
         ],
         "answerIndex": 1,
         "explanation": "따뜻한 숨이 식어 작은 물방울이 된 거예요.",
-        "standardCode": "5과03-01",
+        "standardCode": "4과10-01",
         "roundTimeSec": 30
       }
     ],
@@ -1149,7 +1151,8 @@
     "grade": 4,
     "subject": "사회",
     "standards": [
-      "4사01-01"
+      "4사05-01",
+      "4사05-02"
     ],
     "questionCount": 20,
     "cardTheme": {
@@ -1171,7 +1174,7 @@
         ],
         "answerIndex": 0,
         "explanation": "해는 동쪽에서 떠올라요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-02",
         "roundTimeSec": 30
       },
       {
@@ -1184,7 +1187,7 @@
         ],
         "answerIndex": 2,
         "explanation": "해는 서쪽으로 져요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-02",
         "roundTimeSec": 30
       },
       {
@@ -1197,7 +1200,7 @@
         ],
         "answerIndex": 1,
         "explanation": "한낮 그림자는 북쪽이니 반대쪽은 남쪽이에요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-02",
         "roundTimeSec": 30
       },
       {
@@ -1210,7 +1213,7 @@
         ],
         "answerIndex": 1,
         "explanation": "지도의 위쪽은 북쪽으로 약속했어요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-02",
         "roundTimeSec": 30
       },
       {
@@ -1223,7 +1226,7 @@
         ],
         "answerIndex": 1,
         "explanation": "길을 간단히 그린 그림을 약도라고 해요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-01",
         "roundTimeSec": 30
       },
       {
@@ -1236,7 +1239,7 @@
         ],
         "answerIndex": 2,
         "explanation": "약속한 그림을 기호라고 해요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-01",
         "roundTimeSec": 30
       },
       {
@@ -1249,7 +1252,7 @@
         ],
         "answerIndex": 2,
         "explanation": "나침반은 방위를 알려주는 도구예요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-02",
         "roundTimeSec": 30
       },
       {
@@ -1262,7 +1265,7 @@
         ],
         "answerIndex": 0,
         "explanation": "기호로 장소를 알리고 방위로 방향을 알려요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-01",
         "roundTimeSec": 30
       },
       {
@@ -1275,7 +1278,7 @@
         ],
         "answerIndex": 2,
         "explanation": "동과 북 사이를 북동이라고 해요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-02",
         "roundTimeSec": 30
       },
       {
@@ -1288,7 +1291,7 @@
         ],
         "answerIndex": 1,
         "explanation": "서와 남 사이를 남서라고 해요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-02",
         "roundTimeSec": 30
       },
       {
@@ -1301,7 +1304,7 @@
         ],
         "answerIndex": 0,
         "explanation": "줄인 비율을 축척이라고 해요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-01",
         "roundTimeSec": 30
       },
       {
@@ -1314,7 +1317,7 @@
         ],
         "answerIndex": 1,
         "explanation": "방위를 정해야 방향이 맞게 그려져요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-01",
         "roundTimeSec": 30
       },
       {
@@ -1327,7 +1330,7 @@
         ],
         "answerIndex": 0,
         "explanation": "같은 기호는 같은 종류의 장소예요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-01",
         "roundTimeSec": 30
       },
       {
@@ -1340,7 +1343,7 @@
         ],
         "answerIndex": 0,
         "explanation": "장소마다 다른 기호를 써서 구분해요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-01",
         "roundTimeSec": 30
       },
       {
@@ -1353,7 +1356,7 @@
         ],
         "answerIndex": 2,
         "explanation": "빨간 바늘은 북쪽을 가리켜요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-02",
         "roundTimeSec": 30
       },
       {
@@ -1366,7 +1369,7 @@
         ],
         "answerIndex": 0,
         "explanation": "북극성이 있는 쪽이 북쪽이에요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-02",
         "roundTimeSec": 30
       },
       {
@@ -1379,7 +1382,7 @@
         ],
         "answerIndex": 0,
         "explanation": "방위를 알아야 방향을 맞게 읽어요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-01",
         "roundTimeSec": 30
       },
       {
@@ -1392,7 +1395,7 @@
         ],
         "answerIndex": 1,
         "explanation": "기호 설명을 모아 둔 표를 범례라고 해요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-01",
         "roundTimeSec": 30
       },
       {
@@ -1405,7 +1408,7 @@
         ],
         "answerIndex": 0,
         "explanation": "동쪽은 해가 뜨는 쪽이에요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-02",
         "roundTimeSec": 30
       },
       {
@@ -1418,7 +1421,7 @@
         ],
         "answerIndex": 0,
         "explanation": "방위와 기호와 제목이 있어야 약도를 읽어요.",
-        "standardCode": "4사01-01",
+        "standardCode": "4사05-01",
         "roundTimeSec": 30
       }
     ],
@@ -1434,7 +1437,9 @@
     "grade": 5,
     "subject": "영어",
     "standards": [
-      "5영01-01"
+      "6영01-03",
+      "6영02-04",
+      "6영02-07"
     ],
     "questionCount": 20,
     "cardTheme": {
@@ -1456,7 +1461,7 @@
         ],
         "answerIndex": 0,
         "explanation": "아침 인사는 Good morning.이에요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영01-03",
         "roundTimeSec": 30
       },
       {
@@ -1469,7 +1474,7 @@
         ],
         "answerIndex": 1,
         "explanation": "처음 만나서 반갑다는 말이에요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영01-03",
         "roundTimeSec": 30
       },
       {
@@ -1482,7 +1487,7 @@
         ],
         "answerIndex": 0,
         "explanation": "이름을 물을 때는 What is를 써요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영02-04",
         "roundTimeSec": 30
       },
       {
@@ -1495,7 +1500,7 @@
         ],
         "answerIndex": 2,
         "explanation": "나는 Mina라는 말에는 am을 써요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영02-04",
         "roundTimeSec": 30
       },
       {
@@ -1508,7 +1513,7 @@
         ],
         "answerIndex": 3,
         "explanation": "잘 지낸다는 대답은 I am fine.이에요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영02-07",
         "roundTimeSec": 30
       },
       {
@@ -1521,7 +1526,7 @@
         ],
         "answerIndex": 1,
         "explanation": "고마울 때는 Thank you.라고 해요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영01-03",
         "roundTimeSec": 30
       },
       {
@@ -1534,7 +1539,7 @@
         ],
         "answerIndex": 3,
         "explanation": "헤어질 때는 Good-bye.라고 해요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영01-03",
         "roundTimeSec": 30
       },
       {
@@ -1547,7 +1552,7 @@
         ],
         "answerIndex": 0,
         "explanation": "어디에서 왔는지 답하는 말이에요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영02-04",
         "roundTimeSec": 30
       },
       {
@@ -1560,7 +1565,7 @@
         ],
         "answerIndex": 2,
         "explanation": "나이를 답하는 말이에요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영02-07",
         "roundTimeSec": 30
       },
       {
@@ -1573,7 +1578,7 @@
         ],
         "answerIndex": 0,
         "explanation": "좋아하는 것을 답하는 말이에요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영02-07",
         "roundTimeSec": 30
       },
       {
@@ -1586,7 +1591,7 @@
         ],
         "answerIndex": 1,
         "explanation": "못한다는 대답은 No, I cannot.예요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영02-07",
         "roundTimeSec": 30
       },
       {
@@ -1599,7 +1604,7 @@
         ],
         "answerIndex": 2,
         "explanation": "좋아한다는 대답은 Yes, I do.예요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영02-07",
         "roundTimeSec": 30
       },
       {
@@ -1612,7 +1617,7 @@
         ],
         "answerIndex": 1,
         "explanation": "월요일은 Monday라고 해요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영02-07",
         "roundTimeSec": 30
       },
       {
@@ -1625,7 +1630,7 @@
         ],
         "answerIndex": 0,
         "explanation": "책은 book이라고 해요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영01-03",
         "roundTimeSec": 30
       },
       {
@@ -1638,7 +1643,7 @@
         ],
         "answerIndex": 1,
         "explanation": "여동생은 sister라고 해요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영02-04",
         "roundTimeSec": 30
       },
       {
@@ -1651,7 +1656,7 @@
         ],
         "answerIndex": 1,
         "explanation": "Stand up.은 일어나세요라는 뜻이에요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영01-03",
         "roundTimeSec": 30
       },
       {
@@ -1664,7 +1669,7 @@
         ],
         "answerIndex": 0,
         "explanation": "Open your book.은 책을 여세요라는 뜻이에요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영01-03",
         "roundTimeSec": 30
       },
       {
@@ -1677,7 +1682,7 @@
         ],
         "answerIndex": 2,
         "explanation": "맑은 날씨는 sunny라고 해요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영01-03",
         "roundTimeSec": 30
       },
       {
@@ -1690,7 +1695,7 @@
         ],
         "answerIndex": 1,
         "explanation": "내일 보자는 인사예요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영01-03",
         "roundTimeSec": 30
       },
       {
@@ -1703,7 +1708,7 @@
         ],
         "answerIndex": 2,
         "explanation": "생일 축하 말은 Happy birthday!예요.",
-        "standardCode": "5영01-01",
+        "standardCode": "6영01-03",
         "roundTimeSec": 30
       }
     ],

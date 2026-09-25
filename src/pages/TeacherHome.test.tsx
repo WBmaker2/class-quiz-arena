@@ -170,14 +170,14 @@ describe('TeacherHome growth tools', () => {
         {...base}
         arenas={[]}
         rounds={[
-          { roomId: 'r1', arenaId: 'a', problemIndex: 0, standardCode: '3수01-02', answers: [{ uid: 'u1', correct: false }] },
-          { roomId: 'r1', arenaId: 'a', problemIndex: 1, standardCode: '3수01-01', answers: [{ uid: 'u1', correct: true }] },
+          { roomId: 'r1', arenaId: 'a', problemIndex: 0, standardCode: '[4수01-09]', answers: [{ uid: 'u1', correct: false }] },
+          { roomId: 'r1', arenaId: 'a', problemIndex: 1, standardCode: '[4수01-03]', answers: [{ uid: 'u1', correct: true }] },
         ]}
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: '분석' }));
     expect(screen.getByText('우리 반이 어려워해요 Top 3 (최근 30일)')).toBeTruthy();
-    expect(screen.getAllByText(/3수01-02/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/4수01-09/).length).toBeGreaterThan(0);
     expect(screen.getByText(/정답률 0%/)).toBeTruthy();
   });
 
@@ -185,14 +185,14 @@ describe('TeacherHome growth tools', () => {
     render(
       <TeacherHome
         {...base}
-        arenas={[{ id: 'a1', title: '덧셈', locked: false, standards: ['3수01-01'] }]}
+        arenas={[{ id: 'a1', title: '덧셈', locked: false, standards: ['[4수01-03]'] }]}
         rounds={[]}
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: '분석' }));
-    expect(screen.getByText('5개 중 1개 출제')).toBeTruthy();
+    expect(screen.getByText('47개 중 1개 출제')).toBeTruthy();
     expect(screen.getByText(/출제됨/)).toBeTruthy();
-    expect(screen.getAllByText(/안 됨/)).toHaveLength(4);
+    expect(screen.getAllByText(/안 됨/)).toHaveLength(46);
   });
 
   it('copies an arena from the bank', () => {

@@ -11,7 +11,7 @@ export const EXPECTED_ARENAS = [
   { id: 'arena-add-sub-3', grade: 3, subject: '수학' },
   { id: 'arena-idiom-6', grade: 6, subject: '국어' },
   { id: 'arena-fraction-4', grade: 4, subject: '수학' },
-  { id: 'arena-water-5', grade: 5, subject: '과학' },
+  { id: 'arena-water-5', grade: 4, subject: '과학' },
   { id: 'arena-map-4', grade: 4, subject: '사회' },
   { id: 'arena-english-5', grade: 5, subject: '영어' },
 ];
