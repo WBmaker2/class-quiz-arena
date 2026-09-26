@@ -252,6 +252,19 @@ button.modal-x {
   line-height: 1;
 }
 
+/* 문제 출제 카드: 문제 하나를 흰 박스로 묶어 구분 */
+.problem-card {
+  background: #fff;
+  border: 2px solid #26211a;
+  border-radius: 12px;
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.problem-card > p:first-child {
+  margin-bottom: 8px;
+}
+
 /* 선택된 성취기준 칩 */
 .standard-chip {
   display: flex;

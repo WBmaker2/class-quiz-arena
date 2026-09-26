@@ -327,7 +327,13 @@ export default function ArenaEditor({
       <p>문제 {items.length}개</p>
       {items.length === 0 && <p>아직 등록된 문제가 없어요</p>}
       {items.map((p, i) => (
-        <div key={`problem-${i}`}>
+        <section key={`problem-${i}`} aria-label={`문제 ${i + 1}`} className="problem-card">
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-bold mb-0">문제 {i + 1}</p>
+            <button type="button" aria-label={`문제 ${i + 1} 삭제`} onClick={() => setItems(items.filter((_, j) => j !== i))}>
+              삭제
+            </button>
+          </div>
           {p.standardCode ? <p>{p.standardCode}</p> : null}
           <label>
             문제 {i + 1} 유형
@@ -408,10 +414,7 @@ export default function ArenaEditor({
             문제 {i + 1} 해설
             <input value={p.explanation ?? ''} onChange={(e) => updateItem(i, { explanation: e.target.value })} />
           </label>
-          <button type="button" aria-label={`문제 ${i + 1} 삭제`} onClick={() => setItems(items.filter((_, j) => j !== i))}>
-            삭제
-          </button>
-        </div>
+        </section>
       ))}
       <button type="button" onClick={() => setItems([...items, blankProblem()])}>
         추가

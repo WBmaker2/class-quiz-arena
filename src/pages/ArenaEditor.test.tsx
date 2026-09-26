@@ -115,6 +115,19 @@ describe('ArenaEditor', () => {
     expect(radio.checked).toBe(true);
   });
 
+  it('groups each problem in its own card with a heading', () => {
+    const { container } = render(<ArenaEditor initial={baseInitial} problems={makeProblems(2)} onSave={() => {}} onCancel={() => {}} />);
+    const cards = container.querySelectorAll('.problem-card');
+    expect(cards).toHaveLength(2);
+    expect(cards[0].querySelector('p')?.textContent).toBe('문제 1');
+    expect(cards[1].querySelector('p')?.textContent).toBe('문제 2');
+    // 삭제 버튼은 카드 머리(제목 옆)에 있다
+    const firstCard = cards[0];
+    expect(firstCard.textContent).toContain('문제 1');
+    fireEvent.click(screen.getByRole('button', { name: '문제 1 삭제' }));
+    expect(container.querySelectorAll('.problem-card')).toHaveLength(1);
+  });
+
   it('keeps and shows standardCode of loaded problems', () => {    render(
       <ArenaEditor
         initial={baseInitial}
