@@ -1,7 +1,8 @@
 # Class Quiz Arena 개선 결과 보고서
 
 - 날짜: 2026-09-26
-- 범위: 승인된 로컬 구현과 검증. 커밋·푸시·배포·HVC 등록은 수행하지 않음.
+- 범위: 승인된 로컬 구현과 검증, 커밋·푸시 및 Firebase 배포 완료. HVC 등록은 수행하지 않음.
+- 릴리스 커밋: [`ed0801b1b4b36a92b112ef8887021db7edddf5ca`](https://github.com/WBmaker2/class-quiz-arena/commit/ed0801b1b4b36a92b112ef8887021db7edddf5ca)
 - 기준 문서: [`elementary-webapp-ux-implementation-plan.md`](elementary-webapp-ux-implementation-plan.md), [`elementary-webapp-ux-audit.md`](elementary-webapp-ux-audit.md)
 
 ## 구현 결과
@@ -24,17 +25,20 @@
 | 웹 빌드 | 통과 | `npm run build`; 첫 청크 832,562 B, gzip 251,991 B. 500 kB 초과 경고가 남음 |
 | Functions 빌드 | 통과 | `npm --prefix functions run build` |
 | diff 공백 검사 | 통과 | `git diff --check` |
-| 로그인 화면 반응형 | 통과 | ego-browser로 320/375/1280px 확인: 문서 가로 넘침 0, h1 1개, 로그인 버튼 높이 52px |
+| 배포된 첫 화면·반응형 | 통과 | ego-browser: 페이지 제목 ‘퀴즈 아레나’, Google 시작 버튼 표시, 320/375/1280px에서 가로 넘침 0, 버튼 높이 52px |
 | Firebase Rules·callable 에뮬레이터 | 통과 | 4개 통합 테스트 파일 통과. 타 학급 arena/room 차단, 자기 반 공개 arena 읽기, 교사 문제·학급 편집과 대결 목록 3종, 클라이언트 room/battle 쓰기 차단, 보상 중복 방지와 비참가자 거부 확인 |
+| Firestore 인덱스 배포 | 배포 성공 | Firebase CLI 원격 정의 5개가 저장소 정의 5개와 일치. `READY`/`BUILDING` 상태는 CLI 응답에 없고 별도 조회 권한이 없어 미검증 |
+| Functions 배포 | 배포 및 준비 완료 | 대결·문제 함수 10개가 `ACTIVE`. Node.js 20 및 오래된 `firebase-functions` 버전 경고가 배포 로그에 남음 |
+| Firestore Rules 배포 | 배포 성공 | Rules 컴파일 후 운영 규칙 release 완료. 일부 `request`/`resource` 이름 경고가 있었으나 배포는 성공 |
+| Hosting 배포 | 배포 성공 | 운영 URL HTML과 새 JS 자산 모두 HTTP 200. 브라우저에서 `/assets/index-B37uD_Ub.js` 로드 확인 |
 | 인증 후 학생·교사·대결 흐름 | 미실행 | 인증된 테스트 계정이 없어 브라우저에서 확인하지 않음 |
-| 운영 Firebase 규칙·배포 사이트 | 미검증 | 읽기 전용 `projects:list` 접근 확인은 통과했으나 Rules/Functions를 배포하지 않음 |
 | HVC 등록 | 미실시 | 이번 승인 범위에 포함되지 않음 |
 | VoiceOver | 제외 | 프로젝트 지침에 따름 |
 
 ## 결과 확인 링크
 
-- 로컬 산출물은 배포되지 않았다. 서비스의 현재 공개 첫 화면은 [Class Quiz Arena](https://class-quiz-arena.web.app/)에서 확인할 수 있으며, 이번 로컬 변경이 반영된 주소는 아니다.
+- 배포 결과는 [Class Quiz Arena](https://class-quiz-arena.web.app/)에서 확인할 수 있다. 이 링크는 공개 Hosting 사이트이며 HVC 등록을 뜻하지 않는다.
 
 ## 남은 확인
 
-실제 배포 후 인증된 학생·교사 계정으로 브라우저 대결 흐름을 확인하지 않았다. 로그인 화면의 반응형 결과를 인증 후 화면 전체의 통과 근거로 확대하지 않는다.
+실제 배포 후 인증된 학생·교사 계정으로 브라우저 대결 흐름을 확인하지 않았다. 인덱스 정의 배포는 성공했지만 실제 빌드 상태(`READY`/`BUILDING`)는 미확인이다. Node.js 20 런타임은 2026-10-30 이후 배포할 수 없다는 Firebase CLI 경고가 있었으므로 런타임 업그레이드가 후속 과제다.
