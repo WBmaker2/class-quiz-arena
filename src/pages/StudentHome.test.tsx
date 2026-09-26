@@ -140,26 +140,26 @@ describe('StudentHome', () => {
 });
 
 describe('StudentHome shop and rename', () => {
-  const richProfile = { ...profile, xp: 1000, unlockedAvatars: ['dragon'], unlockedTitles: ['legend'] };
+  const richProfile = { ...profile, xp: 1000, stars: 1000, unlockedAvatars: ['dragon'], unlockedTitles: ['legend'] };
 
-  it('buys a locked avatar with enough XP', () => {
+  it('buys a locked avatar with enough stars', () => {
     const onBuyAvatar = vi.fn();
     render(
       <StudentHome
         arenas={[]}
         leaders={[]}
-        profile={{ ...profile, xp: 1000 }}
+        profile={{ ...profile, stars: 100 }}
         onEnter={() => {}}
         onSignOut={() => {}}
         onBuyAvatar={onBuyAvatar}
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: '상점' }));
-    fireEvent.click(screen.getByRole('button', { name: '800 XP에 사기' }));
-    expect(onBuyAvatar).toHaveBeenCalledWith('dragon', 800);
+    fireEvent.click(screen.getByRole('button', { name: '80별에 사기' }));
+    expect(onBuyAvatar).toHaveBeenCalledWith('dragon', 80);
   });
 
-  it('shows price only when XP is short', () => {
+  it('shows price only when stars are short', () => {
     render(
       <StudentHome
         arenas={[]}
@@ -171,8 +171,8 @@ describe('StudentHome shop and rename', () => {
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: '상점' }));
-    expect(screen.getByText('800 XP 필요')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: '800 XP에 사기' })).toBeNull();
+    expect(screen.getByText('80별 필요')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: '80별에 사기' })).toBeNull();
   });
 
   it('equips an owned avatar', () => {

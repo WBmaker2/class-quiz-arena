@@ -5,6 +5,8 @@ import { db } from '../lib/firebase';
 export interface Profile {
   nickname: string;
   xp: number;
+  /** 상점에서 쓰는 별. 0부터 시작하고 XP와 별개로 모은다. */
+  stars?: number;
   level: number;
   streak: number;
   winCount: number;

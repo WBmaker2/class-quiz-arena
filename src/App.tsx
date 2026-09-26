@@ -50,7 +50,7 @@ export interface PendingArena {
 export default function App() {
   const [view, setView] = useState<View>('login');
   const [role, setRole] = useState<Role | null>(null);
-  const [animal, setAnimal] = useState<Animal>('cat');
+  const [animal, setAnimal] = useState<Animal>('frog');
   const [pendingArena, setPendingArena] = useState<PendingArena | null>(null);
   const { classroomId, join, create, select } = useClassroom();
   const { user, loading, signInWithGoogle, signOut } = useAuth();
@@ -527,19 +527,19 @@ function StudentShell({
       }
       onSignOut={onSignOut}
       onBuyAvatar={(id, price) => {
-        if ((profile?.xp ?? 0) < price) return;
+        if ((profile?.stars ?? 0) < price) return;
         saveProfile({
-          xp: (profile?.xp ?? 0) - price,
+          stars: (profile?.stars ?? 0) - price,
           unlockedAvatars: [...(profile?.unlockedAvatars ?? []), id],
           avatar: id,
         });
       }}
       onEquipAvatar={(id) => saveProfile({ avatar: id })}
       onBuyTitle={(id, price) => {
-        if ((profile?.xp ?? 0) < price) return;
+        if ((profile?.stars ?? 0) < price) return;
         const label = TITLE_GOODS.find((g) => g.id === id)?.label ?? id;
         saveProfile({
-          xp: (profile?.xp ?? 0) - price,
+          stars: (profile?.stars ?? 0) - price,
           unlockedTitles: [...(profile?.unlockedTitles ?? []), id],
           title: label,
         });

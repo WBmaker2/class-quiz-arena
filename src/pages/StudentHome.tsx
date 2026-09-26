@@ -32,6 +32,7 @@ export interface Leader {
 export interface ProfileView {
   nickname: string;
   xp: number;
+  stars?: number;
   level: number;
   streak: number;
   winCount: number;
@@ -42,10 +43,10 @@ export interface ProfileView {
   unlockedTitles?: string[];
 }
 
-const ANIMALS = ['cat', 'dog', 'tiger', 'frog', 'unicorn', 'dragon', 'turtle'] as const;
+const ANIMALS = ['cat', 'dog', 'tiger', 'frog', 'unicorn', 'dragon', 'turtle', 'rabbit', 'chick', 'panda', 'hamster', 'fox', 'penguin', 'owl', 'dino'] as const;
 
 function toAnimal(value: string | undefined): Animal {
-  return (ANIMALS as readonly string[]).includes(value ?? '') ? (value as Animal) : 'cat';
+  return (ANIMALS as readonly string[]).includes(value ?? '') ? (value as Animal) : 'frog';
 }
 
 /** 순위뱃지 자체 색 (원본과 겹치지 않는 밝은 교실 색). */
@@ -233,6 +234,8 @@ export default function StudentHome({
             <p>
               {profile.xp} XP · {profile.streak}연승 · 정답률 {profile.correctRate}%
             </p>
+            <p>내 별</p>
+            <p>{profile.stars ?? 0} 별</p>
             <div className="mt-3">
               <label htmlFor="nickname-input">내 이름 바꾸기</label>
               <input
@@ -252,7 +255,7 @@ export default function StudentHome({
         {tab === 'shop' && (
           <Card>
             <p className="font-bold mb-2">아바타 상점</p>
-            <p className="text-sm mb-2">내 XP {profile.xp}</p>
+            <p className="text-sm mb-2">내 별 {profile.stars ?? 0}</p>
             {AVATAR_GOODS.map((g) => {
               const owned = ownsAvatar(profile.unlockedAvatars, g.id);
               const equipped = toAnimal(profile.avatar) === g.id;
@@ -266,12 +269,12 @@ export default function StudentHome({
                     <button type="button" onClick={() => onEquipAvatar?.(g.id)}>
                       사용하기
                     </button>
-                  ) : canAfford(profile.xp, g.price) ? (
+                  ) : canAfford(profile.stars ?? 0, g.price) ? (
                     <button type="button" onClick={() => onBuyAvatar?.(g.id, g.price)}>
-                      {g.price} XP에 사기
+                      {g.price}별에 사기
                     </button>
                   ) : (
-                    <p className="text-sm">{g.price} XP 필요</p>
+                    <p className="text-sm">{g.price}별 필요</p>
                   )}
                 </div>
               );
@@ -289,12 +292,12 @@ export default function StudentHome({
                     <button type="button" onClick={() => onEquipTitle?.(g.label)}>
                       사용하기
                     </button>
-                  ) : canAfford(profile.xp, g.price) ? (
+                  ) : canAfford(profile.stars ?? 0, g.price) ? (
                     <button type="button" onClick={() => onBuyTitle?.(g.id, g.price)}>
-                      {g.price} XP에 사기
+                      {g.price}별에 사기
                     </button>
                   ) : (
-                    <p className="text-sm">{g.price} XP 필요</p>
+                    <p className="text-sm">{g.price}별 필요</p>
                   )}
                 </div>
               );

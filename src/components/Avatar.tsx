@@ -1,4 +1,19 @@
-export type Animal = 'cat' | 'dog' | 'tiger' | 'frog' | 'unicorn' | 'dragon' | 'turtle';
+export type Animal =
+  | 'cat'
+  | 'dog'
+  | 'tiger'
+  | 'frog'
+  | 'unicorn'
+  | 'dragon'
+  | 'turtle'
+  | 'rabbit'
+  | 'chick'
+  | 'panda'
+  | 'hamster'
+  | 'fox'
+  | 'penguin'
+  | 'owl'
+  | 'dino';
 
 const EMOJI: Record<Animal, string> = {
   cat: '🐱',
@@ -8,6 +23,14 @@ const EMOJI: Record<Animal, string> = {
   unicorn: '🦄',
   dragon: '🐲',
   turtle: '🐢',
+  rabbit: '🐰',
+  chick: '🐤',
+  panda: '🐼',
+  hamster: '🐹',
+  fox: '🦊',
+  penguin: '🐧',
+  owl: '🦉',
+  dino: '🦕',
 };
 
 export default function Avatar({ animal, size = 56 }: { animal: Animal; size?: number }) {

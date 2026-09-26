@@ -22,6 +22,7 @@ import {
   advanceData,
   pickBattleProblems,
   xpAward,
+  starAward,
 } from './battle';
 
 const host = { uid: 'u1', nickname: '일호', avatar: 'cat' };
@@ -116,6 +117,12 @@ describe('xp and level', () => {
   it('computes level', () => {
     expect(computeLevel(0)).toEqual({ level: 1, xpIntoLevel: 0, xpToNext: 100 });
     expect(computeLevel(250)).toEqual({ level: 3, xpIntoLevel: 50, xpToNext: 50 });
+  });
+
+  it('awards stars apart from xp', () => {
+    expect(starAward(true, false, 3)).toBe(5 + 3);
+    expect(starAward(false, true, 2)).toBe(2 + 2);
+    expect(starAward(false, false, 1)).toBe(1);
   });
 
   it('allows auto-win after 30s of silence', () => {

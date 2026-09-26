@@ -169,6 +169,20 @@ export function xpAward(isWinner: boolean, isDraw: boolean, correctCount: number
   return (isWinner ? XP_WIN : isDraw ? XP_DRAW : 0) + correctCount * XP_PER_CORRECT;
 }
 
+/** 별(상점 재화) 기본 지급: 정답 1개당 1별 + 승리 5별/무승부 2별. XP와 별개. */
+export const STAR_PER_CORRECT = 1;
+export const STAR_WIN = 5;
+export const STAR_DRAW = 2;
+/** 새 연승이 3 이상이면 판마다 추가. */
+export const STAR_STREAK_BONUS = 2;
+export const STAR_STREAK_MIN = 3;
+/** 레벨이 오를 때마다 레벨당 추가. */
+export const STAR_LEVEL_UP_BONUS = 10;
+
+export function starAward(isWinner: boolean, isDraw: boolean, correctCount: number): number {
+  return (isWinner ? STAR_WIN : isDraw ? STAR_DRAW : 0) + correctCount * STAR_PER_CORRECT;
+}
+
 export function computeLevel(totalXp: number): { level: number; xpIntoLevel: number; xpToNext: number } {
   return {
     level: Math.floor(totalXp / 100) + 1,

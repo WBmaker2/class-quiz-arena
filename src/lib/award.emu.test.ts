@@ -18,7 +18,7 @@ describe('finishAndAward on emulator', () => {
       myWins: 0,
       myStreak: 0,
     });
-    expect(earnedA).toBe(70);
+    expect(earnedA).toEqual({ xp: 70, stars: 7 });
     const dupA = await finishAndAward({
       roomId,
       winnerUid: uidA,
@@ -27,7 +27,7 @@ describe('finishAndAward on emulator', () => {
       myWins: 0,
       myStreak: 0,
     });
-    expect(dupA).toBe(70);
+    expect(dupA).toEqual({ xp: 70, stars: 7 });
     await auth.signOut();
 
     const credB = await signInAnonymously(auth);
@@ -40,11 +40,13 @@ describe('finishAndAward on emulator', () => {
       myWins: 0,
       myStreak: 0,
     });
-    expect(earnedB).toBe(10);
+    expect(earnedB).toEqual({ xp: 10, stars: 1 });
 
     const snapA = await getDoc(doc(db, 'users', uidA));
     const snapB = await getDoc(doc(db, 'users', uidB));
     expect(snapA.data()?.xp).toBe(70);
+    expect(snapA.data()?.stars).toBe(7);
     expect(snapB.data()?.xp).toBe(10);
+    expect(snapB.data()?.stars).toBe(1);
   }, 30000);
 });
