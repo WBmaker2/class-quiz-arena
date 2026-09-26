@@ -31,9 +31,9 @@ import { useRoom, orderBattleProblems } from './hooks/useRoom';
 import { isCorrectAnswer } from './lib/battle';
 import { TITLE_GOODS } from './data/shop';
 import { containsBanned } from './lib/nickname';
-import { collection, doc, getDocs, orderBy, query, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, orderBy, query, setDoc } from 'firebase/firestore';
 import { db } from './lib/firebase';
-import type { Problem } from './lib/arena';
+import type { Arena, Problem } from './lib/arena';
 import { finishAndAward } from './lib/award';
 
 export type View = 'login' | 'role' | 'join' | 'student' | 'teacher' | 'battle';
@@ -572,6 +572,7 @@ function BattleShell({
 }) {
   const { roomId, busy, error, findOrCreate } = useMatch(arenaId, me);
   const [problems, setProblems] = useState<Problem[]>([]);
+  const [arena, setArena] = useState<Arena | null>(null);
   const { room, ready, answer, tick, claimWin } = useRoom(roomId, problems);
   const [awarded, setAwarded] = useState(false);
 
@@ -588,6 +589,13 @@ function BattleShell({
       })
       .catch(() => {
         setProblems([]);
+      });
+    void getDoc(doc(db, 'arenas', arenaId))
+      .then((snap) => {
+        setArena(snap.exists() ? ({ id: snap.id, ...(snap.data() as Omit<Arena, 'id'>) }) : null);
+      })
+      .catch(() => {
+        setArena(null);
       });
   }, [roomId, arenaId]);
 
@@ -646,6 +654,21 @@ function BattleShell({
           room={room}
           meUid={me.uid}
           problem={problem ? { text: problem.text, options: problem.options, kind: problem.kind ?? 'choice' } : undefined}
+          grade={problem ? { kind: problem.kind, answerIndex: problem.answerIndex, answerText: problem.answerText } : undefined}
+          arena={
+            arena
+              ? {
+                  title: arena.title,
+                  subject: arena.subject,
+                  grade: arena.grade,
+                  gradeBand: arena.gradeBand,
+                  desc: arena.desc,
+                  cardTheme: arena.cardTheme,
+                  cardStyle: arena.cardStyle,
+                  illustId: arena.illustId,
+                }
+              : null
+          }
           problemsLoaded={ordered.length > 0}
           onReady={() => {
             void ready(me.uid);

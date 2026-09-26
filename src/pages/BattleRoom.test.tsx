@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import BattleRoom from './BattleRoom';
-import { createRoomData, joinRoomData, setReadyData } from '../lib/battle';
+import { createRoomData, joinRoomData, setReadyData, submitAnswerData } from '../lib/battle';
 
 const host = { uid: 'u1', nickname: '일호', avatar: 'cat' };
 const guest = { uid: 'u2', nickname: '이호', avatar: 'dog' };
@@ -10,7 +10,39 @@ describe('BattleRoom lobby', () => {
   it('masks opponent name before start', () => {
     const room = joinRoomData(createRoomData('a1', host, 1000), guest, 2000)!;
     render(<BattleRoom room={room} meUid="u1" onReady={() => {}} onExit={() => {}} />);
-    expect(screen.getByText('???')).toBeTruthy();
+    expect(screen.getByText('일호 vs ???')).toBeTruthy();
+  });
+
+  it('shows waiting state with a disabled start button until matched', () => {
+    const room = createRoomData('a1', host, 1000);
+    render(<BattleRoom room={room} meUid="u1" onReady={() => {}} onExit={() => {}} />);
+    expect(screen.getByText('대결 상대를 기다리는 중...')).toBeTruthy();
+    expect(screen.getByText('??? vs ???')).toBeTruthy();
+    expect((screen.getByRole('button', { name: '네! 준비됐어요!' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('shows match complete with an enabled pulsing start button', () => {
+    const room = joinRoomData(createRoomData('a1', host, 1000), guest, 2000)!;
+    render(<BattleRoom room={room} meUid="u1" onReady={() => {}} onExit={() => {}} />);
+    expect(screen.getByText('1:1 매칭 완료!')).toBeTruthy();
+    const button = screen.getByRole('button', { name: '네! 준비됐어요!' }) as HTMLButtonElement;
+    expect(button.disabled).toBe(false);
+    expect(button.classList.contains('btn-pulse')).toBe(true);
+  });
+
+  it('shows the arena card on the waiting screen', () => {
+    const room = createRoomData('a1', host, 1000);
+    render(
+      <BattleRoom
+        room={room}
+        meUid="u1"
+        onReady={() => {}}
+        onExit={() => {}}
+        arena={{ title: '분수 첫걸음', subject: '수학', desc: '설명' }}
+      />,
+    );
+    expect(screen.getByText('분수 첫걸음')).toBeTruthy();
+    expect(screen.getByText('수학')).toBeTruthy();
   });
 
   it('shows waiting hint for opponent readiness', () => {
@@ -65,8 +97,7 @@ describe('BattleRoom playing', () => {
     expect(screen.getByText('시간이 지난 문제예요. 다음 라운드로 넘어가요.')).toBeTruthy();
   });
 
-  it('offers auto-win after silence', () => {
-    let room = joinRoomData(createRoomData('a1', host, 1000), guest, 2000)!;
+  it('offers auto-win after silence', () => {    let room = joinRoomData(createRoomData('a1', host, 1000), guest, 2000)!;
     room = { ...room, status: 'playing', currentRound: 0, roundEndsAt: Date.now() + 30000, updatedAt: 0 };
     const onClaimWin = vi.fn();
     render(
@@ -218,5 +249,63 @@ describe('BattleRoom arena tts setting', () => {
     );
     expect(screen.queryByRole('button', { name: '문제 읽어주기' })).toBeNull();
     vi.unstubAllGlobals();
+  });
+});
+
+describe('BattleRoom scoreboard and feedback', () => {
+  const arena = { title: '분수 첫걸음', subject: '수학' };
+  const grade = { answerIndex: 2 };
+  const question = { text: 'Q', options: ['1', '2', '3', '4'] };
+
+  function playingRoom() {
+    let room = joinRoomData(createRoomData('a1', host, 1000), guest, 2000)!;
+    room = { ...room, status: 'playing' as const, currentRound: 0, roundEndsAt: Date.now() + 30000 };
+    return room;
+  }
+
+  it('shows the live score and arena while playing', () => {
+    render(
+      <BattleRoom
+        room={playingRoom()}
+        meUid="u1"
+        problem={question}
+        grade={grade}
+        arena={arena}
+        onReady={() => {}}
+        onExit={() => {}}
+      />,
+    );
+    expect(screen.getByText('나 0점 : 0점 상대')).toBeTruthy();
+    expect(screen.getByText('분수 첫걸음')).toBeTruthy();
+  });
+
+  it('tells a correct answer and waits for the opponent', () => {
+    const room = submitAnswerData(playingRoom(), 'u1', 2, 3000);
+    render(
+      <BattleRoom room={room} meUid="u1" problem={question} grade={grade} onReady={() => {}} onExit={() => {}} />,
+    );
+    expect(screen.getByText('정답이에요!')).toBeTruthy();
+    expect(screen.getByText('상대방이 생각 중이에요...')).toBeTruthy();
+  });
+
+  it('tells a wrong answer and notes the opponent reply', () => {
+    let room = submitAnswerData(playingRoom(), 'u1', 0, 3000);
+    room = submitAnswerData(room, 'u2', 2, 3100);
+    render(
+      <BattleRoom room={room} meUid="u1" problem={question} grade={grade} onReady={() => {}} onExit={() => {}} />,
+    );
+    expect(screen.getByText('아쉬워요. 땡!')).toBeTruthy();
+    expect(screen.getByText('상대방도 답을 골랐어요.')).toBeTruthy();
+  });
+
+  it('shows totals with the arena on the result screen', () => {
+    let room = joinRoomData(createRoomData('a1', host, 1000), guest, 2000)!;
+    room = { ...room, status: 'finished' as const, winnerUid: 'u1', showPlayers: false };
+    room.players[0].score = 7;
+    room.players[1].score = 5;
+    render(<BattleRoom room={room} meUid="u1" onReady={() => {}} onExit={() => {}} arena={arena} />);
+    expect(screen.getByText('승리!')).toBeTruthy();
+    expect(screen.getByText('내 점수 7 : 5 상대 점수')).toBeTruthy();
+    expect(screen.getByText('분수 첫걸음')).toBeTruthy();
   });
 });
