@@ -3,7 +3,7 @@
 - 날짜: 2026-09-26
 - Firebase 프로젝트: `class-quiz-arena`
 - 커밋: [`ed0801b1b4b36a92b112ef8887021db7edddf5ca`](https://github.com/WBmaker2/class-quiz-arena/commit/ed0801b1b4b36a92b112ef8887021db7edddf5ca)
-- 원격 푸시: `origin/main` 성공 (`cc63ef9` → `ed0801b`)
+- 원격 푸시: `origin/main` 성공. 코드 릴리스 `ed0801b1b4b36a92b112ef8887021db7edddf5ca` 및 이전 문서 후속 커밋 `ba0d0d0fd304485593f02c4cda53ac01472f46fd` 포함 (`cc63ef9`부터 반영)
 - 공개 확인 링크: [Class Quiz Arena](https://class-quiz-arena.web.app/)
 
 ## 서비스별 결과
