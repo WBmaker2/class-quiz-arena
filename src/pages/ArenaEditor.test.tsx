@@ -92,6 +92,29 @@ describe('ArenaEditor', () => {
     expect(await screen.findByText(/20회를 다 썼어요/)).toBeTruthy();
   });
 
+  it('edits problem text in a multiline box', () => {
+    render(<ArenaEditor initial={baseInitial} problems={makeProblems(1)} onSave={() => {}} onCancel={() => {}} />);
+    const box = screen.getByLabelText('문제 1 내용') as HTMLTextAreaElement;
+    expect(box.tagName).toBe('TEXTAREA');
+    fireEvent.change(box, { target: { value: '첫째 줄\n둘째 줄' } });
+    expect(box.value).toBe('첫째 줄\n둘째 줄');
+  });
+
+  it('labels choices above their inputs and keeps picking the answer', () => {
+    render(<ArenaEditor initial={baseInitial} problems={makeProblems(1)} onSave={() => {}} onCancel={() => {}} />);
+    expect(screen.getByText('1번 보기 내용')).toBeTruthy();
+    expect(screen.getByText('4번 보기 내용')).toBeTruthy();
+    expect(screen.queryByText('정답')).toBeNull();
+    // 라벨이 인풋보다 먼저 나온다
+    const label = screen.getByText('2번 보기 내용');
+    const input = screen.getByLabelText('문제 1 선택지 2');
+    expect(label.compareDocumentPosition(input) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // 라디오로 정답을 고르면 반영된다
+    const radio = screen.getByLabelText('문제 1 정답: 2번') as HTMLInputElement;
+    fireEvent.click(radio);
+    expect(radio.checked).toBe(true);
+  });
+
   it('keeps and shows standardCode of loaded problems', () => {    render(
       <ArenaEditor
         initial={baseInitial}

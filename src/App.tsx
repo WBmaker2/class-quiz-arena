@@ -10,6 +10,7 @@ import TeacherHome from './pages/TeacherHome';
 import ArenaEditor from './pages/ArenaEditor';
 import EmptyState from './components/EmptyState';
 import Modal from './components/Modal';
+import RememberLogin from './components/RememberLogin';
 import type { Animal } from './components/Avatar';
 import { useAnalytics } from './hooks/useAnalytics';
 import { useArenaAdmin, type EditableProblem } from './hooks/useArenaAdmin';
@@ -56,6 +57,11 @@ export default function App() {
   // 선생님의 학생 화면 미리보기 (?preview=학급ID, 새 탭). 로그인 후 바로 학생홈.
   const [previewClassroom] = useState(() => new URLSearchParams(window.location.search).get('preview'));
 
+  // 같은 구글 프로필로 저장된 로그인이 있으면 로그인 화면을 건너뛴다.
+  useEffect(() => {
+    if (view === 'login' && user) setView('role');
+  }, [view, user]);
+
   const startLogin = () => {
     void Promise.resolve(signInWithGoogle()).catch(() => {});
     setView('role');
@@ -85,29 +91,38 @@ export default function App() {
     };
     if (view === 'battle' && pendingArena) {
       return (
-        <BattleShell
-          arenaId={pendingArena.arenaId}
-          classroomId={pendingArena.classroomId}
-          me={pendingArena.me}
-          reporterNickname={pendingArena.reporterNickname}
-          myWins={pendingArena.myWins}
-          myStreak={pendingArena.myStreak}
-          onExit={previewExit}
-        />
+        <>
+          <RememberLogin />
+          <BattleShell
+            arenaId={pendingArena.arenaId}
+            classroomId={pendingArena.classroomId}
+            me={pendingArena.me}
+            reporterNickname={pendingArena.reporterNickname}
+            myWins={pendingArena.myWins}
+            myStreak={pendingArena.myStreak}
+            onExit={previewExit}
+          />
+        </>
       );
     }
     return (
-      <StudentShell
-        uid={user.uid}
-        nickname={user.displayName ?? '선생님'}
-        classroomId={previewClassroom}
-        animal={animal}
-        onEnter={previewEnter}
-        onSignOut={() => {
-          void signOut();
-          setView('login');
-        }}
-      />
+      <>
+        <RememberLogin />
+        <StudentShell
+          uid={user.uid}
+          nickname={user.displayName ?? '선생님'}
+          classroomId={previewClassroom}
+          animal={animal}
+          accountName={user.displayName ?? undefined}
+          accountEmail={user.email}
+          photoURL={user.photoURL}
+          onEnter={previewEnter}
+          onSignOut={() => {
+            void signOut();
+            setView('login');
+          }}
+        />
+      </>
     );
   }
 
@@ -122,6 +137,7 @@ export default function App() {
               setView('join');
             }}
           />
+          <RememberLogin />
         </div>
       </div>
     );
@@ -149,6 +165,7 @@ export default function App() {
               onJoin={(code, nickname) => { void join(code, user?.uid ?? 'local-test', { nickname, role: role ?? 'student', avatar: animal }); setView('student'); }}
             />
           )}
+          <RememberLogin />
         </div>
       </div>
     );
@@ -156,20 +173,26 @@ export default function App() {
 
   if (view === 'student') {
     return (
-      <StudentShell
-        uid={user?.uid ?? 'local-test'}
-        nickname={user?.displayName ?? '학생'}
-        classroomId={classroomId}
-        animal={animal}
-        onEnter={(arenaId, me, myWins, myStreak, reporterNickname) => {
-          setPendingArena({ arenaId, classroomId, me, reporterNickname, myWins, myStreak });
-          setView('battle');
-        }}
-        onSignOut={() => {
-          void signOut();
-          setView('login');
-        }}
-      />
+      <>
+        <RememberLogin />
+        <StudentShell
+          uid={user?.uid ?? 'local-test'}
+          nickname={user?.displayName ?? '학생'}
+          classroomId={classroomId}
+          animal={animal}
+          accountName={user?.displayName ?? undefined}
+          accountEmail={user?.email ?? null}
+          photoURL={user?.photoURL ?? null}
+          onEnter={(arenaId, me, myWins, myStreak, reporterNickname) => {
+            setPendingArena({ arenaId, classroomId, me, reporterNickname, myWins, myStreak });
+            setView('battle');
+          }}
+          onSignOut={() => {
+            void signOut();
+            setView('login');
+          }}
+        />
+      </>
     );
   }
 
@@ -180,6 +203,7 @@ export default function App() {
         userEmail={user?.email ?? null}
         uid={user?.uid ?? 'local-test'}
         displayName={user?.displayName ?? '선생님'}
+        photoURL={user?.photoURL ?? null}
         animal={animal}
         onSignOut={() => {
           void signOut();
@@ -191,15 +215,18 @@ export default function App() {
 
   if (view === 'battle' && pendingArena) {
     return (
-      <BattleShell
-        arenaId={pendingArena.arenaId}
-        classroomId={pendingArena.classroomId}
-        me={pendingArena.me}
-        reporterNickname={pendingArena.reporterNickname}
-        myWins={pendingArena.myWins}
-        myStreak={pendingArena.myStreak}
-        onExit={() => setView('student')}
-      />
+      <>
+        <RememberLogin />
+        <BattleShell
+          arenaId={pendingArena.arenaId}
+          classroomId={pendingArena.classroomId}
+          me={pendingArena.me}
+          reporterNickname={pendingArena.reporterNickname}
+          myWins={pendingArena.myWins}
+          myStreak={pendingArena.myStreak}
+          onExit={() => setView('student')}
+        />
+      </>
     );
   }
 
@@ -212,7 +239,7 @@ export default function App() {
   );
 }
 
-function TeacherShell({ classroomId, userEmail, uid, displayName, animal, onSignOut }: { classroomId: string | null; userEmail: string | null; uid: string; displayName: string; animal: Animal; onSignOut: () => void }) {
+function TeacherShell({ classroomId, userEmail, uid, displayName, photoURL, animal, onSignOut }: { classroomId: string | null; userEmail: string | null; uid: string; displayName: string; photoURL: string | null; animal: Animal; onSignOut: () => void }) {
   const showAdmin = isMasterEmail(userEmail);
   const { live, abandoned, finished, forceClose } = useTeacherRooms();
   const { arenas, bank, saveArena, loadProblems, removeArena, setLocked, setShowPlayers, setTtsEnabled, copyArena, seedDefaults } = useArenaAdmin(classroomId);
@@ -326,6 +353,7 @@ function TeacherShell({ classroomId, userEmail, uid, displayName, animal, onSign
 
   return (
     <>
+      <RememberLogin />
       {editorModal}
       <TeacherHome
       live={live.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
@@ -374,6 +402,9 @@ function TeacherShell({ classroomId, userEmail, uid, displayName, animal, onSign
       onNewArena={() => setCreating(true)}
       onSignOut={onSignOut}
       showAdmin={showAdmin}
+      accountName={displayName}
+      accountEmail={userEmail}
+      photoURL={photoURL}
       teachers={teachers}
       onAddTeacher={(email) => {
         void addTeacher(email);
@@ -439,6 +470,9 @@ function StudentShell({
   animal,
   onEnter,
   onSignOut,
+  accountName,
+  accountEmail,
+  photoURL,
 }: {
   uid: string;
   nickname: string;
@@ -446,6 +480,9 @@ function StudentShell({
   animal: Animal;
   onEnter: (arenaId: string, me: { uid: string; nickname: string; avatar: string }, myWins: number, myStreak: number, reporterNickname: string) => void;
   onSignOut: () => void;
+  accountName?: string;
+  accountEmail?: string | null;
+  photoURL?: string | null;
 }) {
   const { arenas } = useArenas();
   const { profile } = useProfile(uid);
@@ -464,6 +501,9 @@ function StudentShell({
       profile={profile ?? { nickname, xp: 0, level: 1, streak: 0, winCount: 0, correctRate: 0 }}
       myUid={uid}
       myRank={myRank}
+      accountName={accountName}
+      accountEmail={accountEmail}
+      photoURL={photoURL}
       onEnter={(arenaId) =>
         onEnter(arenaId, { uid, nickname, avatar: animal }, profile?.winCount ?? 0, profile?.streak ?? 0, profile?.nickname ?? nickname)
       }

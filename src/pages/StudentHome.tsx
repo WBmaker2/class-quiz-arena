@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import Modal from '../components/Modal';
+import AccountChip from '../components/AccountChip';
 import PrimaryButton from '../components/PrimaryButton';
 import Avatar, { type Animal } from '../components/Avatar';
 import ArenaCard from '../components/ArenaCard';
@@ -68,6 +69,9 @@ export default function StudentHome({
   onBuyTitle,
   onEquipTitle,
   onRename,
+  accountName,
+  accountEmail,
+  photoURL,
 }: {
   arenas: Arena[];
   leaders: Leader[];
@@ -81,6 +85,9 @@ export default function StudentHome({
   onBuyTitle?: (id: string, price: number) => void;
   onEquipTitle?: (id: string) => void;
   onRename?: (name: string) => void;
+  accountName?: string;
+  accountEmail?: string | null;
+  photoURL?: string | null;
 }) {
   const [tab, setTab] = useState<'browse' | 'leaderboard' | 'record' | 'shop'>('browse');
   const [newName, setNewName] = useState('');
@@ -101,6 +108,11 @@ export default function StudentHome({
   return (
     <div className="min-h-screen px-6 py-10">
       <div className="w-full max-w-2xl mx-auto">
+        {accountName && (
+          <div className="flex items-center justify-end gap-2 mb-3">
+            <AccountChip name={accountName} email={accountEmail} photoURL={photoURL} />
+          </div>
+        )}
         <nav aria-label="학생 메뉴" className="flex flex-wrap gap-2 mb-4">
           <button type="button" onClick={() => setTab('browse')} aria-current={tab === 'browse' ? 'page' : undefined} className={tab === 'browse' ? 'tab-active' : undefined}>
             둘러보기

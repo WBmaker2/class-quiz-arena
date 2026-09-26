@@ -8,6 +8,7 @@ import { containsBanned } from '../lib/nickname';
 import Toggle from '../components/Toggle';
 import Modal from '../components/Modal';
 import UpdateLog from '../components/UpdateLog';
+import AccountChip from '../components/AccountChip';
 import ArenaCard from '../components/ArenaCard';
 import type { CardStyle } from '../lib/arena';
 import { gradeLabel } from '../lib/arena';
@@ -79,6 +80,9 @@ export default function TeacherHome({
   teachers,
   onAddTeacher,
   onRemoveTeacher,
+  accountName,
+  accountEmail,
+  photoURL,
 }: {
   live: LiveRoom[];
   abandoned: LiveRoom[];
@@ -109,6 +113,9 @@ export default function TeacherHome({
   teachers?: string[];
   onAddTeacher?: (email: string) => void;
   onRemoveTeacher?: (email: string) => void;
+  accountName?: string;
+  accountEmail?: string | null;
+  photoURL?: string | null;
 }) {
   const [tab, setTab] = useState<'live' | 'arenas' | 'students' | 'analysis' | 'reports' | 'classroom' | 'admin'>('live');
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -139,6 +146,7 @@ export default function TeacherHome({
         <div className="flex items-center justify-between gap-2 mb-3">
           <p className="font-bold mb-0 text-xl">선생님 워크스페이스</p>
           <div className="flex items-center gap-2">
+            {accountName && <AccountChip name={accountName} email={accountEmail} photoURL={photoURL} />}
             <button type="button" onClick={() => setShowUpdates(true)}>
               업데이트 내역
             </button>

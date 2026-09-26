@@ -352,7 +352,11 @@ export default function ArenaEditor({
           </label>
           <label>
             문제 {i + 1} 내용
-            <input value={p.text} onChange={(e) => updateItem(i, { text: e.target.value })} />
+            <textarea
+              rows={3}
+              value={p.text}
+              onChange={(e) => updateItem(i, { text: e.target.value })}
+            />
           </label>
           {(p.kind ?? 'choice') === 'short' ? (
             <label>
@@ -382,11 +386,6 @@ export default function ArenaEditor({
           ) : (
             p.options.map((opt, k) => (
               <div key={k}>
-                <input
-                  aria-label={`문제 ${i + 1} 선택지 ${k + 1}`}
-                  value={opt}
-                  onChange={(e) => updateOption(i, k, e.target.value)}
-                />
                 <label>
                   <input
                     type="radio"
@@ -395,8 +394,13 @@ export default function ArenaEditor({
                     checked={p.answerIndex === k}
                     onChange={() => updateItem(i, { answerIndex: k })}
                   />
-                  정답
+                  {k + 1}번 보기 내용
                 </label>
+                <input
+                  aria-label={`문제 ${i + 1} 선택지 ${k + 1}`}
+                  value={opt}
+                  onChange={(e) => updateOption(i, k, e.target.value)}
+                />
               </div>
             ))
           )}

@@ -333,6 +333,24 @@ describe('TeacherHome update log', () => {
   });
 });
 
+describe('TeacherHome account chip', () => {
+  it('shows the signed-in profile next to the preview button', () => {
+    render(
+      <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="A1B2C3" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onToggleShowPlayers={noop} onToggleTts={noop} onNewArena={noop} onSignOut={noop} accountName="김선생" accountEmail="kim@school.kr" photoURL="https://photo.example/me.png" />,
+    );
+    expect(screen.getByText('김선생')).toBeTruthy();
+    expect(screen.getByTitle('kim@school.kr')).toBeTruthy();
+    expect(document.querySelector('img[src="https://photo.example/me.png"]')).toBeTruthy();
+  });
+
+  it('hides the chip without account info', () => {
+    render(
+      <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="A1B2C3" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onToggleShowPlayers={noop} onToggleTts={noop} onNewArena={noop} onSignOut={noop} />,
+    );
+    expect(screen.queryByTitle('kim@school.kr')).toBeNull();
+  });
+});
+
 describe('TeacherHome classroom management', () => {
   const base = {
     live: [],

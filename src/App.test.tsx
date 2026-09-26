@@ -2,7 +2,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('./hooks/useAuth', () => ({
-  useAuth: () => ({ user: null, loading: false, signInWithGoogle: vi.fn(), signOut: vi.fn() }),
+  useAuth: () => ({ user: null, loading: false, signInWithGoogle: vi.fn(), signOut: vi.fn(), remember: null, applyRemember: vi.fn() }),
 }));
 vi.mock('./hooks/useArenas', () => ({ useArenas: () => ({ arenas: [{ id: 'a1', title: '기초 덧셈 아레나', desc: '설명', subject: '수학', locked: false, classroomId: 'A1B2C3' }], loading: false }) }));
 vi.mock('./hooks/useProfile', () => ({ useProfile: () => ({ profile: { nickname: '일호', xp: 0, level: 1, streak: 0, winCount: 0, correctRate: 0 } }) }));

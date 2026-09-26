@@ -4,6 +4,39 @@ import StudentHome from './StudentHome';
 
 const profile = { nickname: '일호', xp: 250, level: 3, streak: 2, winCount: 5, correctRate: 70 };
 
+describe('StudentHome account chip', () => {
+  it('shows the signed-in profile at the top right', () => {
+    render(
+      <StudentHome
+        arenas={[]}
+        leaders={[]}
+        profile={profile}
+        onEnter={() => {}}
+        onSignOut={() => {}}
+        accountName="일호"
+        accountEmail="one@school.kr"
+        photoURL="https://photo.example/one.png"
+      />,
+    );
+    expect(screen.getByText('일호')).toBeTruthy();
+    expect(screen.getByTitle('one@school.kr')).toBeTruthy();
+    expect(document.querySelector('img[src="https://photo.example/one.png"]')).toBeTruthy();
+  });
+
+  it('hides the chip without account info', () => {
+    render(
+      <StudentHome
+        arenas={[]}
+        leaders={[]}
+        profile={profile}
+        onEnter={() => {}}
+        onSignOut={() => {}}
+      />,
+    );
+    expect(screen.queryByTitle('one@school.kr')).toBeNull();
+  });
+});
+
 describe('StudentHome', () => {
   it('shows arenas and starts battle', () => {
     const onEnter = vi.fn();

@@ -39,7 +39,8 @@ label {
 
 /* 텍스트 입력/선택: 종이톤 박스 + 포커스 링 */
 input:not([type="radio"]):not([type="checkbox"]),
-select {
+select,
+textarea {
   background: #fff;
   border: 2px solid #26211a;
   border-radius: 12px;
@@ -50,8 +51,16 @@ select {
   transition: box-shadow 200ms ease, border-color 200ms ease;
 }
 
+/* 여러 줄 입력: 줄바꿈 그대로 보이고 세로로만 늘이기 */
+textarea {
+  resize: vertical;
+  min-height: 88px;
+  line-height: 1.5;
+}
+
 input:not([type="radio"]):not([type="checkbox"]):focus,
-select:focus {
+select:focus,
+textarea:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(37, 69, 160, 0.25);
@@ -83,6 +92,7 @@ button:not(.btn-primary):active {
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
+textarea:focus-visible,
 a:focus-visible {
   outline: 3px solid var(--color-primary);
   outline-offset: 2px;
