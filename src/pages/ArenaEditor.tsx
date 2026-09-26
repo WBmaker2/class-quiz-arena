@@ -412,7 +412,11 @@ export default function ArenaEditor({
           )}
           <label>
             문제 {i + 1} 해설
-            <input value={p.explanation ?? ''} onChange={(e) => updateItem(i, { explanation: e.target.value })} />
+            <textarea
+              rows={2}
+              value={p.explanation ?? ''}
+              onChange={(e) => updateItem(i, { explanation: e.target.value })}
+            />
           </label>
         </section>
       ))}

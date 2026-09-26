@@ -115,6 +115,14 @@ describe('ArenaEditor', () => {
     expect(radio.checked).toBe(true);
   });
 
+  it('edits the explanation in a multiline box', () => {
+    render(<ArenaEditor initial={baseInitial} problems={makeProblems(1)} onSave={() => {}} onCancel={() => {}} />);
+    const box = screen.getByLabelText('문제 1 해설') as HTMLTextAreaElement;
+    expect(box.tagName).toBe('TEXTAREA');
+    fireEvent.change(box, { target: { value: '첫째 줄\n둘째 줄' } });
+    expect(box.value).toBe('첫째 줄\n둘째 줄');
+  });
+
   it('groups each problem in its own card with a heading', () => {
     const { container } = render(<ArenaEditor initial={baseInitial} problems={makeProblems(2)} onSave={() => {}} onCancel={() => {}} />);
     const cards = container.querySelectorAll('.problem-card');
