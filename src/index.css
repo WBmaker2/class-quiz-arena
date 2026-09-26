@@ -252,6 +252,13 @@ button.modal-x {
   line-height: 1;
 }
 
+/* 공개하기(저장하기): 글자가 길어진 만큼 크게 */
+.publish-btn {
+  padding: 12px 32px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
 /* 문제 출제 카드: 문제 하나를 흰 박스로 묶어 구분 */
 .problem-card {
   background: #fff;

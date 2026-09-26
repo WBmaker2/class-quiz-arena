@@ -21,7 +21,7 @@ function makeProblems(n: number): EditableProblem[] {
 const baseInitial = { title: '기초', desc: '', subject: '수학', questionCount: 0 };
 
 function publishButton(): HTMLButtonElement {
-  return screen.getByRole('button', { name: '공개하기' }) as HTMLButtonElement;
+  return screen.getByRole('button', { name: '공개하기(저장하기)' }) as HTMLButtonElement;
 }
 
 describe('ArenaEditor', () => {
@@ -229,7 +229,7 @@ describe('ArenaEditor card style', () => {
     expect(screen.getByText('수학 일러스트 카드 고르기')).toBeTruthy();
     expect(screen.queryByText(/2가지 중 고르기/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: '피자 분수 그림 고르기' }));
-    fireEvent.click(screen.getByRole('button', { name: '공개하기' }));
+    fireEvent.click(screen.getByRole('button', { name: '공개하기(저장하기)' }));
     expect(onSave).toHaveBeenCalledTimes(1);
     expect(onSave.mock.calls[0][0]).toMatchObject({ cardStyle: 'illust', illustId: 'math-pizza', gradeBand: '3-4' });
   });

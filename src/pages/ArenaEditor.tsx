@@ -424,8 +424,8 @@ export default function ArenaEditor({
         추가
       </button>
 
-      <button type="button" className={canPublish ? 'btn-pulse' : undefined} onClick={publish} disabled={!canPublish}>
-        공개하기
+      <button type="button" className={canPublish ? 'btn-pulse publish-btn' : 'publish-btn'} onClick={publish} disabled={!canPublish}>
+        공개하기(저장하기)
       </button>
       {!canPublish && <p>{items.length < MIN_PROBLEMS ? '문제를 10개 이상 넣어주세요' : contentError}</p>}
       <button type="button" onClick={onCancel}>
