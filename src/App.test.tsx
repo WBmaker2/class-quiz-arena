@@ -17,6 +17,7 @@ vi.mock('./hooks/useClassroom', () => ({
   }),
   useTeacherClassrooms: () => ({ classrooms: [], loading: false }),
   useClassroomDoc: () => ({ name: '4학년 3반', inviteCode: 'NEWC1' }),
+  normalizeClassroomName: (s: string) => s.trim().replace(/\s+/g, ' '),
 }));
 
 import App from './App';

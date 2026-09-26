@@ -29,6 +29,10 @@ service cloud.firestore {
   function teacherOfArena(arenaId) {
     return teacherOf(get(/databases/(default)/documents/arenas/$(arenaId)).data.classroomId);
   }
+  // 대결방은 아레나를 거쳐 학급 선생님을 확인한다 (학급 삭제 시 함께 지우기용).
+  function teacherOfRoom(roomId) {
+    return teacherOfArena(get(/databases/(default)/documents/rooms/$(roomId)).data.arenaId);
+  }
   function isOwner(uid) {
     return isSignedIn() && request.auth.uid == uid;
   }
@@ -60,7 +64,8 @@ service cloud.firestore {
       // 학급 개설은 명단 선생님·마스터만 (무단 개설 방지)
       allow create: if isSignedIn() && (isAllowlisted() || isMaster());
       allow update: if isSignedIn() && resource.data.teacherId == request.auth.uid;
-      allow delete: if false;
+      // 본인 학급만 삭제 (아레나·대결방은 앱에서 먼저 함께 지운다)
+      allow delete: if teacherOf(id);
     }
     match /arenas/{id} {
       allow read: if isSignedIn();
@@ -89,9 +94,10 @@ service cloud.firestore {
               || request.resource.data.winnerUid == request.resource.data.players[0].uid
               || request.resource.data.winnerUid == request.resource.data.players[1].uid))
         )
-        // 강제 종료(abandoned)는 해당 학급 선생님만. 그 외 상태 전이는 앱이 지킴
-        && (request.resource.data.status != 'abandoned' || teacherOf(get(/databases/(default)/documents/arenas/$(resource.data.arenaId)).data.classroomId));
-      allow delete: if false;
+      // 강제 종료(abandoned)는 해당 학급 선생님만. 그 외 상태 전이는 앱이 지킴
+      && (request.resource.data.status != 'abandoned' || teacherOf(get(/databases/(default)/documents/arenas/$(resource.data.arenaId)).data.classroomId));
+      // 학급 삭제 때 딸린 대결방을 함께 지우기용 (본인 학급 방만)
+      allow delete: if teacherOfRoom(roomId);
     }
     match /battles/{battleId} {
       allow read: if isSignedIn();

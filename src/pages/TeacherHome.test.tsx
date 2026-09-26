@@ -351,6 +351,72 @@ describe('TeacherHome account chip', () => {
   });
 });
 
+describe('TeacherHome classroom list', () => {
+  const base = {
+    live: [],
+    abandoned: [],
+    finished: [],
+    classroomCode: 'AAAAAA',
+    classroomName: '4학년 3반',
+    students: [],
+    onDeleteStudent: noop,
+    onExportCsv: noop,
+    rounds: [],
+    onForceClose: noop,
+    onEditArena: noop,
+    onDeleteArena: noop,
+    onToggleLock: noop,
+    onToggleShowPlayers: noop,
+    onToggleTts: noop,
+    onNewArena: noop,
+    onSignOut: noop,
+  };
+  const rooms = [
+    { id: 'AAAAAA', name: '4학년 3반', inviteCode: 'AAAAAA' },
+    { id: 'BBBBBB', name: '4학년 4반', inviteCode: 'BBBBBB' },
+  ];
+
+  const openTab = () => {
+    fireEvent.click(screen.getByRole('button', { name: '학급' }));
+  };
+
+  it('lists opened classrooms with invite codes', () => {
+    render(<TeacherHome {...base} arenas={[]} classrooms={rooms} currentClassroomId="AAAAAA" />);
+    openTab();
+    expect(screen.getByText('내 학급 목록')).toBeTruthy();
+    expect(screen.getByText(/4학년 4반/)).toBeTruthy();
+    expect(screen.getByText(/초대 코드: BBBBBB/)).toBeTruthy();
+  });
+
+  it('enters another classroom from the list', () => {
+    const onSelectClassroom = vi.fn();
+    render(<TeacherHome {...base} arenas={[]} classrooms={rooms} currentClassroomId="AAAAAA" onSelectClassroom={onSelectClassroom} />);
+    openTab();
+    fireEvent.click(screen.getByRole('button', { name: '입장하기' }));
+    expect(onSelectClassroom).toHaveBeenCalledWith('BBBBBB');
+  });
+
+  it('renames a classroom from the list', () => {
+    const onRenameClassroomById = vi.fn().mockResolvedValue(null);
+    render(<TeacherHome {...base} arenas={[]} classrooms={rooms} currentClassroomId="AAAAAA" onRenameClassroomById={onRenameClassroomById} />);
+    openTab();
+    fireEvent.click(screen.getAllByRole('button', { name: '이름 바꾸기' })[1]);
+    fireEvent.change(screen.getByLabelText('학급 새 이름'), { target: { value: '4학년 5반' } });
+    fireEvent.click(screen.getByRole('button', { name: '저장' }));
+    expect(onRenameClassroomById).toHaveBeenCalledWith('BBBBBB', '4학년 5반');
+  });
+
+  it('confirms before deleting a classroom', () => {
+    const onDeleteClassroom = vi.fn().mockResolvedValue(null);
+    render(<TeacherHome {...base} arenas={[]} classrooms={rooms} currentClassroomId="AAAAAA" onDeleteClassroom={onDeleteClassroom} />);
+    openTab();
+    fireEvent.click(screen.getAllByRole('button', { name: '학급 삭제' })[1]);
+    expect(screen.getByText(/함께 지워져요/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '확인' }));
+    expect(onDeleteClassroom).toHaveBeenCalledWith('BBBBBB');
+  });
+});
+
 describe('TeacherHome classroom management', () => {
   const base = {
     live: [],

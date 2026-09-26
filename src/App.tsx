@@ -209,6 +209,7 @@ export default function App() {
           void signOut();
           setView('login');
         }}
+        onSelectClassroom={select}
       />
     );
   }
@@ -239,13 +240,14 @@ export default function App() {
   );
 }
 
-function TeacherShell({ classroomId, userEmail, uid, displayName, photoURL, animal, onSignOut }: { classroomId: string | null; userEmail: string | null; uid: string; displayName: string; photoURL: string | null; animal: Animal; onSignOut: () => void }) {
+function TeacherShell({ classroomId, userEmail, uid, displayName, photoURL, animal, onSignOut, onSelectClassroom }: { classroomId: string | null; userEmail: string | null; uid: string; displayName: string; photoURL: string | null; animal: Animal; onSignOut: () => void; onSelectClassroom: (id: string | null) => void }) {
   const showAdmin = isMasterEmail(userEmail);
   const { live, abandoned, finished, forceClose } = useTeacherRooms();
   const { arenas, bank, saveArena, loadProblems, removeArena, setLocked, setShowPlayers, setTtsEnabled, copyArena, seedDefaults } = useArenaAdmin(classroomId);
   const { students, removeStudent } = useStudents(classroomId);
   const { reports, resolveReport } = useReports(classroomId);
-  const { create, renameClassroom } = useClassroom();
+  const { create, renameClassroom, deleteClassroom } = useClassroom();
+  const { classrooms } = useTeacherClassrooms(import.meta.env.MODE === 'test' ? null : uid);
   const { name: classroomName } = useClassroomDoc(classroomId);
   const { teachers, addTeacher, removeTeacher } = useTeacherAllowlist(showAdmin);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -296,9 +298,13 @@ function TeacherShell({ classroomId, userEmail, uid, displayName, photoURL, anim
       <div className="min-h-screen grid place-items-center px-6 py-10">
         <div className="w-full max-w-md">
           <ClassCreate
+            existingNames={classrooms.map((c) => c.name)}
             onCreate={(name) => {
               void create(name, uid, displayName, animal).then((id) => {
-                if (id) setCreatingClass(false);
+                if (id) {
+                  setCreatingClass(false);
+                  onSelectClassroom(id);
+                }
               });
             }}
             onCancel={() => setCreatingClass(false)}
@@ -364,8 +370,19 @@ function TeacherShell({ classroomId, userEmail, uid, displayName, photoURL, anim
       classroomCode={classroomId ?? ''}
       classroomName={classroomName}
       onRenameClassroom={(name) => {
-        if (classroomId) void renameClassroom(classroomId, name);
+        if (!classroomId) return Promise.resolve('학급을 먼저 골라주세요');
+        return renameClassroom(classroomId, name, uid);
       }}
+      onRenameClassroomById={(id, name) => renameClassroom(id, name, uid)}
+      onDeleteClassroom={async (id) => {
+        const r = await deleteClassroom(id, uid);
+        if (!r.ok) return '삭제에 실패했어요. 다시 시도해주세요.';
+        onSelectClassroom(r.next);
+        return null;
+      }}
+      onSelectClassroom={onSelectClassroom}
+      classrooms={classrooms}
+      currentClassroomId={classroomId}
       onNewClassroom={() => setCreatingClass(true)}
       students={students}
       onDeleteStudent={(uid) => {
@@ -449,6 +466,7 @@ export function TeacherGate({
   if (creating || classrooms.length === 0) {
     return (
       <ClassCreate
+        existingNames={classrooms.map((c) => c.name)}
         onCreate={(name) => {
           void create(name, uid, displayName, animal).then((id) => {
             if (id) onDone(id);

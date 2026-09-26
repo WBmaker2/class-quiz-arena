@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import Card from '../components/Card';
+import { normalizeClassroomName } from '../hooks/useClassroom';
 
-export default function ClassCreate({ onCreate, onCancel }: { onCreate: (name: string) => void; onCancel?: () => void }) {
+export default function ClassCreate({ onCreate, onCancel, existingNames }: { onCreate: (name: string) => void; onCancel?: () => void; existingNames?: string[] }) {
   const [name, setName] = useState('');
   const [error, setError] = useState<string | null>(null);
 
@@ -9,6 +10,11 @@ export default function ClassCreate({ onCreate, onCancel }: { onCreate: (name: s
     e.preventDefault();
     if (!name.trim()) {
       setError('학급 이름을 입력해주세요');
+      return;
+    }
+    const want = normalizeClassroomName(name);
+    if ((existingNames ?? []).some((n) => normalizeClassroomName(n) === want)) {
+      setError('같은 이름의 학급이 이미 있어요');
       return;
     }
     setError(null);
