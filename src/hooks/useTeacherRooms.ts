@@ -22,44 +22,89 @@ function toView(id: string, data: Record<string, unknown>): RoomView {
   };
 }
 
-export function useTeacherRooms() {
+export function useTeacherRooms(classroomId: string | null) {
   const [live, setLive] = useState<RoomView[]>([]);
   const [abandoned, setAbandoned] = useState<RoomView[]>([]);
   const [finished, setFinished] = useState<RoomView[]>([]);
+  const [errors, setErrors] = useState({ live: false, abandoned: false, finished: false });
+  const [retryToken, setRetryToken] = useState(0);
 
   useEffect(
-    () =>
-      onSnapshot(
-        query(collection(db, 'rooms'), where('status', 'in', ['waiting', 'ready', 'playing'])),
-        (snap) => setLive(snap.docs.map((d) => toView(d.id, d.data()))),
-        () => {},
-      ),
-    [],
+    () => {
+      setLive([]);
+      setErrors((current) => ({ ...current, live: false }));
+      if (!classroomId) {
+        return;
+      }
+      return onSnapshot(
+        query(collection(db, 'rooms'), where('classroomId', '==', classroomId), where('status', 'in', ['waiting', 'ready', 'playing'])),
+        (snap) => {
+          setLive(snap.docs.map((d) => toView(d.id, d.data())));
+          setErrors((current) => ({ ...current, live: false }));
+        },
+        () => {
+          setLive([]);
+          setErrors((current) => ({ ...current, live: true }));
+        },
+      );
+    },
+    [classroomId, retryToken],
   );
 
   useEffect(
-    () =>
-      onSnapshot(
-        query(collection(db, 'rooms'), where('status', '==', 'abandoned'), orderBy('updatedAt', 'desc'), limit(20)),
-        (snap) => setAbandoned(snap.docs.map((d) => toView(d.id, d.data()))),
-        () => {},
-      ),
-    [],
+    () => {
+      setAbandoned([]);
+      setErrors((current) => ({ ...current, abandoned: false }));
+      if (!classroomId) {
+        return;
+      }
+      return onSnapshot(
+        query(collection(db, 'rooms'), where('classroomId', '==', classroomId), where('status', '==', 'abandoned'), orderBy('updatedAt', 'desc'), limit(20)),
+        (snap) => {
+          setAbandoned(snap.docs.map((d) => toView(d.id, d.data())));
+          setErrors((current) => ({ ...current, abandoned: false }));
+        },
+        () => {
+          setAbandoned([]);
+          setErrors((current) => ({ ...current, abandoned: true }));
+        },
+      );
+    },
+    [classroomId, retryToken],
   );
 
   useEffect(
-    () =>
-      onSnapshot(
-        query(collection(db, 'rooms'), where('status', '==', 'finished'), orderBy('updatedAt', 'desc'), limit(20)),
-        (snap) => setFinished(snap.docs.map((d) => toView(d.id, d.data()))),
-        () => {},
-      ),
-    [],
+    () => {
+      setFinished([]);
+      setErrors((current) => ({ ...current, finished: false }));
+      if (!classroomId) {
+        return;
+      }
+      return onSnapshot(
+        query(collection(db, 'rooms'), where('classroomId', '==', classroomId), where('status', '==', 'finished'), orderBy('updatedAt', 'desc'), limit(20)),
+        (snap) => {
+          setFinished(snap.docs.map((d) => toView(d.id, d.data())));
+          setErrors((current) => ({ ...current, finished: false }));
+        },
+        () => {
+          setFinished([]);
+          setErrors((current) => ({ ...current, finished: true }));
+        },
+      );
+    },
+    [classroomId, retryToken],
   );
 
   const forceClose = async (id: string) => {
     await updateDoc(doc(db, 'rooms', id), { status: 'abandoned' });
   };
 
-  return { live, abandoned, finished, forceClose };
+  return {
+    live,
+    abandoned,
+    finished,
+    roomsError: Object.values(errors).some(Boolean),
+    retryRooms: () => setRetryToken((current) => current + 1),
+    forceClose,
+  };
 }

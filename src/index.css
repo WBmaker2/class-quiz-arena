@@ -98,6 +98,26 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
+/* 교사 작업 탭은 좁은 화면에서 한 줄로 넘겨 선택하고, 아레나 카드는 한 열로 읽습니다. */
+@media (max-width: 540px) {
+  .teacher-nav {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding: 2px 2px 8px;
+    margin-right: -4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .teacher-nav button {
+    flex: 0 0 auto;
+    min-height: 44px;
+  }
+
+  .teacher-card-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .card-ink {
   background: #fffdf6;
   border: 2px solid #26211a;

@@ -1,118 +1,193 @@
 rules_version = '2';
 service cloud.firestore {
-  function isSignedIn() {
-    return request.auth != null;
+  function signedIn() { return request.auth != null; }
+  function myUser() {
+    return get(/databases/(default)/documents/users/$(request.auth.uid)).data;
   }
-  // (default) 리터럴 경로 사용: $(database) 변수는 에뮬레이터에서 null로 평가되어
-  // get()/exists()가 실패한다. 단일 (default) DB만 쓰므로 리터럴이 안전하다.
-  function masterEmail() {
-    return 'ketarou85@gmail.com';
+  function myClassroom(classroomId) {
+    return signedIn() && myUser().classroomId == classroomId;
   }
-  // 익명 로그인은 토큰에 email이 없어서 바로 읽으면 평가 오류가 난다.
-  // 먼저 있는지 확인하고 읽는다.
+  function masterEmail() { return 'ketarou85@gmail.com'; }
   function tokenEmail() {
-    return 'email' in request.auth.token ? request.auth.token.email : null;
+    return signedIn() && 'email' in request.auth.token ? request.auth.token.email : null;
   }
-  function isMaster() {
-    return isSignedIn() && tokenEmail() == masterEmail();
-  }
-  // 선생님 명단에 든 학교 계정인지 (이메일 키, 읽기 권한 없이 존재 확인용)
+  function isMaster() { return tokenEmail() == masterEmail(); }
   function isAllowlisted() {
-    return isSignedIn()
-      && tokenEmail() != null
+    return tokenEmail() != null
       && exists(/databases/(default)/documents/teacherAllowlist/$(tokenEmail()));
   }
+  function allowlistedTeacher() {
+    return signedIn() && isAllowlisted() && myUser().role == 'teacher';
+  }
   function teacherOf(classroomId) {
-    return isSignedIn()
+    return signedIn()
+      && exists(/databases/(default)/documents/classrooms/$(classroomId))
       && get(/databases/(default)/documents/classrooms/$(classroomId)).data.teacherId == request.auth.uid;
   }
   function teacherOfArena(arenaId) {
-    return teacherOf(get(/databases/(default)/documents/arenas/$(arenaId)).data.classroomId);
+    return exists(/databases/(default)/documents/arenas/$(arenaId))
+      && teacherOf(get(/databases/(default)/documents/arenas/$(arenaId)).data.classroomId);
   }
-  // 대결방은 아레나를 거쳐 학급 선생님을 확인한다 (학급 삭제 시 함께 지우기용).
-  function teacherOfRoom(roomId) {
-    return teacherOfArena(get(/databases/(default)/documents/rooms/$(roomId)).data.arenaId);
+  function roomParticipant(data) {
+    return signedIn() && data.players is list
+      && (data.players[0].uid == request.auth.uid
+        || (data.players.size() > 1 && data.players[1].uid == request.auth.uid));
   }
-  function isOwner(uid) {
-    return isSignedIn() && request.auth.uid == uid;
+  function roomTeacher(data) { return teacherOf(data.classroomId); }
+  function roomReadyUpdate() {
+    return request.resource.data.diff(resource.data).affectedKeys().hasOnly(['players', 'updatedAt'])
+      && resource.data.players.size() == 2
+      && request.resource.data.players.size() == 2
+      && (
+        (resource.data.players[0].uid == request.auth.uid
+          && request.resource.data.players[0].diff(resource.data.players[0]).affectedKeys().hasOnly(['ready'])
+          && request.resource.data.players[0].ready == true
+          && request.resource.data.players[1] == resource.data.players[1])
+        ||
+        (resource.data.players[1].uid == request.auth.uid
+          && request.resource.data.players[1].diff(resource.data.players[1]).affectedKeys().hasOnly(['ready'])
+          && request.resource.data.players[1].ready == true
+          && request.resource.data.players[0] == resource.data.players[0])
+      );
+  }
+  function validInitialUser(uid) {
+    return signedIn() && request.auth.uid == uid
+      && request.resource.data.keys().hasOnly(['nickname', 'role', 'classroomId', 'avatar'])
+      && (!('avatar' in request.resource.data) || request.resource.data.avatar == 'frog')
+      && (!('xp' in request.resource.data) || request.resource.data.xp == 0)
+      && (!('stars' in request.resource.data) || request.resource.data.stars == 0)
+      && (!('winCount' in request.resource.data) || request.resource.data.winCount == 0)
+      && (!('streak' in request.resource.data) || request.resource.data.streak == 0)
+      && (!('answerCount' in request.resource.data) || request.resource.data.answerCount == 0)
+      && (!('correctAnswerCount' in request.resource.data) || request.resource.data.correctAnswerCount == 0)
+      && (!('classroomId' in request.resource.data)
+        || (exists(/databases/(default)/documents/classrooms/$(request.resource.data.classroomId))
+          && get(/databases/(default)/documents/classrooms/$(request.resource.data.classroomId)).data.inviteCode == request.resource.data.classroomId
+          && get(/databases/(default)/documents/classrooms/$(request.resource.data.classroomId)).data.locked == false))
+      && (!('role' in request.resource.data)
+        || request.resource.data.role == 'student'
+        || (request.resource.data.role == 'teacher'
+          && (isAllowlisted() || isMaster())
+          && exists(/databases/(default)/documents/classrooms/$(request.resource.data.classroomId))
+          && get(/databases/(default)/documents/classrooms/$(request.resource.data.classroomId)).data.teacherId == uid));
+  }
+  function validRoomCreate() {
+    return signedIn()
+      && request.resource.data.keys().hasOnly([
+        'arenaId', 'classroomId', 'status', 'players', 'problemIds', 'showPlayers',
+        'ttsEnabled', 'currentRound', 'roundEndsAt', 'winnerUid', 'updatedAt'
+      ])
+      && request.resource.data.status == 'waiting'
+      && request.resource.data.winnerUid == null
+      && request.resource.data.currentRound == 0
+      && request.resource.data.players.size() == 1
+      && request.resource.data.players[0].uid == request.auth.uid
+      && request.resource.data.players[0].score == 0
+      && request.resource.data.players[0].ready == false
+      && request.resource.data.players[0].answeredRounds.size() == 0
+      && myClassroom(request.resource.data.classroomId)
+      && get(/databases/(default)/documents/arenas/$(request.resource.data.arenaId)).data.classroomId == request.resource.data.classroomId;
+  }
+  function validRoomJoin() {
+    return signedIn()
+      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'players', 'updatedAt'])
+      && resource.data.status == 'waiting'
+      && resource.data.players.size() == 1
+      && request.resource.data.players.size() == 2
+      && request.resource.data.status == 'ready'
+      && request.resource.data.players[0] == resource.data.players[0]
+      && request.resource.data.players[0].uid != request.auth.uid
+      && request.resource.data.players[1].uid == request.auth.uid
+      && request.resource.data.players[1].score == 0
+      && request.resource.data.players[1].ready == false
+      && request.resource.data.players[1].answeredRounds.size() == 0
+      && myClassroom(resource.data.classroomId);
   }
   match /databases/{database}/documents {
-    // 선생님 명단: 본인 문서 단건 확인 + 마스터 전체 관리
     match /teacherAllowlist/{email} {
-      allow get: if isMaster() || (isSignedIn() && tokenEmail() == email);
-      allow list: if isMaster();
-      allow write: if isMaster();
+      allow get: if isMaster() || (signedIn() && tokenEmail() == email);
+      allow list, write: if isMaster();
     }
     match /users/{uid} {
-      // 학급 Top20 리더보드는 classroomId+xp 조회, 로그인한 사용자만 읽는다 (최소 권한 유지).
-      allow read: if isSignedIn();
-      // role은 생성 시에만 정해지고 이후 본인이 바꿀 수 없음 (교사 사칭 방지).
-      // 생성 시 teacher role은 명단·마스터만 가능 (join 사칭 방지).
-      allow write: if isOwner(uid)
-        && (!('role' in request.resource.data)
-          || resource == null
-          || request.resource.data.role == resource.data.role)
-        && (resource != null
-          || !('role' in request.resource.data)
-          || request.resource.data.role != 'teacher'
-          || isAllowlisted()
-          || isMaster());
+      allow get, list: if signedIn() && (request.auth.uid == uid || myClassroom(resource.data.classroomId));
+      allow create: if validInitialUser(uid);
+      allow update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'nickname', 'role', 'classroomId', 'updatedAt'
+        ])
+        && (request.resource.data.get('role', null) == resource.data.get('role', null)
+          || (resource.data.get('role', null) == null
+            && (request.resource.data.get('role', null) == 'student'
+              || (request.resource.data.get('role', null) == 'teacher'
+                && (isAllowlisted() || isMaster())
+                && exists(/databases/(default)/documents/classrooms/$(request.resource.data.classroomId))
+                && get(/databases/(default)/documents/classrooms/$(request.resource.data.classroomId)).data.teacherId == uid))))
+        && request.resource.data.get('xp', 0) == resource.data.get('xp', 0)
+        && request.resource.data.get('stars', 0) == resource.data.get('stars', 0)
+        && request.resource.data.get('unlockedAvatars', []) == resource.data.get('unlockedAvatars', [])
+        && request.resource.data.get('unlockedTitles', []) == resource.data.get('unlockedTitles', [])
+        && request.resource.data.get('winCount', 0) == resource.data.get('winCount', 0)
+        && request.resource.data.get('streak', 0) == resource.data.get('streak', 0)
+        && (request.resource.data.get('classroomId', null) == resource.data.get('classroomId', null)
+          || (request.resource.data.get('role', null) == 'student'
+            && exists(/databases/(default)/documents/classrooms/$(request.resource.data.classroomId))
+            && get(/databases/(default)/documents/classrooms/$(request.resource.data.classroomId)).data.inviteCode == request.resource.data.classroomId
+            && get(/databases/(default)/documents/classrooms/$(request.resource.data.classroomId)).data.locked == false));
       allow delete: if teacherOf(resource.data.classroomId);
     }
-    match /classrooms/{id} {
-      allow read: if isSignedIn();
-      // 학급 개설은 명단 선생님·마스터만 (무단 개설 방지)
-      allow create: if isSignedIn() && (isAllowlisted() || isMaster());
-      allow update: if isSignedIn() && resource.data.teacherId == request.auth.uid;
-      // 본인 학급만 삭제 (아레나·대결방은 앱에서 먼저 함께 지운다)
-      allow delete: if teacherOf(id);
+    match /classrooms/{classroomId} {
+      allow get: if signedIn() && (resource.data.teacherId == request.auth.uid || myClassroom(classroomId) || resource.data.inviteCode == classroomId);
+      allow list: if signedIn() && resource.data.teacherId == request.auth.uid;
+      allow create: if signedIn() && (isAllowlisted() || isMaster())
+        && request.resource.data.teacherId == request.auth.uid;
+      allow update: if teacherOf(classroomId) && request.resource.data.teacherId == resource.data.teacherId;
+      allow delete: if teacherOf(classroomId);
     }
-    match /arenas/{id} {
-      allow read: if isSignedIn();
-      // 자기 학급의 선생님만 (타 학급 쓰기 방지).
-      // 삭제 시 request.resource는 null이라 resource(기존 문서)로 확인한다.
-      allow create, update: if teacherOf(request.resource.data.classroomId);
+    match /arenas/{arenaId} {
+      allow get, list: if signedIn() && (myClassroom(resource.data.classroomId) || teacherOf(resource.data.classroomId) || (allowlistedTeacher() && resource.data.locked == false));
+      allow create: if teacherOf(request.resource.data.classroomId);
+      allow update: if teacherOf(resource.data.classroomId)
+        && request.resource.data.classroomId == resource.data.classroomId;
       allow delete: if teacherOf(resource.data.classroomId);
     }
-    match /arenas/{arenaId}/problems/{pid} {
-      allow read: if isSignedIn();
+    match /arenas/{arenaId}/problems/{problemId} {
+      allow read: if teacherOfArena(arenaId)
+        || (allowlistedTeacher()
+          && get(/databases/(default)/documents/arenas/$(arenaId)).data.locked == false);
       allow write: if teacherOfArena(arenaId);
     }
     match /rooms/{roomId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if isSignedIn()
-        && request.resource.data.status in ['waiting', 'ready', 'playing', 'finished', 'abandoned']
-        && request.resource.data.players.size() >= 1
-        && request.resource.data.players.size() <= 2
-        && (
-          (request.resource.data.players.size() == 1
-            && (request.resource.data.winnerUid == null
-              || request.resource.data.winnerUid == request.resource.data.players[0].uid))
-          || (request.resource.data.players.size() == 2
-            && (request.resource.data.winnerUid == null
-              || request.resource.data.winnerUid == request.resource.data.players[0].uid
-              || request.resource.data.winnerUid == request.resource.data.players[1].uid))
-        )
-      // 강제 종료(abandoned)는 해당 학급 선생님만. 그 외 상태 전이는 앱이 지킴
-      && (request.resource.data.status != 'abandoned' || teacherOf(get(/databases/(default)/documents/arenas/$(resource.data.arenaId)).data.classroomId));
-      // 학급 삭제 때 딸린 대결방을 함께 지우기용 (본인 학급 방만)
-      allow delete: if teacherOfRoom(roomId);
+      allow get: if signedIn() && (
+        roomParticipant(resource.data)
+        || roomTeacher(resource.data)
+        || (resource.data.status == 'waiting' && myClassroom(resource.data.classroomId))
+      );
+      allow list: if signedIn() && (
+        (resource.data.status == 'waiting' && myClassroom(resource.data.classroomId))
+        || roomTeacher(resource.data)
+      );
+      // Creation, joining, readiness, answers, scores and outcomes are callable-only.
+      allow create: if false;
+      allow update: if roomTeacher(resource.data)
+        && resource.data.status in ['waiting', 'ready', 'playing']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && request.resource.data.status == 'abandoned';
+      allow delete: if roomTeacher(resource.data);
     }
+    match /roomSubmissions/{submissionId} { allow read, write: if false; }
+    match /matchLocks/{lockId} { allow read, write: if false; }
     match /battles/{battleId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn();
-      allow update: if false;
-      allow delete: if false;
+      allow get: if signedIn() && resource.data.uid == request.auth.uid;
+      allow list: if false;
+      allow create, update, delete: if false;
     }
-    match /reports/{id} {
-      // 신고 읽기·처리는 해당 학급 선생님만
-      allow read: if isSignedIn() && teacherOf(resource.data.classroomId);
-      // 신고는 본인 이름으로만, open 상태로만 만든다
-      allow create: if isSignedIn()
+    match /reports/{reportId} {
+      allow read: if signedIn() && teacherOf(resource.data.classroomId);
+      allow create: if signedIn()
         && request.resource.data.reporterUid == request.auth.uid
+        && myClassroom(request.resource.data.classroomId)
         && request.resource.data.status == 'open';
-      allow update: if isSignedIn() && teacherOf(resource.data.classroomId);
+      allow update: if signedIn() && teacherOf(resource.data.classroomId);
       allow delete: if false;
     }
   }

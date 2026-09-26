@@ -29,6 +29,7 @@ describe('reports rules on emulator', () => {
 
     const studentCred = await signInAnonymously(auth);
     const studentUid = studentCred.user.uid;
+    await adminDb.doc(`users/${studentUid}`).set({ nickname: '일호', role: 'student', classroomId: CLASSROOM });
     const ref = await addDoc(collection(db, 'reports'), {
       reporterUid: studentUid,
       reporterNickname: '일호',

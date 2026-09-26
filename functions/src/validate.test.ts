@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   isValidProblem,
+  authorizeArenaTeacher,
   kindMix,
   kstToday,
   nextUsage,
@@ -85,6 +86,32 @@ describe('requireAuth', () => {
 
   it('accepts calls with auth', () => {
     expect(requireAuth({ auth: { uid: 'u1' } })).toEqual({ ok: true });
+  });
+});
+
+describe('authorizeArenaTeacher', () => {
+  const base = {
+    authenticated: true,
+    role: 'teacher',
+    allowlisted: true,
+    master: false,
+    ownerUid: 'u1',
+    uid: 'u1',
+    classroomId: 'class-1',
+  };
+
+  it('accepts an allowlisted teacher profile and classroom identity', () => {
+    expect(authorizeArenaTeacher(base)).toEqual({ ok: true, classroomId: 'class-1' });
+  });
+
+  it('rejects students and teachers outside the allowlist', () => {
+    expect(authorizeArenaTeacher({ ...base, role: 'student' }).ok).toBe(false);
+    expect(authorizeArenaTeacher({ ...base, allowlisted: false }).ok).toBe(false);
+  });
+
+  it('rejects a mismatched UID or missing classroom', () => {
+    expect(authorizeArenaTeacher({ ...base, ownerUid: 'u2' }).ok).toBe(false);
+    expect(authorizeArenaTeacher({ ...base, classroomId: null }).ok).toBe(false);
   });
 });
 

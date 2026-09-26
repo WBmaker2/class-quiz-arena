@@ -1,34 +1,29 @@
-import { useEffect, useState } from 'react';
-import { doc, onSnapshot, runTransaction, serverTimestamp } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { httpsCallable } from 'firebase/functions';
+import { db, functions } from '../lib/firebase';
 import type { Problem } from '../lib/arena';
-import {
-  advanceData,
-  allReady,
-  bothAnswered,
-  canClaimWin,
-  finishData,
-  roundRemainingMs,
-  setReadyData,
-  startPlayingData,
-  submitAnswerData,
-  type AnswerValue,
-  type RoomData,
-} from '../lib/battle';
+import { toMillis, type AnswerValue, type RoomData } from '../lib/battle';
 
 function toRoomData(id: string, data: Record<string, unknown>): RoomData {
   void id;
-  const r = data as unknown as RoomData & { problemIds?: unknown };
+  const r = data as unknown as RoomData & { problemIds?: unknown; updatedAt?: unknown };
   return {
     ...(r as RoomData),
+    players: Array.isArray(r.players) ? r.players.map((player) => {
+      const legacy = player as typeof player & { answers?: (AnswerValue | null)[] };
+      const answeredRounds = Array.isArray(player.answeredRounds)
+        ? player.answeredRounds
+        : (legacy.answers ?? []).flatMap((answer, index) => answer === null ? [] : [index]);
+      const safePlayer = { ...legacy };
+      delete safePlayer.answers;
+      return { ...safePlayer, answeredRounds };
+    }) : [],
+    updatedAt: toMillis(r.updatedAt),
     problemIds: Array.isArray(r.problemIds) ? (r.problemIds as string[]) : [],
     showPlayers: (r as RoomData).showPlayers ?? false,
     ttsEnabled: (r as RoomData).ttsEnabled ?? false,
   };
-}
-
-function totalRoundsOf(room: RoomData, problems: Problem[]): number {
-  return room.problemIds.length > 0 ? room.problemIds.length : problems.length;
 }
 
 export function orderBattleProblems(problems: Problem[], problemIds: string[]): Problem[] {
@@ -38,106 +33,59 @@ export function orderBattleProblems(problems: Problem[], problemIds: string[]): 
     .filter((p): p is Problem => Boolean(p));
 }
 
-function battleProblemsOf(room: RoomData, problems: Problem[]): Problem[] {
-  const ordered = orderBattleProblems(problems, room.problemIds);
-  return ordered.length > 0 ? ordered : problems;
-}
-
-export function useRoom(roomId: string | null, problems: Problem[]) {
+export function useRoom(roomId: string | null, _problems: Problem[]) {
   const [room, setRoom] = useState<RoomData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+  const tickInFlight = useRef(false);
 
   useEffect(() => {
+    setRoom(null);
+    setError(null);
     if (!roomId) return;
     return onSnapshot(doc(db, 'rooms', roomId), (snap) => {
-      if (snap.exists()) setRoom(toRoomData(snap.id, snap.data()));
+      if (snap.exists()) {
+        setRoom(toRoomData(snap.id, snap.data()));
+        setError(null);
+      } else {
+        setRoom(null);
+        setError('대결방이 끝났거나 없어졌어요. 다시 연결해 주세요.');
+      }
+    }, () => {
+      setRoom(null);
+      setError('대결방에 연결할 수 없어요. 다시 시도해 주세요.');
     });
-  }, [roomId]);
+  }, [roomId, retryCount]);
+
+  const retry = useCallback(() => setRetryCount((value) => value + 1), []);
 
   const ready = async (uid: string) => {
+    void uid;
     if (!roomId) return;
-    await runTransaction(db, async (tx) => {
-      const ref = doc(db, 'rooms', roomId);
-      const snap = await tx.get(ref);
-      if (!snap.exists()) return;
-      const r = toRoomData(snap.id, snap.data());
-      const next = setReadyData(r, uid, Date.now());
-      tx.update(ref, { players: next.players, updatedAt: serverTimestamp() });
-      if (allReady(next) && problems.length > 0) {
-        const started = startPlayingData(next, Date.now(), problems[0].roundTimeSec);
-        tx.update(ref, {
-          status: started.status,
-          currentRound: 0,
-          roundEndsAt: started.roundEndsAt,
-          players: started.players,
-          updatedAt: serverTimestamp(),
-        });
-      }
-    });
+    await httpsCallable(functions, 'readyBattlePlayer')({ roomId });
   };
 
   const answer = async (uid: string, value: AnswerValue) => {
+    void uid;
     if (!roomId) return;
-    await runTransaction(db, async (tx) => {
-      const ref = doc(db, 'rooms', roomId);
-      const snap = await tx.get(ref);
-      if (!snap.exists()) return;
-      const r = toRoomData(snap.id, snap.data());
-      if (r.status !== 'playing') return;
-      const next = submitAnswerData(r, uid, value, Date.now());
-      tx.update(ref, { players: next.players, updatedAt: serverTimestamp() });
-      if (bothAnswered(next)) {
-        const battle = battleProblemsOf(r, problems);
-        const current = battle[r.currentRound];
-        const adv = advanceData(next, current ?? { answerIndex: -1 }, Date.now(), current?.roundTimeSec ?? 30, totalRoundsOf(r, battle));
-        const fin = adv.status === 'finished' ? finishData(adv, Date.now()) : adv;
-        tx.update(ref, {
-          status: fin.status,
-          players: fin.players,
-          currentRound: fin.currentRound,
-          roundEndsAt: fin.roundEndsAt,
-          winnerUid: fin.winnerUid,
-          updatedAt: serverTimestamp(),
-        });
-      }
-    });
+    await httpsCallable(functions, 'submitBattleAnswer')({ roomId, answer: value });
   };
 
   const tick = async () => {
-    if (!roomId || !room || room.status !== 'playing') return;
-    if (roundRemainingMs(room, Date.now()) > 0) return;
-    await runTransaction(db, async (tx) => {
-      const ref = doc(db, 'rooms', roomId);
-      const snap = await tx.get(ref);
-      if (!snap.exists()) return;
-      const r = toRoomData(snap.id, snap.data());
-      if (r.status !== 'playing' || roundRemainingMs(r, Date.now()) > 0) return;
-      const battle = battleProblemsOf(r, problems);
-      const current = battle[r.currentRound];
-      const adv = advanceData(r, current ?? { answerIndex: -1 }, Date.now(), current?.roundTimeSec ?? 30, totalRoundsOf(r, battle));
-      const fin = adv.status === 'finished' ? finishData(adv, Date.now()) : adv;
-      tx.update(ref, {
-        status: fin.status,
-        players: fin.players,
-        currentRound: fin.currentRound,
-        roundEndsAt: fin.roundEndsAt,
-        winnerUid: fin.winnerUid,
-        updatedAt: serverTimestamp(),
-      });
-    });
+    if (!roomId || !room || room.status !== 'playing' || Date.now() < room.roundEndsAt || tickInFlight.current) return;
+    tickInFlight.current = true;
+    try {
+      await httpsCallable(functions, 'advanceBattleRound')({ roomId });
+    } finally {
+      tickInFlight.current = false;
+    }
   };
 
   const claimWin = async (uid: string) => {
+    void uid;
     if (!roomId) return;
-    await runTransaction(db, async (tx) => {
-      const ref = doc(db, 'rooms', roomId);
-      const snap = await tx.get(ref);
-      if (!snap.exists()) return;
-      const r = toRoomData(snap.id, snap.data());
-      if (!canClaimWin(r, uid, Date.now())) return;
-      const fin = finishData({ ...r, players: r.players }, Date.now());
-      tx.update(ref, { status: 'finished', winnerUid: uid, players: fin.players, updatedAt: serverTimestamp() });
-    });
+    await httpsCallable(functions, 'claimBattleWin')({ roomId });
   };
 
-  return { room, ready, answer, tick, claimWin };
+  return { room, error, retry, ready, answer, tick, claimWin };
 }

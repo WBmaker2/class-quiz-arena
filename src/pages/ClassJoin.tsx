@@ -8,11 +8,12 @@ export default function ClassJoin({
   onJoin,
 }: {
   defaultNickname: string;
-  onJoin: (code: string, nickname: string) => void;
+  onJoin: (code: string, nickname: string) => Promise<{ ok: boolean; error?: string } | boolean | void> | { ok: boolean; error?: string } | boolean | void;
 }) {
   const [code, setCode] = useState('');
   const [nickname, setNickname] = useState(defaultNickname);
   const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,7 +27,14 @@ export default function ClassJoin({
       return;
     }
     setError(null);
-    onJoin(normalizeInviteCode(code), nickname.trim());
+    setSubmitting(true);
+    void Promise.resolve(onJoin(normalizeInviteCode(code), nickname.trim()))
+      .then((joined) => {
+        if (joined === false) setError('학급에 들어가지 못했어요. 다시 시도해주세요');
+        else if (joined && typeof joined === 'object' && !joined.ok) setError(joined.error ?? '학급에 들어가지 못했어요. 다시 시도해주세요');
+      })
+      .catch(() => setError('연결에 실패했어요. 다시 시도해주세요'))
+      .finally(() => setSubmitting(false));
   };
 
   return (
@@ -50,8 +58,8 @@ export default function ClassJoin({
           maxLength={8}
         />
         {error && <p role="alert">{error}</p>}
-        <button type="submit" className="btn-primary w-full btn-pulse">
-          학급 들어가기
+        <button type="submit" disabled={submitting} className="btn-primary w-full btn-pulse">
+          {submitting ? '학급을 확인하고 있어요...' : '학급 들어가기'}
         </button>
       </form>
     </Card>

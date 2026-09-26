@@ -23,6 +23,7 @@ import {
   pickBattleProblems,
   xpAward,
   starAward,
+  toMillis,
 } from './battle';
 
 const host = { uid: 'u1', nickname: '일호', avatar: 'cat' };
@@ -78,7 +79,7 @@ describe('rounds', () => {
     expect(bothAnswered(r)).toBe(false);
     r = submitAnswerData(r, 'u2', 1, 7000);
     expect(bothAnswered(r)).toBe(true);
-    r = advanceData(r, { answerIndex: 0 }, 8000, 30, 3);
+    r = advanceData(r, { answerIndex: 0 }, 8000, 30, 3, { u1: 0, u2: 1 });
     expect(r.players[0].score).toBe(1);
     expect(r.players[1].score).toBe(0);
     expect(r.currentRound).toBe(1);
@@ -89,7 +90,7 @@ describe('rounds', () => {
     let r = readyRoom();
     r = submitAnswerData(r, 'u1', 0, 6000);
     r = submitAnswerData(r, 'u2', 1, 7000);
-    r = advanceData(r, { answerIndex: 0 }, 8000, 30, 1);
+    r = advanceData(r, { answerIndex: 0 }, 8000, 30, 1, { u1: 0, u2: 1 });
     expect(r.status).toBe('finished');
     const f = finishData(r, 9000);
     expect(f.winnerUid).toBe('u1');
@@ -99,7 +100,7 @@ describe('rounds', () => {
     let r = readyRoom();
     r = submitAnswerData(r, 'u1', 0, 6000);
     r = submitAnswerData(r, 'u2', 0, 7000);
-    r = advanceData(r, { answerIndex: 0 }, 8000, 30, 1);
+    r = advanceData(r, { answerIndex: 0 }, 8000, 30, 1, { u1: 0, u2: 0 });
     expect(finishData(r, 9000).winnerUid).toBeNull();
   });
 });
@@ -125,11 +126,23 @@ describe('xp and level', () => {
     expect(starAward(false, false, 1)).toBe(1);
   });
 
-  it('allows auto-win after 30s of silence', () => {
+  it('allows auto-win only after both 30s of silence and the current round timer', () => {
     expect(AUTO_WIN_AFTER_MS).toBe(30000);
-    const r = readyRoom();
-    expect(canClaimWin(r, 'u1', 5000 + 30001)).toBe(true);
-    expect(canClaimWin(r, 'u1', 5000 + 10000)).toBe(false);
+    const thirtySecondRound = { ...readyRoom(), roundEndsAt: 5000 + 30000 };
+    expect(canClaimWin(thirtySecondRound, 'u1', 5000 + 29999)).toBe(false);
+    expect(canClaimWin(thirtySecondRound, 'u1', 5000 + 30000)).toBe(true);
+
+    const sixtySecondRound = { ...readyRoom(), roundEndsAt: 5000 + 60000 };
+    expect(canClaimWin(sixtySecondRound, 'u1', 5000 + 30000)).toBe(false);
+    expect(canClaimWin(sixtySecondRound, 'u1', 5000 + 59999)).toBe(false);
+    expect(canClaimWin(sixtySecondRound, 'u1', 5000 + 60000)).toBe(true);
+  });
+
+  it('normalizes real Timestamp values at the boundary in milliseconds', () => {
+    const timestamp = { toMillis: () => 1_000 };
+    expect(toMillis(timestamp)).toBe(1_000);
+    expect(toMillis(1_000)).toBe(1_000);
+    expect(AUTO_WIN_AFTER_MS - 1_000).toBe(29_000);
   });
 
   it('picks 10 unique ids fixed per room', () => {
@@ -170,7 +183,7 @@ describe('mixed question grading', () => {
     let r = readyRoom();
     r = submitAnswerData(r, 'u1', '세종대왕', 6000);
     r = submitAnswerData(r, 'u2', '이순신', 7000);
-    r = advanceData(r, { kind: 'short', answerIndex: 0, answerText: '세종대왕' }, 8000, 30, 1);
+    r = advanceData(r, { kind: 'short', answerIndex: 0, answerText: '세종대왕' }, 8000, 30, 1, { u1: '세종대왕', u2: '이순신' });
     expect(r.players[0].score).toBe(1);
     expect(r.players[1].score).toBe(0);
   });

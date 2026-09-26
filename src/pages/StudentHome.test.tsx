@@ -42,16 +42,30 @@ describe('StudentHome', () => {
     const onEnter = vi.fn();
     render(
       <StudentHome
-        arenas={[{ id: 'a1', title: '기초 덧셈 아레나', desc: '설명', subject: '수학', locked: false }]}
+        arenas={[{ id: 'a1', title: '기초 덧셈 아레나', desc: '설명', subject: '수학', locked: false, questionCount: 20 }]}
         leaders={[]}
         profile={profile}
         onEnter={onEnter}
         onSignOut={() => {}}
       />,
     );
-    fireEvent.click(screen.getByRole('button', { name: '지금 바로 대결!' }));
+    fireEvent.click(screen.getByRole('button', { name: '친구와 대결하기' }));
     expect(onEnter).toHaveBeenCalledWith('a1');
     expect(screen.getByRole('button', { name: '둘러보기' }).classList.contains('tab-active')).toBe(true);
+  });
+
+  it('honors the server readiness flag for legacy arenas', () => {
+    render(
+      <StudentHome
+        arenas={[{ id: 'legacy', title: '준비 중인 아레나', desc: '', subject: '수학', locked: false, questionCount: 12, arenaReady: false }]}
+        leaders={[]}
+        profile={profile}
+        onEnter={() => {}}
+        onSignOut={() => {}}
+      />,
+    );
+    expect(screen.getByText('선생님이 문제를 준비하고 있어요')).toBeTruthy();
+    expect((screen.getByRole('button', { name: '문제 준비 중' }) as HTMLButtonElement).disabled).toBe(true);
   });
 
   it('switches to leaderboard tab', () => {
@@ -88,8 +102,8 @@ describe('StudentHome', () => {
       <StudentHome
         arenas={[]}
         leaders={[
-          { uid: 'u1', nickname: '일호', xp: 300, avatar: 'cat', level: 3, winCount: 5, correctRate: 70 },
-          { uid: 'u2', nickname: '이호', xp: 250, avatar: 'dog', level: 2, winCount: 3, correctRate: 60, isMe: true },
+          { uid: 'u1', nickname: '일호', xp: 300, avatar: 'cat', level: 3, winCount: 5, correctRate: 70, answerCount: 10 },
+          { uid: 'u2', nickname: '이호', xp: 250, avatar: 'dog', level: 2, winCount: 3, correctRate: 60, answerCount: 10, isMe: true },
         ]}
         profile={profile}
         myUid="u2"
@@ -119,6 +133,7 @@ describe('StudentHome', () => {
             desc: '설명',
             subject: '수학',
             locked: false,
+            questionCount: 20,
             grade: 3,
             topic: '받아올림',
             cardTheme: { bg: '#E3F2FD', emoji: '➗' },
@@ -130,11 +145,11 @@ describe('StudentHome', () => {
         onSignOut={() => {}}
       />,
     );
-    // "20문제 중 10문제 대결" 문구 확인
-    expect(screen.getByText('20문제 중 10문제 대결')).toBeTruthy();
+    // 문제 총량과 실제 대결 문항 수 확인
+    expect(screen.getByText('10문제 대결 · 전체 20문제')).toBeTruthy();
     expect(screen.getByText('수학')).toBeTruthy();
     expect(screen.getByText('3-4학년')).toBeTruthy();
-    expect(screen.getByText('대결 준비됨')).toBeTruthy();
+    expect(screen.getByText('친구와 대결할 수 있어요')).toBeTruthy();
     expect(screen.queryByText(/BATTLE READY/)).toBeNull();
   });
 });
@@ -249,12 +264,12 @@ describe('StudentHome graphic cards', () => {
 });
 
 describe('StudentHome two-column grid', () => {
-  it('lays arena cards out in 2 columns', () => {
+  it('uses one column on mobile and two columns on wider screens', () => {
     const { container } = render(
       <StudentHome
         arenas={[
-          { id: 'a1', title: '하나', desc: '', subject: '수학', locked: false },
-          { id: 'a2', title: '둘', desc: '', subject: '국어', locked: false },
+          { id: 'a1', title: '하나', desc: '', subject: '수학', locked: false, questionCount: 20 },
+          { id: 'a2', title: '둘', desc: '', subject: '국어', locked: false, questionCount: 20 },
         ]}
         leaders={[]}
         profile={profile}
@@ -262,7 +277,7 @@ describe('StudentHome two-column grid', () => {
         onSignOut={() => {}}
       />,
     );
-    const grid = container.querySelector('.grid-cols-2');
+    const grid = container.querySelector('div[class*="sm:grid-cols-2"]');
     expect(grid).toBeTruthy();
     expect(grid?.querySelectorAll('svg, span[aria-hidden="true"]').length).toBeGreaterThan(0);
   });

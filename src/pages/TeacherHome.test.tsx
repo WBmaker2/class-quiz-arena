@@ -14,6 +14,27 @@ describe('TeacherHome', () => {
     expect(screen.getByRole('button', { name: '현재 대결' }).classList.contains('tab-active')).toBe(true);
   });
 
+  it('shows room and analytics load errors with retry actions', () => {
+    const retryRooms = vi.fn();
+    const retryAnalysis = vi.fn();
+    render(
+      <TeacherHome
+        live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="" students={[]}
+        onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop}
+        onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onToggleShowPlayers={noop}
+        onToggleTts={noop} onNewArena={noop} onSignOut={noop}
+        roomsError onRetryRooms={retryRooms} analysisError onRetryAnalysis={retryAnalysis}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '다시 불러오기' }));
+    expect(retryRooms).toHaveBeenCalledOnce();
+    expect(screen.queryByText('지금은 진행 중인 대결이 없어요')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '분석' }));
+    fireEvent.click(screen.getByRole('button', { name: '다시 불러오기' }));
+    expect(retryAnalysis).toHaveBeenCalledOnce();
+    expect(screen.queryByText('아직 분석할 기록이 없어요')).toBeNull();
+  });
+
   it('confirms force close', () => {
     const onForceClose = vi.fn();
     render(
@@ -170,8 +191,8 @@ describe('TeacherHome growth tools', () => {
         {...base}
         arenas={[]}
         rounds={[
-          { roomId: 'r1', arenaId: 'a', problemIndex: 0, standardCode: '[4수01-09]', answers: [{ uid: 'u1', correct: false }] },
-          { roomId: 'r1', arenaId: 'a', problemIndex: 1, standardCode: '[4수01-03]', answers: [{ uid: 'u1', correct: true }] },
+          { roomId: 'r1', arenaId: 'a', problemId: 'p1', problemTitle: '1번 문제', problemIndex: 0, standardCode: '[4수01-09]', answers: [{ uid: 'u1', correct: false }] },
+          { roomId: 'r1', arenaId: 'a', problemId: 'p2', problemTitle: '2번 문제', problemIndex: 1, standardCode: '[4수01-03]', answers: [{ uid: 'u1', correct: true }] },
         ]}
       />,
     );
@@ -348,205 +369,6 @@ describe('TeacherHome account chip', () => {
       <TeacherHome live={[]} abandoned={[]} finished={[]} arenas={[]} classroomCode="A1B2C3" students={[]} onDeleteStudent={noop} onExportCsv={noop} rounds={[]} onForceClose={noop} onEditArena={noop} onDeleteArena={noop} onToggleLock={noop} onToggleShowPlayers={noop} onToggleTts={noop} onNewArena={noop} onSignOut={noop} />,
     );
     expect(screen.queryByTitle('kim@school.kr')).toBeNull();
-  });
-});
-
-describe('TeacherHome classroom list', () => {
-  const base = {
-    live: [],
-    abandoned: [],
-    finished: [],
-    classroomCode: 'AAAAAA',
-    classroomName: '4학년 3반',
-    students: [],
-    onDeleteStudent: noop,
-    onExportCsv: noop,
-    rounds: [],
-    onForceClose: noop,
-    onEditArena: noop,
-    onDeleteArena: noop,
-    onToggleLock: noop,
-    onToggleShowPlayers: noop,
-    onToggleTts: noop,
-    onNewArena: noop,
-    onSignOut: noop,
-  };
-  const rooms = [
-    { id: 'AAAAAA', name: '4학년 3반', inviteCode: 'AAAAAA' },
-    { id: 'BBBBBB', name: '4학년 4반', inviteCode: 'BBBBBB' },
-  ];
-
-  const openTab = () => {
-    fireEvent.click(screen.getByRole('button', { name: '학급' }));
-  };
-
-  it('lists opened classrooms with invite codes', () => {
-    render(<TeacherHome {...base} arenas={[]} classrooms={rooms} currentClassroomId="AAAAAA" />);
-    openTab();
-    expect(screen.getByText('내 학급 목록')).toBeTruthy();
-    expect(screen.getByText(/4학년 4반/)).toBeTruthy();
-    expect(screen.getByText(/초대 코드: BBBBBB/)).toBeTruthy();
-  });
-
-  it('enters another classroom from the list', () => {
-    const onSelectClassroom = vi.fn();
-    render(<TeacherHome {...base} arenas={[]} classrooms={rooms} currentClassroomId="AAAAAA" onSelectClassroom={onSelectClassroom} />);
-    openTab();
-    fireEvent.click(screen.getByRole('button', { name: '입장하기' }));
-    expect(onSelectClassroom).toHaveBeenCalledWith('BBBBBB');
-  });
-
-  it('renames a classroom from the list', () => {
-    const onRenameClassroomById = vi.fn().mockResolvedValue(null);
-    render(<TeacherHome {...base} arenas={[]} classrooms={rooms} currentClassroomId="AAAAAA" onRenameClassroomById={onRenameClassroomById} />);
-    openTab();
-    fireEvent.click(screen.getAllByRole('button', { name: '이름 바꾸기' })[1]);
-    fireEvent.change(screen.getByLabelText('학급 새 이름'), { target: { value: '4학년 5반' } });
-    fireEvent.click(screen.getByRole('button', { name: '저장' }));
-    expect(onRenameClassroomById).toHaveBeenCalledWith('BBBBBB', '4학년 5반');
-  });
-
-  it('confirms before deleting a classroom', () => {
-    const onDeleteClassroom = vi.fn().mockResolvedValue(null);
-    render(<TeacherHome {...base} arenas={[]} classrooms={rooms} currentClassroomId="AAAAAA" onDeleteClassroom={onDeleteClassroom} />);
-    openTab();
-    fireEvent.click(screen.getAllByRole('button', { name: '학급 삭제' })[1]);
-    expect(screen.getByText(/함께 지워져요/)).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: '확인' }));
-    expect(onDeleteClassroom).toHaveBeenCalledWith('BBBBBB');
-  });
-});
-
-describe('TeacherHome classroom management', () => {
-  const base = {
-    live: [],
-    abandoned: [],
-    finished: [],
-    classroomCode: 'AAAAAA',
-    classroomName: '4학년 3반',
-    students: [],
-    onDeleteStudent: noop,
-    onExportCsv: noop,
-    rounds: [],
-    onForceClose: noop,
-    onEditArena: noop,
-    onDeleteArena: noop,
-    onToggleLock: noop,
-    onToggleShowPlayers: noop,
-    onToggleTts: noop,
-    onNewArena: noop,
-    onSignOut: noop,
-  };
-
-  it('renames the classroom', () => {
-    const onRenameClassroom = vi.fn();
-    render(<TeacherHome {...base} arenas={[]} onRenameClassroom={onRenameClassroom} />);
-    fireEvent.click(screen.getByRole('button', { name: '학급' }));
-    fireEvent.change(screen.getByLabelText('학급 이름'), { target: { value: '5학년 1반' } });
-    fireEvent.click(screen.getByRole('button', { name: '이름 저장' }));
-    expect(onRenameClassroom).toHaveBeenCalledWith('5학년 1반');
-  });
-
-  it('opens the new-classroom form', () => {
-    const onNewClassroom = vi.fn();
-    render(<TeacherHome {...base} arenas={[]} onNewClassroom={onNewClassroom} />);
-    fireEvent.click(screen.getByRole('button', { name: '학급' }));
-    fireEvent.click(screen.getByRole('button', { name: '새 학급 만들기' }));
-    expect(onNewClassroom).toHaveBeenCalledTimes(1);
-  });
-
-  it('opens the student preview in a new tab', () => {
-    const openSpy = vi.fn();
-    vi.stubGlobal('open', openSpy);
-    Object.defineProperty(window, 'location', { value: { origin: 'https://x.web.app', pathname: '/' }, writable: true });
-    render(<TeacherHome {...base} arenas={[]} />);
-    fireEvent.click(screen.getByRole('button', { name: '학생 화면 미리보기' }));
-    expect(openSpy).toHaveBeenCalledWith('https://x.web.app/?preview=AAAAAA', '_blank');
-    vi.unstubAllGlobals();
-  });
-});
-
-describe('TeacherHome default seeding', () => {
-  it('offers the default 6 only when empty', () => {
-    const onSeedDefaults = vi.fn();
-    const { rerender } = render(
-      <TeacherHome
-        live={[]}
-        abandoned={[]}
-        finished={[]}
-        arenas={[]}
-        classroomCode=""
-        students={[]}
-        onDeleteStudent={noop}
-        onExportCsv={noop}
-        rounds={[]}
-        onForceClose={noop}
-        onEditArena={noop}
-        onDeleteArena={noop}
-        onToggleLock={noop}
-        onToggleShowPlayers={noop}
-        onToggleTts={noop}
-        onNewArena={noop}
-        onSignOut={noop}
-        onSeedDefaults={onSeedDefaults}
-      />,
-    );
-    fireEvent.click(screen.getByRole('button', { name: '아레나' }));
-    fireEvent.click(screen.getByRole('button', { name: '기본 아레나 6개 가져오기' }));
-    expect(onSeedDefaults).toHaveBeenCalledTimes(1);
-
-    rerender(
-      <TeacherHome
-        live={[]}
-        abandoned={[]}
-        finished={[]}
-        arenas={[{ id: 'a1', title: '내 것', locked: false }]}
-        classroomCode=""
-        students={[]}
-        onDeleteStudent={noop}
-        onExportCsv={noop}
-        rounds={[]}
-        onForceClose={noop}
-        onEditArena={noop}
-        onDeleteArena={noop}
-        onToggleLock={noop}
-        onToggleShowPlayers={noop}
-        onToggleTts={noop}
-        onNewArena={noop}
-        onSignOut={noop}
-        onSeedDefaults={onSeedDefaults}
-      />,
-    );
-    fireEvent.click(screen.getByRole('button', { name: '아레나' }));
-    expect(screen.queryByRole('button', { name: '기본 아레나 6개 가져오기' })).toBeNull();
-  });
-});
-
-describe('TeacherHome two-column grid', () => {
-  it('lays arena cards out in 2 columns', () => {
-    const { container } = render(
-      <TeacherHome
-        live={[]}
-        abandoned={[]}
-        finished={[]}
-        arenas={[{ id: 'a1', title: '덧셈', locked: false }]}
-        classroomCode=""
-        students={[]}
-        onDeleteStudent={noop}
-        onExportCsv={noop}
-        rounds={[]}
-        onForceClose={noop}
-        onEditArena={noop}
-        onDeleteArena={noop}
-        onToggleLock={noop}
-        onToggleShowPlayers={noop}
-        onToggleTts={noop}
-        onNewArena={noop}
-        onSignOut={noop}
-      />,
-    );
-    fireEvent.click(screen.getByRole('button', { name: '아레나' }));
-    expect(container.querySelector('.grid-cols-2')).toBeTruthy();
   });
 });
 

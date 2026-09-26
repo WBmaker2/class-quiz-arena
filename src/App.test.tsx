@@ -6,19 +6,30 @@ vi.mock('./hooks/useAuth', () => ({
 }));
 vi.mock('./hooks/useArenas', () => ({ useArenas: () => ({ arenas: [{ id: 'a1', title: '기초 덧셈 아레나', desc: '설명', subject: '수학', locked: false, classroomId: 'A1B2C3' }], loading: false }) }));
 vi.mock('./hooks/useProfile', () => ({ useProfile: () => ({ profile: { nickname: '일호', xp: 0, level: 1, streak: 0, winCount: 0, correctRate: 0 } }) }));
-vi.mock('./hooks/useClassroom', () => ({
-  useClassroom: () => ({
-    classroomId: null,
-    join: vi.fn(),
+vi.mock('firebase/functions', () => ({
+  getFunctions: () => ({}),
+  connectFunctionsEmulator: vi.fn(),
+  httpsCallable: (_functions: unknown, name: string) => vi.fn().mockResolvedValue({ data: name === 'getArenaReadiness' ? { questionCount: 10, ready: true } : {} }),
+}));
+vi.mock('./hooks/useClassroom', async () => {
+  const { useState } = await import('react');
+  return {
+  useClassroom: () => {
+    const [classroomId, setClassroomId] = useState<string | null>(null);
+    return {
+    classroomId,
+    join: vi.fn().mockImplementation(async () => { setClassroomId('A1B2C3'); return { ok: true }; }),
     create: vi.fn().mockResolvedValue('NEWC1'),
-    select: vi.fn(),
+    select: setClassroomId,
     renameClassroom: vi.fn(),
     error: null,
-  }),
+    };
+  },
   useTeacherClassrooms: () => ({ classrooms: [], loading: false }),
   useClassroomDoc: () => ({ name: '4학년 3반', inviteCode: 'NEWC1' }),
   normalizeClassroomName: (s: string) => s.trim().replace(/\s+/g, ' '),
-}));
+  };
+});
 
 import App from './App';
 
@@ -29,10 +40,10 @@ describe('App', () => {
     expect(screen.getByRole('button', { name: 'Google 계정으로 시작하기' })).toBeTruthy();
   });
 
-  it('moves to role select after login tap', () => {
+  it('moves to role select after login tap', async () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Google 계정으로 시작하기' }));
-    expect(screen.getByText('반가워요! 누구신가요?')).toBeTruthy();
+    expect(await screen.findByText('반가워요! 누구신가요?')).toBeTruthy();
   });
 
   it('shows login when signed out', () => {
@@ -43,6 +54,7 @@ describe('App', () => {
   it('creates a classroom as teacher instead of asking for a code', async () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Google 계정으로 시작하기' }));
+    await screen.findByText('반가워요! 누구신가요?');
     fireEvent.click(screen.getByRole('button', { name: '선생님으로 시작' }));
     expect(screen.getByLabelText('학급 이름')).toBeTruthy();
     expect(screen.queryByLabelText('초대 코드')).toBeNull();
@@ -51,12 +63,13 @@ describe('App', () => {
     expect(await screen.findByText('선생님 워크스페이스')).toBeTruthy();
   });
 
-  it('enters student home after join as student', () => {
+  it('enters student home after join as student', async () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: 'Google 계정으로 시작하기' }));
+    await screen.findByText('반가워요! 누구신가요?');
     fireEvent.click(screen.getByRole('button', { name: '학생으로 시작' }));
     fireEvent.change(screen.getByLabelText('초대 코드'), { target: { value: 'A1B2C3' } });
     fireEvent.click(screen.getByRole('button', { name: '학급 들어가기' }));
-    expect(screen.getByRole('button', { name: '지금 바로 대결!' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: '친구와 대결하기' })).toBeTruthy();
   });
 });

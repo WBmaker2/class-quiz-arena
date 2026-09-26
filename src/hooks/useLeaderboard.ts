@@ -9,6 +9,7 @@ export interface RawLeaderDoc {
   level?: number;
   winCount?: number;
   correctRate?: number;
+  answerCount?: number;
   avatar?: string;
   title?: string;
 }
@@ -19,7 +20,8 @@ export interface LeaderboardEntry {
   xp: number;
   level: number;
   winCount: number;
-  correctRate: number;
+  correctRate?: number;
+  answerCount?: number;
   avatar: string;
   title?: string;
   rank: number;
@@ -40,7 +42,8 @@ export function mapLeaderboard(
     xp: d.xp ?? 0,
     level: d.level ?? 1,
     winCount: d.winCount ?? 0,
-    correctRate: d.correctRate ?? 0,
+    ...(d.correctRate == null ? {} : { correctRate: d.correctRate }),
+    ...(d.answerCount == null ? {} : { answerCount: d.answerCount }),
     avatar: d.avatar ?? 'cat',
     ...(d.title ? { title: d.title } : {}),
     rank: i + 1,

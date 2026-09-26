@@ -12,6 +12,11 @@ export interface JoinInfo {
   avatar: string;
 }
 
+export interface JoinResult {
+  ok: boolean;
+  error?: string;
+}
+
 export interface TeacherClassroom {
   id: string;
   name: string;
@@ -99,41 +104,44 @@ export function useClassroom() {
     mounted.current = false;
   }, []);
 
-  const join = async (code: string, uid: string, info: JoinInfo) => {
-    if (!mounted.current) return;
+  const join = async (code: string, uid: string, info: JoinInfo): Promise<JoinResult> => {
+    if (!mounted.current) return { ok: false, error: '다시 시도해주세요' };
     const normalized = normalizeInviteCode(code);
     if (!isValidInviteCode(code)) {
       setError('초대 코드 6자리를 확인해주세요');
-      return;
+      return { ok: false, error: '초대 코드 6자리를 확인해주세요' };
     }
     const nameError = validateNickname(info.nickname);
     if (nameError) {
       setError(nameError);
-      return;
+      return { ok: false, error: nameError };
     }
     try {
       const snap = await getDoc(doc(db, 'classrooms', normalized));
-      if (!mounted.current) return;
+      if (!mounted.current) return { ok: false, error: '다시 시도해주세요' };
       if (!snap.exists() || (snap.data().locked as boolean)) {
         setError('들어갈 수 없는 학급이에요. 코드를 확인해주세요');
-        return;
+        return { ok: false, error: '들어갈 수 없는 학급이에요. 코드를 확인해주세요' };
       }
       setError(null);
       await setDoc(
         doc(db, 'users', uid),
         // 초대로 들어오면 무조건 학생 (선생님 사칭 방지, 규칙도 강제)
-        { nickname: info.nickname, role: 'student', avatar: info.avatar, classroomId: normalized },
+        { nickname: info.nickname, role: 'student', classroomId: normalized },
         { merge: true },
       );
-      if (!mounted.current) return;
+      if (!mounted.current) return { ok: false, error: '다시 시도해주세요' };
       setClassroomId(normalized);
+      return { ok: true };
     } catch {
-      if (!mounted.current) return;
+      if (!mounted.current) return { ok: false, error: '연결에 실패했어요. 다시 시도해주세요' };
       setError('연결에 실패했어요. 다시 시도해주세요');
+      return { ok: false, error: '연결에 실패했어요. 다시 시도해주세요' };
     }
   };
 
   const create = async (name: string, uid: string, nickname: string, avatar: string): Promise<string | null> => {
+    void avatar;
     if (!mounted.current) return null;
     const nameError = validateNickname(nickname);
     if (nameError) {
@@ -156,7 +164,7 @@ export function useClassroom() {
       if (!mounted.current) return null;
       await setDoc(
         doc(db, 'users', uid),
-        { nickname, role: 'teacher', avatar, classroomId: code },
+        { nickname, role: 'teacher', classroomId: code },
         { merge: true },
       );
       if (!mounted.current) return null;

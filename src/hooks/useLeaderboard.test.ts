@@ -29,4 +29,14 @@ describe('mapLeaderboard', () => {
     expect(inside.myRank).toBe(1);
     expect(inside.top20[0].isMe).toBe(true);
   });
+
+  it('preserves answer counts so an unplayed student differs from a true zero percent', () => {
+    const { top20 } = mapLeaderboard([
+      { uid: 'none', correctRate: 0 },
+      { uid: 'played', correctRate: 0, answerCount: 4 },
+    ], null);
+    expect(top20.find((entry) => entry.uid === 'none')?.answerCount).toBeUndefined();
+    expect(top20.find((entry) => entry.uid === 'played')?.answerCount).toBe(4);
+    expect(top20.find((entry) => entry.uid === 'played')?.correctRate).toBe(0);
+  });
 });

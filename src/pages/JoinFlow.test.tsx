@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import RoleSelect from './RoleSelect';
 import ClassJoin from './ClassJoin';
@@ -24,6 +24,15 @@ describe('join flow', () => {
     fireEvent.change(screen.getByLabelText('초대 코드'), { target: { value: 'a1b2c3' } });
     fireEvent.click(screen.getByRole('button', { name: '학급 들어가기' }));
     expect(onJoin).toHaveBeenCalledWith('A1B2C3', '일호');
+  });
+
+  it('keeps the student on code entry when the exact code does not join a class', async () => {
+    const onJoin = vi.fn().mockResolvedValue({ ok: false, error: '들어갈 수 없는 학급이에요. 코드를 확인해주세요' });
+    render(<ClassJoin defaultNickname="일호" onJoin={onJoin} />);
+    fireEvent.change(screen.getByLabelText('초대 코드'), { target: { value: 'BAD123' } });
+    fireEvent.click(screen.getByRole('button', { name: '학급 들어가기' }));
+    await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('코드를 확인'));
+    expect(screen.getByLabelText('초대 코드')).toBeTruthy();
   });
 
   it('blocks banned nicknames at signup', () => {

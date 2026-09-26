@@ -3,6 +3,7 @@ import { HttpsError, onCall } from 'firebase-functions/v2/https';
 
 import {
   AI_DAILY_LIMIT,
+  authorizeArenaTeacher,
   kindMix,
   kstToday,
   nextUsage,
@@ -14,7 +15,7 @@ import {
   type UsageState,
 } from './validate';
 
-admin.initializeApp();
+if (admin.apps.length === 0) admin.initializeApp();
 const db = admin.firestore();
 
 // gemini-2.0-flash는 2026-06-01에 종료됨. 공식 대체 모델을 쓴다.
@@ -103,6 +104,25 @@ export const generateArena = onCall(
     if (!parsed.ok) {
       console.error('generateArena failed', { stage: 'input', error: parsed.error });
       throw new HttpsError('invalid-argument', parsed.error);
+    }
+
+    const uid = request.auth!.uid;
+    const profileSnap = await db.doc(`users/${uid}`).get();
+    const email = typeof request.auth!.token.email === 'string' ? request.auth!.token.email : null;
+    const allowlisted = email ? (await db.doc(`teacherAllowlist/${email}`).get()).exists : false;
+    const authz = authorizeArenaTeacher({
+      authenticated: true,
+      role: profileSnap.data()?.role,
+      allowlisted,
+      master: email === 'ketarou85@gmail.com',
+      ownerUid: uid,
+      uid,
+      classroomId: profileSnap.data()?.classroomId,
+    });
+    if (!authz.ok) throw new HttpsError('permission-denied', authz.error);
+    const classroom = await db.doc(`classrooms/${authz.classroomId}`).get();
+    if (!classroom.exists || classroom.data()?.teacherId !== uid) {
+      throw new HttpsError('permission-denied', '이 학급의 담당 선생님만 문제를 만들 수 있어요.');
     }
 
     // 요금폭탄 방지: 교사 1명 하루 20회(KST 기준).

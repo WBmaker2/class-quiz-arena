@@ -9,7 +9,16 @@ export interface PlayerState {
   avatar: string;
   score: number;
   ready: boolean;
-  answers: (AnswerValue | null)[];
+  /** Round indexes submitted; answer values stay server-side until reveal. */
+  answeredRounds: number[];
+}
+
+export interface RoundReveal {
+  questionId: string;
+  answers: Record<string, AnswerValue | null>;
+  correctAnswer: number | string;
+  kind: 'choice' | 'ox' | 'short';
+  explanation?: string;
 }
 
 export interface RoomData {
@@ -21,6 +30,7 @@ export interface RoomData {
   winnerUid: string | null;
   updatedAt: number;
   problemIds: string[];
+  reveals?: Record<string, RoundReveal>;
   /** 방 생성 시 아레나 showPlayers 복사값. 없으면 비공개로 간주. */
   showPlayers?: boolean;
   /** 방 생성 시 아레나 ttsEnabled 복사값. 없으면 off. */
@@ -41,7 +51,7 @@ export function createRoomData(
   return {
     arenaId,
     status: 'waiting',
-    players: [{ ...host, score: 0, ready: false, answers: [] }],
+    players: [{ ...host, score: 0, ready: false, answeredRounds: [] }],
     currentRound: 0,
     roundEndsAt: 0,
     winnerUid: null,
@@ -63,7 +73,7 @@ export function joinRoomData(
   return {
     ...room,
     status: 'ready',
-    players: [...room.players, { ...guest, score: 0, ready: false, answers: [] }],
+    players: [...room.players, { ...guest, score: 0, ready: false, answeredRounds: [] }],
     updatedAt: nowMs,
   };
 }
@@ -86,7 +96,7 @@ export function startPlayingData(room: RoomData, nowMs: number, roundSec: number
     status: 'playing',
     currentRound: 0,
     roundEndsAt: nowMs + roundSec * 1000,
-    players: room.players.map((p) => ({ ...p, answers: [] })),
+    players: room.players.map((p) => ({ ...p, answeredRounds: [] })),
     updatedAt: nowMs,
   };
 }
@@ -96,13 +106,14 @@ export function roundRemainingMs(room: RoomData, nowMs: number): number {
 }
 
 export function submitAnswerData(room: RoomData, uid: string, answer: AnswerValue, nowMs: number): RoomData {
+  void answer;
+  if (room.status !== 'playing' || !room.players.some((player) => player.uid === uid)) return room;
   return {
     ...room,
     players: room.players.map((p) => {
       if (p.uid !== uid) return p;
-      const answers = [...p.answers];
-      answers[room.currentRound] = answer;
-      return { ...p, answers };
+      if (p.answeredRounds.includes(room.currentRound)) return p;
+      return { ...p, answeredRounds: [...p.answeredRounds, room.currentRound] };
     }),
     updatedAt: nowMs,
   };
@@ -111,7 +122,7 @@ export function submitAnswerData(room: RoomData, uid: string, answer: AnswerValu
 export function bothAnswered(room: RoomData): boolean {
   return (
     room.players.length === 2 &&
-    room.players.every((p) => p.answers[room.currentRound] !== undefined && p.answers[room.currentRound] !== null)
+    room.players.every((p) => p.answeredRounds.includes(room.currentRound))
   );
 }
 
@@ -143,10 +154,11 @@ export function advanceData(
   nowMs: number,
   roundSec: number,
   totalRounds: number,
+  answersByUid: Record<string, AnswerValue | null> = {},
 ): RoomData {
   const players = room.players.map((p) => ({
     ...p,
-    score: p.score + (isCorrectAnswer(p.answers[room.currentRound], problem) ? 1 : 0),
+    score: p.score + (isCorrectAnswer(answersByUid[p.uid], problem) ? 1 : 0),
   }));
   const last = room.currentRound >= totalRounds - 1;
   return {
@@ -194,7 +206,18 @@ export function computeLevel(totalXp: number): { level: number; xpIntoLevel: num
 export function canClaimWin(room: RoomData, uid: string, nowMs: number): boolean {
   if (room.status !== 'playing') return false;
   if (!room.players.some((p) => p.uid === uid)) return false;
-  return nowMs - room.updatedAt >= AUTO_WIN_AFTER_MS;
+  return nowMs >= Math.max(room.updatedAt + AUTO_WIN_AFTER_MS, room.roundEndsAt);
+}
+
+/** Convert Firestore Timestamp values at the database boundary without numeric coercion. */
+export function toMillis(value: unknown): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (value && typeof value === 'object' && 'toMillis' in value) {
+    const millis = (value as { toMillis: () => number }).toMillis();
+    if (Number.isFinite(millis)) return millis;
+  }
+  if (value instanceof Date) return value.getTime();
+  return 0;
 }
 
 /** 대기 방 중 무작위 1개. Math.random 기반이라 테스트에서는 값을 고정한다. */

@@ -84,6 +84,31 @@ export function validateGenerateArenaInput(data: unknown): InputValidation {
 
 export type AuthCheck = { ok: true } | { ok: false; error: string };
 
+export type TeacherAuthorization =
+  | { ok: true; classroomId: string }
+  | { ok: false; error: string };
+
+/** Pure policy shared by callable authorization tests. */
+export function authorizeArenaTeacher(args: {
+  authenticated: boolean;
+  role: unknown;
+  allowlisted: boolean;
+  master: boolean;
+  ownerUid: unknown;
+  uid: string;
+  classroomId: unknown;
+}): TeacherAuthorization {
+  if (!args.authenticated) return { ok: false, error: 'sign-in required' };
+  if (args.role !== 'teacher' || (!args.allowlisted && !args.master)) {
+    return { ok: false, error: 'teacher access required' };
+  }
+  if (args.ownerUid !== args.uid) return { ok: false, error: 'classroom owner required' };
+  if (typeof args.classroomId !== 'string' || !args.classroomId) {
+    return { ok: false, error: 'classroom id required' };
+  }
+  return { ok: true, classroomId: args.classroomId };
+}
+
 export function requireAuth(request: { auth?: unknown }): AuthCheck {
   return request.auth ? { ok: true } : { ok: false, error: 'sign-in required' };
 }

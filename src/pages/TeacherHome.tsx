@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Card from '../components/Card';
 import EmptyState from '../components/EmptyState';
 import InviteQR from '../components/InviteQR';
@@ -8,6 +8,8 @@ import { containsBanned } from '../lib/nickname';
 import Toggle from '../components/Toggle';
 import Modal from '../components/Modal';
 import UpdateLog from '../components/UpdateLog';
+import TeacherClassroom from './TeacherClassroom';
+import TeacherNav, { type TeacherTab } from './TeacherNav';
 import AccountChip from '../components/AccountChip';
 import ArenaCard from '../components/ArenaCard';
 import type { CardStyle } from '../lib/arena';
@@ -88,6 +90,10 @@ export default function TeacherHome({
   accountName,
   accountEmail,
   photoURL,
+  roomsError = false,
+  onRetryRooms,
+  analysisError = false,
+  onRetryAnalysis,
 }: {
   live: LiveRoom[];
   abandoned: LiveRoom[];
@@ -126,26 +132,21 @@ export default function TeacherHome({
   accountName?: string;
   accountEmail?: string | null;
   photoURL?: string | null;
+  roomsError?: boolean;
+  onRetryRooms?: () => void;
+  analysisError?: boolean;
+  onRetryAnalysis?: () => void;
 }) {
-  const [tab, setTab] = useState<'live' | 'arenas' | 'students' | 'analysis' | 'reports' | 'classroom' | 'admin'>('live');
+  const [tab, setTab] = useState<TeacherTab>('live');
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [teacherEmail, setTeacherEmail] = useState('');
   const [coverageGrade, setCoverageGrade] = useState(3);
   const [coverageSubject, setCoverageSubject] = useState('수학');
   const coverageSubjects = subjectsOfGrade(coverageGrade);
   const effectiveCoverageSubject = coverageSubjects.includes(coverageSubject) ? coverageSubject : (coverageSubjects[0] ?? '국어');
-  const [className, setClassName] = useState(classroomName ?? '');
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [showUpdates, setShowUpdates] = useState(false);
-  const [classError, setClassError] = useState<string | null>(null);
-  const [renamingId, setRenamingId] = useState<string | null>(null);
-  const [renameText, setRenameText] = useState('');
-  const [listError, setListError] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    setClassName(classroomName ?? '');
-  }, [classroomName]);
 
   const stats = problemStats(rounds);
   const hard = hardProblems(stats, 3);
@@ -173,39 +174,18 @@ export default function TeacherHome({
             </button>
           </div>
         </div>
-        <nav aria-label="선생님 메뉴" className="flex flex-wrap gap-2 mb-5">
-          <button type="button" onClick={() => setTab('live')} aria-current={tab === 'live' ? 'page' : undefined} className={tab === 'live' ? 'tab-active' : undefined}>
-            현재 대결
-          </button>
-          <button type="button" onClick={() => setTab('arenas')} aria-current={tab === 'arenas' ? 'page' : undefined} className={tab === 'arenas' ? 'tab-active' : undefined}>
-            아레나
-          </button>
-          <button type="button" onClick={() => setTab('students')} aria-current={tab === 'students' ? 'page' : undefined} className={tab === 'students' ? 'tab-active' : undefined}>
-            학생
-          </button>
-          <button type="button" onClick={() => setTab('analysis')} aria-current={tab === 'analysis' ? 'page' : undefined} className={tab === 'analysis' ? 'tab-active' : undefined}>
-            분석
-          </button>
-          <button type="button" onClick={() => setTab('reports')} aria-current={tab === 'reports' ? 'page' : undefined} className={tab === 'reports' ? 'tab-active' : undefined}>
-            신고
-          </button>
-          <button type="button" onClick={() => setTab('classroom')} aria-current={tab === 'classroom' ? 'page' : undefined} className={tab === 'classroom' ? 'tab-active' : undefined}>
-            학급
-          </button>
-          {showAdmin && (
-            <button type="button" onClick={() => setTab('admin')} aria-current={tab === 'admin' ? 'page' : undefined} className={tab === 'admin' ? 'tab-active' : undefined}>
-              선생님 관리
-            </button>
-          )}
-          <button type="button" onClick={() => setConfirmingLogout(true)}>
-            로그아웃
-          </button>
-        </nav>
+        <TeacherNav tab={tab} showAdmin={showAdmin} onChange={setTab} onLogout={() => setConfirmingLogout(true)} />
         {tab === 'live' && (
           <Card>
             <p className="font-bold mb-2">진행 중인 대결</p>
+            {roomsError && (
+              <div role="alert" className="mb-3">
+                <p>대결 기록을 불러오지 못했어요. 연결을 확인해 주세요.</p>
+                <button type="button" onClick={onRetryRooms}>다시 불러오기</button>
+              </div>
+            )}
             {live.length === 0 ? (
-              <EmptyState title="지금은 진행 중인 대결이 없어요" />
+              roomsError ? null : <EmptyState title="지금은 진행 중인 대결이 없어요" />
             ) : (
               live.map((r) => (
                 <div key={r.id}>
@@ -228,9 +208,9 @@ export default function TeacherHome({
               ))
             )}
             <p className="font-bold mt-4">방치된 대결</p>
-            {abandoned.length === 0 ? <p>방치된 대결이 없어요</p> : abandoned.map((r) => <p key={r.id}>{r.arenaTitle}</p>)}
+            {abandoned.length === 0 ? (roomsError ? null : <p>방치된 대결이 없어요</p>) : abandoned.map((r) => <p key={r.id}>{r.arenaTitle}</p>)}
             <p className="font-bold mt-4">최근 종료된 대결</p>
-            {finished.length === 0 ? <p>종료된 대결이 아직 없어요</p> : finished.map((r) => <p key={r.id}>{r.arenaTitle}</p>)}
+            {finished.length === 0 ? (roomsError ? null : <p>종료된 대결이 아직 없어요</p>) : finished.map((r) => <p key={r.id}>{r.arenaTitle}</p>)}
           </Card>
         )}
         {tab === 'arenas' && (
@@ -248,7 +228,7 @@ export default function TeacherHome({
               </div>
               {arenas.length === 0 && <p className="mt-2">아직 만든 아레나가 없어요</p>}
             </Card>
-            <div className="grid grid-cols-2 gap-3 mt-3">
+              <div className="teacher-card-grid grid grid-cols-2 gap-3 mt-3">
               {arenas.map((a) => (
               <ArenaCard
                 key={a.id}
@@ -310,7 +290,7 @@ export default function TeacherHome({
             {(bank ?? []).length === 0 ? (
               <p>가져올 수 있는 아레나가 없어요</p>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="teacher-card-grid grid grid-cols-2 gap-3">
                 {(bank ?? []).map((b) => (
                 <ArenaCard
                   key={b.id}
@@ -367,14 +347,20 @@ export default function TeacherHome({
         {tab === 'analysis' && (
           <>
             <Card>
-              {rounds.length === 0 ? (
+              {analysisError ? (
+                <div role="alert">
+                  <p>분석 기록을 불러오지 못했어요. 연결을 확인해 주세요.</p>
+                  <button type="button" onClick={onRetryAnalysis}>다시 불러오기</button>
+                </div>
+              ) : rounds.length === 0 ? (
                 <EmptyState title="아직 분석할 기록이 없어요" />
               ) : (
                 <div>
                   <p>어려운 문제 {hard.length}개</p>
-                  {hard.map((h) => (
-                    <p key={h.problemIndex}>
-                      {h.problemIndex + 1}번 문제 — {h.correct}/{h.asked} 정답
+                  {hard.length === 0 && <p>아직 답을 제출한 문제가 없어요. 기록 없음은 0%와 달라요.</p>}
+                  {hard.map((h, index) => (
+                    <p key={`${h.problemId}-${h.problemTitle}-${index}`}>
+                      {h.problemTitle} — 정답 {h.correct}/{h.asked}명 ({Math.round(h.correctPercent ?? 0)}%)
                     </p>
                   ))}
                   <p>
@@ -386,8 +372,8 @@ export default function TeacherHome({
                   ) : (
                     weak.map((w) => (
                       <p key={w.code}>
-                        {w.code} {findStandard(w.code)?.summary ?? ''} — 정답률{' '}
-                        {Math.round(w.rate * 100)}% ({w.correct}/{w.asked})
+                      {w.code} {findStandard(w.code)?.summary ?? ''} — 정답률{' '}
+                      {Math.round(w.rate * 100)}% ({w.correct}/{w.asked}명)
                       </p>
                     ))
                   )}
@@ -450,145 +436,7 @@ export default function TeacherHome({
             )}
           </Card>
         )}
-        {tab === 'classroom' && (
-          <>
-            <Card>
-              <p className="font-bold mb-3 text-lg">학급 관리</p>
-              <div className="flex flex-col gap-2 mb-3">
-                <label htmlFor="classroom-name">학급 이름</label>
-                <input
-                  id="classroom-name"
-                  value={className}
-                  maxLength={30}
-                  onChange={(e) => setClassName(e.target.value)}
-                />
-                {classError && <p>{classError}</p>}
-                <div className="flex flex-wrap gap-2 mt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      void (async () => {
-                        const msg = await onRenameClassroom?.(className);
-                        setClassError(msg ?? null);
-                      })();
-                    }}
-                  >
-                    이름 저장
-                  </button>
-                  <button type="button" onClick={() => onNewClassroom?.()}>
-                    새 학급 만들기
-                  </button>
-                </div>
-              </div>
-              <p className="text-sm mt-2">초대 코드: {classroomCode}</p>
-            </Card>
-            <Card>
-              <p className="font-bold mb-2 text-lg">내 학급 목록</p>
-              {(classrooms ?? []).length === 0 ? (
-                <p>개설한 학급이 없어요</p>
-              ) : (
-                (classrooms ?? []).map((c) => (
-                  <div key={c.id} className="mb-2">
-                    {renamingId === c.id ? (
-                      <div className="flex flex-col gap-2">
-                        <label htmlFor={`rename-${c.id}`}>학급 새 이름</label>
-                        <input
-                          id={`rename-${c.id}`}
-                          value={renameText}
-                          maxLength={30}
-                          onChange={(e) => setRenameText(e.target.value)}
-                        />
-                        <div className="flex flex-wrap gap-2">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              void (async () => {
-                                const msg = await onRenameClassroomById?.(c.id, renameText);
-                                if (msg) {
-                                  setListError(msg);
-                                } else {
-                                  setListError(null);
-                                  setRenamingId(null);
-                                }
-                              })();
-                            }}
-                          >
-                            저장
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRenamingId(null);
-                              setListError(null);
-                            }}
-                          >
-                            취소
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <p>
-                          {c.name}
-                          {c.id === (currentClassroomId ?? classroomCode) && <span> (지금 학급)</span>}
-                        </p>
-                        <p className="text-sm">초대 코드: {c.inviteCode}</p>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {c.id !== (currentClassroomId ?? classroomCode) && (
-                            <button type="button" onClick={() => onSelectClassroom?.(c.id)}>
-                              입장하기
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setRenamingId(c.id);
-                              setRenameText(c.name);
-                              setListError(null);
-                            }}
-                          >
-                            이름 바꾸기
-                          </button>
-                          <button type="button" onClick={() => setDeletingId(c.id)}>
-                            학급 삭제
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))
-              )}
-              {listError && <p>{listError}</p>}
-            </Card>
-            {deletingId && (
-              <Modal title="학급 삭제 확인" onClose={() => setDeletingId(null)}>
-                <p className="font-bold mb-3">
-                  ‘{(classrooms ?? []).find((c) => c.id === deletingId)?.name ?? ''}’ 학급을 정말 삭제할까요?
-                  아레나와 대결 기록이 함께 지워져요.
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    className="btn-primary flex-1"
-                    onClick={() => {
-                      const id = deletingId;
-                      setDeletingId(null);
-                      void (async () => {
-                        const msg = await onDeleteClassroom?.(id);
-                        setListError(msg ?? null);
-                      })();
-                    }}
-                  >
-                    확인
-                  </button>
-                  <button type="button" className="flex-1" onClick={() => setDeletingId(null)}>
-                    취소
-                  </button>
-                </div>
-              </Modal>
-            )}
-          </>
-        )}
+        {tab === 'classroom' && <TeacherClassroom classroomCode={classroomCode} classroomName={classroomName} onRenameClassroom={onRenameClassroom} onRenameClassroomById={onRenameClassroomById} onDeleteClassroom={onDeleteClassroom} onSelectClassroom={onSelectClassroom} classrooms={classrooms} currentClassroomId={currentClassroomId} onNewClassroom={onNewClassroom} />}
         {tab === 'admin' && showAdmin && (
           <Card>
             <p className="font-bold mb-2">선생님 관리</p>

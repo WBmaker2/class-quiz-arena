@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import admin from 'firebase-admin';
 import { createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { collection, doc, getDoc, getDocs, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc } from 'firebase/firestore';
 import { describe, expect, it } from 'vitest';
 import { auth, db } from '../lib/firebase';
 import { useArenaAdmin } from './useArenaAdmin';
@@ -62,8 +62,8 @@ describe('useArenaAdmin on emulator', () => {
       await act(async () => {
         await result.current.removeArena(id);
       });
-      expect((await getDoc(doc(db, 'arenas', id))).exists()).toBe(false);
-      expect((await getDocs(collection(db, 'arenas', id, 'problems'))).size).toBe(0);
+      expect((await adminDb.doc(`arenas/${id}`).get()).exists).toBe(false);
+      expect((await adminDb.collection(`arenas/${id}/problems`).get()).size).toBe(0);
     } finally {
       await signOut(auth);
     }

@@ -25,6 +25,7 @@ export interface Leader {
   level?: number;
   winCount?: number;
   correctRate?: number;
+  answerCount?: number;
   title?: string;
   isMe?: boolean;
 }
@@ -36,7 +37,8 @@ export interface ProfileView {
   level: number;
   streak: number;
   winCount: number;
-  correctRate: number;
+  correctRate?: number;
+  answerCount?: number;
   avatar?: string;
   title?: string;
   unlockedAvatars?: string[];
@@ -73,8 +75,14 @@ export default function StudentHome({
   accountName,
   accountEmail,
   photoURL,
+  arenaError,
+  onRetryArenas,
+  shopError,
+  onRetryQuestionCount,
+  profileError,
+  onRetryProfile,
 }: {
-  arenas: Arena[];
+  arenas: Array<Arena & { arenaReady?: boolean }>;
   leaders: Leader[];
   profile: ProfileView;
   myUid?: string | null;
@@ -89,6 +97,12 @@ export default function StudentHome({
   accountName?: string;
   accountEmail?: string | null;
   photoURL?: string | null;
+  arenaError?: string | null;
+  onRetryArenas?: () => void;
+  shopError?: string | null;
+  onRetryQuestionCount?: (arenaId: string) => void;
+  profileError?: string | null;
+  onRetryProfile?: () => void;
 }) {
   const [tab, setTab] = useState<'browse' | 'leaderboard' | 'record' | 'shop'>('browse');
   const [newName, setNewName] = useState('');
@@ -131,17 +145,19 @@ export default function StudentHome({
             로그아웃
           </button>
         </nav>
+        {profileError && <div role="alert" className="card-ink p-4 mb-4"><p>{profileError}</p><button type="button" className="btn-primary mt-2" onClick={onRetryProfile}>기록 다시 불러오기</button></div>}
         {tab === 'browse' && (
           <>
             <p className="font-display text-2xl mb-3">오늘 도전할 아레나는?</p>
             {arenas.length === 0 ? (
               <Card>
-                <EmptyState title="아직 참여 중인 아레나가 없어요" />
+                {arenaError ? <div role="alert"><p>{arenaError}</p><button type="button" className="btn-primary mt-3" onClick={onRetryArenas}>다시 불러오기</button></div> : <EmptyState title="아직 참여 중인 아레나가 없어요" />}
               </Card>
             ) : (
-              <div className="grid grid-cols-2 gap-3">
-                {arenas.map((a) => (
-                <ArenaCard
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {arenas.map((a) => {
+                  const canPlay = a.arenaReady ?? (a.questionCount ?? 0) >= 10;
+                  return <ArenaCard
                   key={a.id}
                   bg={a.cardTheme?.bg}
                   emoji={a.cardTheme?.emoji}
@@ -160,15 +176,21 @@ export default function StudentHome({
                     <>
                       {a.topic && <p className="text-sm">{a.topic}</p>}
                       {a.desc && <p className="text-sm opacity-70">{a.desc}</p>}
-                      <p className="text-sm mt-1">20문제 중 10문제 대결</p>
+                      <p className="text-sm mt-1">
+                        {a.questionCount == null ? '문제 수 확인 중' : a.questionCount < 0 ? '문제 수를 확인하지 못했어요' : `${Math.min(10, a.questionCount)}문제 대결 · 전체 ${a.questionCount}문제`}
+                      </p>
                       <p className="text-xs mt-1">
-                        <span className="px-2 py-0.5 rounded-full bg-white/70">대결 준비됨</span>
+                        <span className="px-2 py-0.5 rounded-full bg-white/70">
+                          {a.questionCount == null ? '준비 상태 확인 중' : a.questionCount < 0 ? '연결을 확인해주세요' : canPlay ? '친구와 대결할 수 있어요' : '선생님이 문제를 준비하고 있어요'}
+                        </span>
                       </p>
                     </>
                   }
-                  footer={<PrimaryButton pulse onClick={() => onEnter(a.id)}>지금 바로 대결!</PrimaryButton>}
-                />
-                ))}
+                  footer={a.questionCount === -1 ? <button type="button" onClick={() => onRetryQuestionCount?.(a.id)}>다시 확인하기</button> : <PrimaryButton pulse disabled={!canPlay} onClick={() => onEnter(a.id)}>
+                    {canPlay ? '친구와 대결하기' : '문제 준비 중'}
+                  </PrimaryButton>}
+                  />;
+                })}
               </div>
             )}
           </>
@@ -208,7 +230,7 @@ export default function StudentHome({
                         {highlighted && <span className="ml-1 text-xs">나</span>}
                       </p>
                       <p className="text-xs">
-                        Lv{l.level ?? 1} · {l.winCount ?? 0}승 · 정답률 {l.correctRate ?? 0}% ·{' '}
+                        Lv{l.level ?? 1} · {l.winCount ?? 0}승 · 정답률 {l.answerCount === 0 || l.answerCount == null ? '기록 없음' : `${l.correctRate ?? 0}%`} ·{' '}
                         <span className="tnum">{l.xp} XP</span>
                       </p>
                     </div>
@@ -232,7 +254,7 @@ export default function StudentHome({
             </div>
             <p>총 XP</p>
             <p>
-              {profile.xp} XP · {profile.streak}연승 · 정답률 {profile.correctRate}%
+              {profile.xp} XP · {profile.streak}연승 · 정답률 {profile.answerCount == null || profile.answerCount === 0 ? '기록 없음' : `${profile.correctRate ?? 0}%`}
             </p>
             <p>내 별</p>
             <p>{profile.stars ?? 0} 별</p>
@@ -254,6 +276,7 @@ export default function StudentHome({
         )}
         {tab === 'shop' && (
           <Card>
+            {shopError && <p role="alert" className="mb-3">{shopError}</p>}
             <p className="font-bold mb-2">아바타 상점</p>
             <p className="text-sm mb-2">내 별 {profile.stars ?? 0}</p>
             {AVATAR_GOODS.map((g) => {
@@ -289,7 +312,7 @@ export default function StudentHome({
                   {equipped ? (
                     <p className="text-sm">사용 중</p>
                   ) : owned ? (
-                    <button type="button" onClick={() => onEquipTitle?.(g.label)}>
+                    <button type="button" onClick={() => onEquipTitle?.(g.id)}>
                       사용하기
                     </button>
                   ) : canAfford(profile.stars ?? 0, g.price) ? (

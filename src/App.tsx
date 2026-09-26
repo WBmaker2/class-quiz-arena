@@ -1,40 +1,25 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import BattleRoom from './pages/BattleRoom';
-import ClassCreate from './pages/ClassCreate';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import ClassJoin from './pages/ClassJoin';
-import ClassSelect from './pages/ClassSelect';
 import LoginScreen from './pages/LoginScreen';
 import RoleSelect, { type Role } from './pages/RoleSelect';
-import StudentHome from './pages/StudentHome';
-import TeacherHome from './pages/TeacherHome';
-import ArenaEditor from './pages/ArenaEditor';
 import EmptyState from './components/EmptyState';
-import Modal from './components/Modal';
+import TeacherGate from './pages/TeacherGate';
 import RememberLogin from './components/RememberLogin';
 import type { Animal } from './components/Avatar';
-import { useAnalytics } from './hooks/useAnalytics';
-import { useArenaAdmin, type EditableProblem } from './hooks/useArenaAdmin';
 import { useArenas } from './hooks/useArenas';
 import { useAuth } from './hooks/useAuth';
-import { useClassroom, useClassroomDoc, useTeacherClassrooms } from './hooks/useClassroom';
+import { useClassroom } from './hooks/useClassroom';
 import { useLeaderboard } from './hooks/useLeaderboard';
-import { useMatch } from './hooks/useMatch';
 import { useProfile } from './hooks/useProfile';
-import { useStudents } from './hooks/useStudents';
-import { useTeacherAllowlist } from './hooks/useTeacherAllowlist';
-import { isMasterEmail } from './lib/admin';
-import { useTeacherRooms } from './hooks/useTeacherRooms';
-import { avgCorrectVsWrong, hardProblems, problemStats } from './lib/analytics';
-import { buildRosterCsv } from './lib/roster';
-import { useReports } from './hooks/useReports';
-import { useRoom, orderBattleProblems } from './hooks/useRoom';
-import { isCorrectAnswer } from './lib/battle';
-import { TITLE_GOODS } from './data/shop';
 import { containsBanned } from './lib/nickname';
-import { collection, doc, getDoc, getDocs, orderBy, query, setDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { db } from './lib/firebase';
-import type { Arena, Problem } from './lib/arena';
-import { finishAndAward } from './lib/award';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+
+const StudentHome = lazy(() => import('./pages/StudentHome'));
+const TeacherShell = lazy(() => import('./pages/TeacherShell').then((module) => ({ default: module.TeacherShell })));
+const BattleShell = lazy(() => import('./pages/BattleShell'));
+export { default as TeacherGate } from './pages/TeacherGate';
 
 export type View = 'login' | 'role' | 'join' | 'student' | 'teacher' | 'battle';
 
@@ -45,6 +30,11 @@ export interface PendingArena {
   reporterNickname: string;
   myWins: number;
   myStreak: number;
+  roomId?: string | null;
+}
+
+function RouteLoading() {
+  return <div className="min-h-screen grid place-items-center" role="status" aria-live="polite" aria-busy="true">화면을 불러오는 중...</div>;
 }
 
 export default function App() {
@@ -52,8 +42,10 @@ export default function App() {
   const [role, setRole] = useState<Role | null>(null);
   const [animal, setAnimal] = useState<Animal>('frog');
   const [pendingArena, setPendingArena] = useState<PendingArena | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const { classroomId, join, create, select } = useClassroom();
   const { user, loading, signInWithGoogle, signOut } = useAuth();
+  const { profile: savedProfile } = useProfile(user?.uid ?? null);
   // 선생님의 학생 화면 미리보기 (?preview=학급ID, 새 탭). 로그인 후 바로 학생홈.
   const [previewClassroom] = useState(() => new URLSearchParams(window.location.search).get('preview'));
 
@@ -62,19 +54,37 @@ export default function App() {
     if (view === 'login' && user) setView('role');
   }, [view, user]);
 
+  useEffect(() => {
+    if (!user || !savedProfile?.classroomId || view !== 'role' || savedProfile.role !== 'student') return;
+    select(savedProfile.classroomId);
+    try {
+      const saved = window.sessionStorage.getItem('quiz-arena-active-battle');
+      const pending = saved ? JSON.parse(saved) as PendingArena & { uid?: string } : null;
+      if (pending?.uid === user.uid && pending.arenaId && pending.me?.uid === user.uid && pending.classroomId === savedProfile.classroomId) {
+        setPendingArena(pending);
+        setView('battle');
+        return;
+      }
+    } catch { /* 손상된 복원 데이터는 버리고 학급 홈으로 이동 */ }
+    setView('student');
+  }, [user, savedProfile, view, select]);
+
   const startLogin = () => {
-    void Promise.resolve(signInWithGoogle()).catch(() => {});
-    setView('role');
+    setLoginError(null);
+    void Promise.resolve(signInWithGoogle()).then(() => setView('role')).catch((error: unknown) => {
+      const code = (error as { code?: string })?.code;
+      setLoginError(code === 'auth/popup-blocked' ? '로그인 창이 차단됐어요. 팝업을 허용하고 다시 눌러주세요.' : '로그인에 실패했어요. 인터넷 연결을 확인하고 다시 시도해주세요.');
+    });
   };
 
   // 실제 환경에서만 미로그인 진입을 막는다. vitest의 MODE는 'test'이므로
   // 테스트 흐름은 Plan 1과 동일하게 통과한다.
   const effectivelySignedOut = !loading && user === null && import.meta.env.MODE !== 'test';
   if (view !== 'login' && effectivelySignedOut) {
-    return <LoginScreen onStart={startLogin} />;
+    return <LoginScreen onStart={startLogin} error={loginError} />;
   }
   if (view === 'login') {
-    return <LoginScreen onStart={startLogin} />;
+    return <LoginScreen onStart={startLogin} error={loginError} />;
   }
   if (loading) {
     return <div className="min-h-screen grid place-items-center">불러오는 중...</div>;
@@ -82,10 +92,13 @@ export default function App() {
 
   if (previewClassroom && user) {
     const previewEnter = (arenaId: string, me: { uid: string; nickname: string; avatar: string }, myWins: number, myStreak: number, reporterNickname: string) => {
-      setPendingArena({ arenaId, classroomId: previewClassroom, me, reporterNickname, myWins, myStreak });
+      const pending = { arenaId, classroomId: previewClassroom, me, reporterNickname, myWins, myStreak };
+      setPendingArena(pending);
+      window.sessionStorage.setItem('quiz-arena-active-battle', JSON.stringify({ ...pending, uid: me.uid }));
       setView('battle');
     };
     const previewExit = () => {
+      window.sessionStorage.removeItem('quiz-arena-active-battle');
       setPendingArena(null);
       setView('login');
     };
@@ -93,22 +106,23 @@ export default function App() {
       return (
         <>
           <RememberLogin />
-          <BattleShell
+          <Suspense fallback={<RouteLoading />}><BattleShell
             arenaId={pendingArena.arenaId}
             classroomId={pendingArena.classroomId}
             me={pendingArena.me}
             reporterNickname={pendingArena.reporterNickname}
             myWins={pendingArena.myWins}
             myStreak={pendingArena.myStreak}
+            resumeRoomId={pendingArena.roomId}
             onExit={previewExit}
-          />
+          /></Suspense>
         </>
       );
     }
     return (
       <>
         <RememberLogin />
-        <StudentShell
+        <Suspense fallback={<RouteLoading />}><StudentShell
           uid={user.uid}
           nickname={user.displayName ?? '선생님'}
           classroomId={previewClassroom}
@@ -121,7 +135,7 @@ export default function App() {
             void signOut();
             setView('login');
           }}
-        />
+        /></Suspense>
       </>
     );
   }
@@ -162,7 +176,11 @@ export default function App() {
           ) : (
             <ClassJoin
               defaultNickname={user?.displayName ?? '학생'}
-              onJoin={(code, nickname) => { void join(code, user?.uid ?? 'local-test', { nickname, role: role ?? 'student', avatar: animal }); setView('student'); }}
+              onJoin={async (code, nickname) => {
+                const joined = await join(code, user?.uid ?? 'local-test', { nickname, role: role ?? 'student', avatar: animal });
+                if (joined.ok) setView('student');
+                return joined;
+              }}
             />
           )}
           <RememberLogin />
@@ -175,7 +193,7 @@ export default function App() {
     return (
       <>
         <RememberLogin />
-        <StudentShell
+        <Suspense fallback={<RouteLoading />}><StudentShell
           uid={user?.uid ?? 'local-test'}
           nickname={user?.displayName ?? '학생'}
           classroomId={classroomId}
@@ -184,21 +202,23 @@ export default function App() {
           accountEmail={user?.email ?? null}
           photoURL={user?.photoURL ?? null}
           onEnter={(arenaId, me, myWins, myStreak, reporterNickname) => {
-            setPendingArena({ arenaId, classroomId, me, reporterNickname, myWins, myStreak });
+            const pending = { arenaId, classroomId, me, reporterNickname, myWins, myStreak };
+            setPendingArena(pending);
+            window.sessionStorage.setItem('quiz-arena-active-battle', JSON.stringify({ ...pending, uid: me.uid }));
             setView('battle');
           }}
           onSignOut={() => {
             void signOut();
             setView('login');
           }}
-        />
+        /></Suspense>
       </>
     );
   }
 
   if (view === 'teacher') {
     return (
-      <TeacherShell
+      <Suspense fallback={<RouteLoading />}><TeacherShell
         classroomId={classroomId}
         userEmail={user?.email ?? null}
         uid={user?.uid ?? 'local-test'}
@@ -210,7 +230,7 @@ export default function App() {
           setView('login');
         }}
         onSelectClassroom={select}
-      />
+      /></Suspense>
     );
   }
 
@@ -218,15 +238,20 @@ export default function App() {
     return (
       <>
         <RememberLogin />
-        <BattleShell
+        <Suspense fallback={<RouteLoading />}><BattleShell
           arenaId={pendingArena.arenaId}
           classroomId={pendingArena.classroomId}
           me={pendingArena.me}
           reporterNickname={pendingArena.reporterNickname}
           myWins={pendingArena.myWins}
           myStreak={pendingArena.myStreak}
-          onExit={() => setView('student')}
-        />
+          resumeRoomId={pendingArena.roomId}
+          onExit={() => {
+            window.sessionStorage.removeItem('quiz-arena-active-battle');
+            setPendingArena(null);
+            setView('student');
+          }}
+        /></Suspense>
       </>
     );
   }
@@ -238,247 +263,6 @@ export default function App() {
       </div>
     </div>
   );
-}
-
-function TeacherShell({ classroomId, userEmail, uid, displayName, photoURL, animal, onSignOut, onSelectClassroom }: { classroomId: string | null; userEmail: string | null; uid: string; displayName: string; photoURL: string | null; animal: Animal; onSignOut: () => void; onSelectClassroom: (id: string | null) => void }) {
-  const showAdmin = isMasterEmail(userEmail);
-  const { live, abandoned, finished, forceClose } = useTeacherRooms();
-  const { arenas, bank, saveArena, loadProblems, removeArena, setLocked, setShowPlayers, setTtsEnabled, copyArena, seedDefaults } = useArenaAdmin(classroomId);
-  const { students, removeStudent } = useStudents(classroomId);
-  const { reports, resolveReport } = useReports(classroomId);
-  const { create, renameClassroom, deleteClassroom } = useClassroom();
-  const { classrooms } = useTeacherClassrooms(import.meta.env.MODE === 'test' ? null : uid);
-  const { name: classroomName } = useClassroomDoc(classroomId);
-  const { teachers, addTeacher, removeTeacher } = useTeacherAllowlist(showAdmin);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
-  const [editingProblems, setEditingProblems] = useState<EditableProblem[] | null>(null);
-  const [creatingClass, setCreatingClass] = useState(false);
-  const [analysisArenaId, setAnalysisArenaId] = useState<string | null>(null);
-  const { rounds } = useAnalytics(analysisArenaId);
-  const stats = problemStats(rounds);
-  const hard = hardProblems(stats, 3);
-  const avg = avgCorrectVsWrong(rounds);
-
-  useEffect(() => {
-    if (!analysisArenaId && arenas.length > 0) setAnalysisArenaId(arenas[0].id);
-  }, [analysisArenaId, arenas]);
-
-  const downloadCsv = () => {
-    const blob = new Blob([buildRosterCsv(students)], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'roster.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  useEffect(() => {
-    if (!editingId) {
-      setEditingProblems(null);
-      return;
-    }
-    let alive = true;
-    void loadProblems(editingId)
-      .then((ps) => {
-        if (alive) setEditingProblems(ps);
-      })
-      .catch(() => {
-        if (alive) setEditingProblems([]);
-      });
-    return () => {
-      alive = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editingId]);
-
-  if (creatingClass) {
-    return (
-      <div className="min-h-screen grid place-items-center px-6 py-10">
-        <div className="w-full max-w-md">
-          <ClassCreate
-            existingNames={classrooms.map((c) => c.name)}
-            onCreate={(name) => {
-              void create(name, uid, displayName, animal).then((id) => {
-                if (id) {
-                  setCreatingClass(false);
-                  onSelectClassroom(id);
-                }
-              });
-            }}
-            onCancel={() => setCreatingClass(false)}
-          />
-        </div>
-      </div>
-    );
-  }
-
-  let editorModal: ReactNode = null;
-  if (creating || editingId) {
-    const closeEditor = () => {
-      setCreating(false);
-      setEditingId(null);
-    };
-    const arena = arenas.find((a) => a.id === editingId);
-    editorModal = (
-      <Modal title={editingId ? '아레나 수정' : '새 아레나 만들기'} onClose={closeEditor}>
-        {editingId && editingProblems === null ? (
-          <p>문제를 불러오는 중...</p>
-        ) : (
-          <ArenaEditor
-          initial={
-            arena
-              ? {
-                  title: arena.title,
-                  desc: arena.desc,
-                  subject: arena.subject,
-                  questionCount: (arena as unknown as { questionCount?: number }).questionCount ?? 0,
-                  grade: arena.grade ?? 3,
-                  gradeBand: arena.gradeBand,
-                  topic: arena.topic ?? '',
-                  standards: arena.standards ?? [],
-                  cardStyle: arena.cardStyle ?? 'color',
-                  illustId: arena.illustId,
-                }
-              : { title: '', desc: '', subject: '수학', questionCount: 0, grade: 3, topic: '', standards: [], cardStyle: 'color' as const }
-          }
-          problems={editingProblems ?? []}
-          onSave={(input, problems) => {
-            void saveArena(editingId, input, problems.map((p) => ({ ...p, roundTimeSec: 30 }))).then(() => {
-              setCreating(false);
-              setEditingId(null);
-            });
-          }}
-          onCancel={closeEditor}
-        />
-        )}
-      </Modal>
-    );
-  }
-
-  return (
-    <>
-      <RememberLogin />
-      {editorModal}
-      <TeacherHome
-      live={live.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
-      abandoned={abandoned.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
-      finished={finished.map((r) => ({ id: r.id, arenaTitle: r.arenaId, players: r.players.map((p) => p.nickname) }))}
-      arenas={arenas.map((a) => ({ id: a.id, title: a.title, desc: a.desc, subject: a.subject, grade: a.grade, gradeBand: a.gradeBand, locked: a.locked, showPlayers: a.showPlayers ?? false, ttsEnabled: a.ttsEnabled ?? false, standards: a.standards ?? [], cardTheme: a.cardTheme, cardStyle: a.cardStyle ?? 'color', illustId: a.illustId }))}
-      bank={bank}
-      classroomCode={classroomId ?? ''}
-      classroomName={classroomName}
-      onRenameClassroom={(name) => {
-        if (!classroomId) return Promise.resolve('학급을 먼저 골라주세요');
-        return renameClassroom(classroomId, name, uid);
-      }}
-      onRenameClassroomById={(id, name) => renameClassroom(id, name, uid)}
-      onDeleteClassroom={async (id) => {
-        const r = await deleteClassroom(id, uid);
-        if (!r.ok) return '삭제에 실패했어요. 다시 시도해주세요.';
-        onSelectClassroom(r.next);
-        return null;
-      }}
-      onSelectClassroom={onSelectClassroom}
-      classrooms={classrooms}
-      currentClassroomId={classroomId}
-      onNewClassroom={() => setCreatingClass(true)}
-      students={students}
-      onDeleteStudent={(uid) => {
-        void removeStudent(uid);
-      }}
-      onExportCsv={downloadCsv}
-      rounds={rounds}
-      onForceClose={(id) => {
-        void forceClose(id);
-      }}
-      onEditArena={setEditingId}
-      onDeleteArena={(id) => {
-        void removeArena(id);
-      }}
-      onToggleLock={(id, locked) => {
-        void setLocked(id, locked);
-      }}
-      onToggleShowPlayers={(id, showPlayers) => {
-        void setShowPlayers(id, showPlayers);
-      }}
-      onToggleTts={(id, ttsEnabled) => {
-        void setTtsEnabled(id, ttsEnabled);
-      }}
-      onCopyArena={(id) => {
-        void copyArena(id);
-      }}
-      onSeedDefaults={() => {
-        void seedDefaults(uid);
-      }}
-      reports={reports}
-      onResolveReport={(id) => {
-        void resolveReport(id);
-      }}
-      onNewArena={() => setCreating(true)}
-      onSignOut={onSignOut}
-      showAdmin={showAdmin}
-      accountName={displayName}
-      accountEmail={userEmail}
-      photoURL={photoURL}
-      teachers={teachers}
-      onAddTeacher={(email) => {
-        void addTeacher(email);
-      }}
-      onRemoveTeacher={(email) => {
-        void removeTeacher(email);
-      }}
-    />
-    </>
-  );
-}
-
-export function TeacherGate({
-  uid,
-  displayName,
-  animal,
-  create,
-  onDone,
-}: {
-  uid: string;
-  displayName: string;
-  animal: Animal;
-  create: (name: string, uid: string, nickname: string, avatar: string) => Promise<string | null>;
-  onDone: (classroomId: string) => void;
-}) {
-  // 테스트에서는 조회 없이 만들기 화면 (기존 App 테스트 유지)
-  const { classrooms, loading } = useTeacherClassrooms(import.meta.env.MODE === 'test' ? null : uid);
-  const [creating, setCreating] = useState(false);
-  const [entered, setEntered] = useState(false);
-
-  // 학급 1개면 자동으로 입장
-  useEffect(() => {
-    if (!entered && !loading && !creating && classrooms.length === 1) {
-      setEntered(true);
-      onDone(classrooms[0].id);
-    }
-  }, [entered, loading, creating, classrooms, onDone]);
-
-  if (loading) {
-    return <p>학급 목록을 불러오는 중...</p>;
-  }
-  if (creating || classrooms.length === 0) {
-    return (
-      <ClassCreate
-        existingNames={classrooms.map((c) => c.name)}
-        onCreate={(name) => {
-          void create(name, uid, displayName, animal).then((id) => {
-            if (id) onDone(id);
-          });
-        }}
-      />
-    );
-  }
-  if (classrooms.length === 1) {
-    return <p>학급으로 들어가는 중...</p>;
-  }
-  return <ClassSelect classrooms={classrooms} onSelect={onDone} />;
 }
 
 function StudentShell({
@@ -502,14 +286,38 @@ function StudentShell({
   accountEmail?: string | null;
   photoURL?: string | null;
 }) {
-  const { arenas } = useArenas();
-  const { profile } = useProfile(uid);
+  const { arenas, error: arenaError, retry: retryArenas } = useArenas(classroomId);
+  const { profile, error: profileError, retry: retryProfile } = useProfile(uid);
   const { top20, myRank } = useLeaderboard(classroomId, uid);
+  const [shopError, setShopError] = useState<string | null>(null);
+  const [legacyReadiness, setLegacyReadiness] = useState<Record<string, { questionCount: number; ready: boolean }>>({});
 
-  const mine = classroomId ? arenas.filter((a) => (a as unknown as { classroomId?: string }).classroomId === classroomId) : arenas;
+  useEffect(() => {
+    if (!classroomId) return;
+    const missing = arenas.filter((arena) => arena.questionCount == null && legacyReadiness[arena.id] == null);
+    if (!missing.length) return;
+    const getReadiness = httpsCallable<{ arenaId: string }, { questionCount: number; ready: boolean }>(getFunctions(), 'getArenaReadiness');
+    for (const arena of missing) {
+      void getReadiness({ arenaId: arena.id }).then(({ data }) => {
+        setLegacyReadiness((current) => ({ ...current, [arena.id]: data }));
+      }).catch(() => {
+        setLegacyReadiness((current) => ({ ...current, [arena.id]: { questionCount: -1, ready: false } }));
+      });
+    }
+  }, [arenas, classroomId, legacyReadiness]);
 
-  const saveProfile = (patch: Record<string, unknown>) => {
-    void setDoc(doc(db, 'users', uid), patch, { merge: true });
+  const mine = classroomId ? arenas.filter((a) => (a as unknown as { classroomId?: string }).classroomId === classroomId).map((a) => {
+    const legacy = a.questionCount == null ? legacyReadiness[a.id] : undefined;
+    return { ...a, questionCount: a.questionCount ?? legacy?.questionCount, arenaReady: legacy?.ready };
+  }) : [];
+
+  const manageCosmetic = (kind: 'avatar' | 'title', id: string, action: 'buy' | 'equip') => {
+    const call = httpsCallable(getFunctions(), 'manageCosmetic');
+    setShopError(null);
+    void call({ kind, id, action }).catch((error: unknown) => {
+      const code = (error as { code?: string })?.code;
+      setShopError(code?.includes('permission-denied') ? '이 상품을 사용할 수 없어요. 상점 정보를 새로고침해주세요.' : '상품을 저장하지 못했어요. 연결을 확인하고 다시 시도해주세요.');
+    });
   };
 
   return (
@@ -522,180 +330,24 @@ function StudentShell({
       accountName={accountName}
       accountEmail={accountEmail}
       photoURL={photoURL}
+      arenaError={arenaError}
+      onRetryArenas={retryArenas}
+      shopError={shopError}
+      onRetryQuestionCount={(id) => setLegacyReadiness((current) => { const next = { ...current }; delete next[id]; return next; })}
+      profileError={profileError}
+      onRetryProfile={retryProfile}
       onEnter={(arenaId) =>
         onEnter(arenaId, { uid, nickname, avatar: animal }, profile?.winCount ?? 0, profile?.streak ?? 0, profile?.nickname ?? nickname)
       }
       onSignOut={onSignOut}
-      onBuyAvatar={(id, price) => {
-        if ((profile?.stars ?? 0) < price) return;
-        saveProfile({
-          stars: (profile?.stars ?? 0) - price,
-          unlockedAvatars: [...(profile?.unlockedAvatars ?? []), id],
-          avatar: id,
-        });
-      }}
-      onEquipAvatar={(id) => saveProfile({ avatar: id })}
-      onBuyTitle={(id, price) => {
-        if ((profile?.stars ?? 0) < price) return;
-        const label = TITLE_GOODS.find((g) => g.id === id)?.label ?? id;
-        saveProfile({
-          stars: (profile?.stars ?? 0) - price,
-          unlockedTitles: [...(profile?.unlockedTitles ?? []), id],
-          title: label,
-        });
-      }}
-      onEquipTitle={(label) => saveProfile({ title: label })}
+      onBuyAvatar={(id) => manageCosmetic('avatar', id, 'buy')}
+      onEquipAvatar={(id) => manageCosmetic('avatar', id, 'equip')}
+      onBuyTitle={(id) => manageCosmetic('title', id, 'buy')}
+      onEquipTitle={(id) => manageCosmetic('title', id, 'equip')}
       onRename={(name) => {
         if (containsBanned(name)) return;
-        saveProfile({ nickname: name });
+        void setDoc(doc(db, 'users', uid), { nickname: name }, { merge: true });
       }}
     />
-  );
-}
-
-function BattleShell({
-  arenaId,
-  classroomId,
-  me,
-  reporterNickname,
-  myWins,
-  myStreak,
-  onExit,
-}: {
-  arenaId: string;
-  classroomId: string | null;
-  me: { uid: string; nickname: string; avatar: string };
-  reporterNickname: string;
-  myWins: number;
-  myStreak: number;
-  onExit: () => void;
-}) {
-  const { roomId, busy, error, findOrCreate } = useMatch(arenaId, me);
-  const [problems, setProblems] = useState<Problem[]>([]);
-  const [arena, setArena] = useState<Arena | null>(null);
-  const { room, ready, answer, tick, claimWin } = useRoom(roomId, problems);
-  const [awarded, setAwarded] = useState(false);
-
-  useEffect(() => {
-    void findOrCreate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [arenaId]);
-
-  useEffect(() => {
-    if (!roomId) return;
-    void getDocs(query(collection(db, 'arenas', arenaId, 'problems'), orderBy('__name__')))
-      .then((snap) => {
-        setProblems(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Problem, 'id'>) })));
-      })
-      .catch(() => {
-        setProblems([]);
-      });
-    void getDoc(doc(db, 'arenas', arenaId))
-      .then((snap) => {
-        setArena(snap.exists() ? ({ id: snap.id, ...(snap.data() as Omit<Arena, 'id'>) }) : null);
-      })
-      .catch(() => {
-        setArena(null);
-      });
-  }, [roomId, arenaId]);
-
-  // 방에 고정된 10문제 순서대로 대결한다. problemIds가 없는 옛 방은 전체를 그대로 쓴다.
-  const ordered = orderBattleProblems(problems, room?.problemIds ?? []);
-
-  useEffect(() => {
-    if (!room || room.status !== 'playing') return;
-    const t = setInterval(() => {
-      void tick();
-    }, 1000);
-    return () => clearInterval(t);
-  }, [room, roomId, tick]);
-
-  useEffect(() => {
-    if (!room || room.status !== 'finished' || awarded || ordered.length === 0) return;
-    setAwarded(true);
-    const mine = room.players.find((p) => p.uid === me.uid)?.answers ?? [];
-    const correct = mine.filter((a, i) => isCorrectAnswer(a, ordered[i] ?? { answerIndex: -1 })).length;
-    void finishAndAward({
-      roomId: roomId!,
-      winnerUid: room.winnerUid,
-      myUid: me.uid,
-      myCorrect: correct,
-      myWins,
-      myStreak,
-    });
-  }, [room, awarded, ordered, roomId, me.uid, myWins, myStreak]);
-
-  if (error) {
-    return (
-      <div className="min-h-screen grid place-items-center px-6">
-        <div className="w-full max-w-md text-center">
-          <p>{error}</p>
-          <button type="button" className="btn-primary mt-4" onClick={onExit}>
-            아레나로 돌아가기
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (busy || !room) {
-    return (
-      <div className="min-h-screen grid place-items-center px-6">
-        <p>같은 반 친구와 연결 중...</p>
-      </div>
-    );
-  }
-
-  const problem = ordered[room.currentRound];
-  return (
-    <div className="min-h-screen grid place-items-center px-6 py-10">
-      <div className="w-full max-w-md">
-        <BattleRoom
-          room={room}
-          meUid={me.uid}
-          problem={problem ? { text: problem.text, options: problem.options, kind: problem.kind ?? 'choice' } : undefined}
-          grade={problem ? { kind: problem.kind, answerIndex: problem.answerIndex, answerText: problem.answerText } : undefined}
-          arena={
-            arena
-              ? {
-                  title: arena.title,
-                  subject: arena.subject,
-                  grade: arena.grade,
-                  gradeBand: arena.gradeBand,
-                  desc: arena.desc,
-                  cardTheme: arena.cardTheme,
-                  cardStyle: arena.cardStyle,
-                  illustId: arena.illustId,
-                }
-              : null
-          }
-          problemsLoaded={ordered.length > 0}
-          onReady={() => {
-            void ready(me.uid);
-          }}
-          onAnswer={(v) => {
-            void answer(me.uid, v);
-          }}
-          onClaimWin={() => {
-            void claimWin(me.uid);
-          }}
-          onReport={() => {
-            const opponent = room.players.find((p) => p.uid !== me.uid);
-            if (!opponent || !classroomId) return;
-            void setDoc(doc(collection(db, 'reports')), {
-              reporterUid: me.uid,
-              reporterNickname,
-              reportedUid: opponent.uid,
-              reportedNickname: opponent.nickname,
-              arenaId,
-              classroomId,
-              status: 'open',
-              createdAt: Date.now(),
-            });
-          }}
-          onExit={onExit}
-        />
-      </div>
-    </div>
   );
 }
