@@ -125,7 +125,7 @@ describe('TeacherHome arena privacy', () => {
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: '아레나' }));
-    const toggle = screen.getByRole('switch', { name: '공개' });
+    const toggle = screen.getByRole('switch', { name: '대전 상대 공개' });
     expect(toggle.getAttribute('aria-checked')).toBe('false');
     fireEvent.click(toggle);
     expect(onToggleShowPlayers).toHaveBeenCalledWith('a1', true);
@@ -140,7 +140,7 @@ describe('TeacherHome arena privacy', () => {
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: '아레나' }));
-    expect(screen.getByRole('switch', { name: '공개' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('switch', { name: '대전 상대 공개' }).getAttribute('aria-checked')).toBe('true');
   });
 });
 

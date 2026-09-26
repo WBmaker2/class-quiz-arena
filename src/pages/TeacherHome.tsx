@@ -269,7 +269,7 @@ export default function TeacherHome({
                         small
                         checked={a.showPlayers ?? false}
                         onChange={(next) => onToggleShowPlayers(a.id, next)}
-                        label="공개"
+                        label="대전 상대 공개"
                       />
                       <Toggle
                         small
